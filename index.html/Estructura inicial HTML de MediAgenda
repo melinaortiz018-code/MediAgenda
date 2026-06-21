@@ -43,14 +43,7 @@
             </tr>
         </thead>
         <tbody id="table-body">
-            <!-- Las filas de las citas se agregarán aquí con JavaScript -->
-            <tr>
-                <td>Ejemplo: Carlos Mendoza</td>
-                <td>2026-06-25</td>
-                <td>10:00 AM</td>
-                <td><button class="delete-btn">Cancelar</button></td>
-            </tr>
-        </tbody>
+
     </table>
 </section>
 
