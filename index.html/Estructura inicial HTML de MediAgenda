@@ -31,6 +31,28 @@
         <button type="submit">Agendar Cita</button>
     </form>
 </section>
+<section class="table-container">
+    <h2>Citas Programadas</h2>
+    <table id="appointments-table">
+        <thead>
+            <tr>
+                <th>Paciente</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <!-- Las filas de las citas se agregarán aquí con JavaScript -->
+            <tr>
+                <td>Ejemplo: Carlos Mendoza</td>
+                <td>2026-06-25</td>
+                <td>10:00 AM</td>
+                <td><button class="delete-btn">Cancelar</button></td>
+            </tr>
+        </tbody>
+    </table>
+</section>
 
     </main>
 </body>
