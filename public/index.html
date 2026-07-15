@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediAgenda - Sistema de Citas Médicas</title>
+    <!-- Bootstrap para un diseño limpio -->
+    <link href="https://jsdelivr.net" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+    <!-- SELECCIÓN DE ROL INICIAL -->
+    <div id="role-selection" class="container text-center my-5">
+        <h1 class="mb-4">Bienvenido a MediAgenda</h1>
+        <p class="text-muted">Por favor, seleccione su rol para ingresar al sistema</p>
+        <div class="row justify-content-center gap-3">
+            <div class="card col-md-3 role-card p-4" onclick="selectRole('Paciente')">
+                <div class="fs-1">👤</div>
+                <h3>Paciente</h3>
+            </div>
+            <div class="card col-md-3 role-card p-4" onclick="selectRole('Medico')">
+                <div class="fs-1">🥼</div>
+                <h3>Médico</h3>
+            </div>
+            <div class="card col-md-3 role-card p-4" onclick="selectRole('Administrador')">
+                <div class="fs-1">⚙️</div>
+                <h3>Administrador</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORMULARIO DE INGRESO / REGISTRO -->
+    <div id="auth-section" class="container my-5 d-none">
+        <button class="btn btn-secondary mb-3" onclick="backToRoles()">← Volver</button>
+        <div class="row justify-content-center">
+            <div class="col-md-6 card p-4">
+                <h2 id="auth-title" class="text-center mb-4">Iniciar Sesión</h2>
+                
+                <form id="auth-form">
+                    <div class="mb-3">
+                        <label class="form-label">Número de Cédula de Identidad (CI)</label>
+                        <input type="text" id="auth-ci" class="form-control" required placeholder="Ej. 1712345678">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" id="auth-password" class="form-control" required>
+                        <small class="text-muted d-none" id="pass-requirements">
+                            Mínimo 8 caracteres, una mayúscula, un número y un carácter especial.
+                        </small>
+                    </div>
+                    <div class="mb-3 d-none" id="email-group">
+                        <label class="form-label">Correo Electrónico</label>
+                        <input type="email" id="auth-email" class="form-control">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="btn-auth-submit">Ingresar</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="#" id="toggle-auth-mode" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate como Paciente</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE VERIFICACIÓN DE CÓDIGO (EMAIL) -->
+    <div id="verification-section" class="container my-5 d-none text-center">
+        <div class="row justify-content-center">
+            <div class="col-md-5 card p-4">
+                <h3>Verificación de Correo</h3>
+                <p>Hemos enviado un código a tu correo electrónico. Ingrésalo abajo:</p>
+                <input type="text" id="verification-code" class="form-control mb-3 text-center fs-4" placeholder="000000">
+                <button class="btn btn-success w-100" onclick="verifyCode()">Verificar y Activar Cuenta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL PRINCIPAL DE TRABAJO -->
+    <div id="dashboard-section" class="container-fluid my-4 d-none">
+        <div class="row">
+            
+            <!-- CONTENIDO PRINCIPAL SEGÚN EL ROL -->
+            <div class="col-md-8 px-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <h2 id="dashboard-welcome">Panel de Control</h2>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">Cerrar Sesión</button>
+                </div>
+
+                <!-- VISTA PACIENTE: AGENDAR CITAS -->
+                <div id="view-paciente" class="d-none">
+                    <h4>Agendar Nueva Cita</h4>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Especialidad</label>
+                            <select id="select-especialidad" class="form-select" onchange="loadMedicos()">
+                                <option value="">Seleccione una opción...</option>
+                                <option value="Medicina General">Medicina General</option>
+                                <option value="Odontologia">Odontología</option>
+                                <option value="Psicologia">Psicología</option>
+                                <option value="Pediatria">Pediatría</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Médico Disponible</label>
+                            <select id="select-medico" class="form-select">
+                                <option value="">Primero elija la especialidad...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Calendario de Horarios Disponibles -->
+                    <h5 class="mt-4">Horarios Disponibles para Mañana</h5>
+                    <div class="calendar-grid id='calendar-container'">
+                        <!-- Casillas generadas por JavaScript en colores pasteles -->
+                    </div>
+                </div>
+
+                <!-- VISTA MÉDICO: GESTIÓN PERFIL Y HORARIOS -->
+                <div id="view-medico" class="d-none">
+                    <h4>Agenda de Citas Asignadas</h4>
+                    <p class="text-muted">A continuación se muestran los pacientes que agendaron contigo hoy.</p>
+                    <div id="medico-appointments-list" class="list-group mb-4"></div>
+                </div>
+
+                <!-- VISTA ADMINISTRADOR: ESTADÍSTICAS -->
+                <div id="view-admin" class="d-none">
+                    <h4>Dashboard Estadístico de Control</h4>
+                    <div class="row mt-4 gap-3 justify-content-center">
+                        <div class="col-md-2 stats-card text-center p-3 bg-light border rounded">
+                            <h6>Diario</h6>
+                            <h2 class="text-primary">12</h2>
+                            <small>Atendidos</small>
+                        </div>
+                        <div class="col-md-2 stats-card text-center p-3 bg-light border rounded">
+                            <h6>Semanal</h6>
+                            <h2 class="text-success">84</h2>
+                            <small>Atendidos</small>
+                        </div>
+                        <div class="col-md-2 stats-card text-center p-3 bg-light border rounded">
+                            <h6>Mensual</h6>
+                            <h2 class="text-warning">340</h2>
+                            <small>Atendidos</small>
+                        </div>
+                        <div class="col-md-2 stats-card text-center p-3 bg-light border rounded">
+                            <h6>Anual</h6>
+                            <h2 class="text-danger">4,120</h2>
+                            <small>Atendidos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARTE LATERAL: MIS CITAS Y DATOS PERSONALES -->
+            <div class="col-md-4 border-start bg-light p-3" id="sidebar-right">
+                <!-- Gestión de Perfil -->
+                <div id="profile-box" class="mb-4 p-3 bg-white border rounded">
+                    <h5>Mi Perfil</h5>
+                    <div class="text-center mb-2">
+                        <img id="profile-img-preview" src="https://placeholder.com" class="rounded-circle profile-avatar" alt="Avatar">
+                    </div>
+                    <form id="profile-form" enctype="multipart/form-data">
+                        <div class="mb-2">
+                            <label class="form-label small">Cambiar Foto</label>
+                            <input type="file" id="profile-file" class="form-control form-control-sm" accept="image/*" onchange="uploadAvatar()">
+                        </div>
+                        <div id="paciente-extra-fields">
+                            <div class="mb-2">
+                                <label class="form-label small">Nombre Completo</label>
+                                <input type="text" id="profile-name" class="form-control form-control-sm" placeholder="Tu Nombre">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary w-100" onclick="saveProfileData()">Actualizar Datos</button>
+                    </form>
+                </div>
+
+                <!-- Sección Mis Citas (Solo para Pacientes) -->
+                <div id="my-appointments-box">
+                    <h5 class="border-bottom pb-2">Mis Citas</h5>
+                    <div id="appointments-sidebar-list">
+                        <!-- Citas Agendadas Dinámicas -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
