@@ -7,14 +7,25 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f5fa; margin: 0; padding: 0; color: #333; }
         .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-        header { text-align: center; padding: 30px 0; background: linear-gradient(135deg, #b39ddb 0%, #7e57c2 100%); color: white; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        
+        /* Banner Principal: Hermoso Morado Pastel Vivo */
+        header { 
+            text-align: center; 
+            padding: 30px 0; 
+            background: linear-gradient(135deg, #b39ddb 0%, #7e57c2 100%); 
+            color: white; 
+            border-radius: 0 0 20px 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            margin-bottom: 30px; 
+        }
         h1 { margin: 0; font-size: 32px; font-weight: 700; }
+        
         .view-roles-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
         .role-card { background: white; border-radius: 12px; padding: 25px; width: 260px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent; }
         .role-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(126,87,194,0.2); border-color: #7e57c2; }
         .role-icon { font-size: 45px; margin-bottom: 15px; display: inline-block; }
-        .role-title { font-size: 20px; font-weight: bold; color: #4a148c; margin-bottom: 10px; }
-        .role-desc { font-size: 14px; color: #666; line-height: 1.4; }
+        .role-title { font-size: 20px; font-weight: bold; color: #4a148c; margin-bottom: 5px; }
+        .role-desc { font-size: 13px; color: #666; line-height: 1.4; display: none; }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
         .modal-box { background: white; padding: 30px; border-radius: 16px; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; }
         .modal-close { position: absolute; top: 15px; right: 15px; font-size: 22px; cursor: pointer; color: #999; }
@@ -25,44 +36,78 @@
         .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #444; }
         .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         .form-control:focus { outline: none; border-color: #7e57c2; }
-        .btn-morado { width: 100%; background: linear-gradient(135deg, #ba68c8 0%, #8e24aa 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 10px rgba(142,36,170,0.25); transition: background 0.3s, transform 0.1s, box-shadow 0.3s; }
-        .btn-morado:hover { background: linear-gradient(135deg, #ce93d8 0%, #aa00ff 100%) !important; box-shadow: 0 6px 15px rgba(170,0,255,0.4); transform: scale(1.01); }
+        
+        /* Botón de Agendar: Morado Pastel Brillante e Interactivo */
+        .btn-morado { 
+            width: 100%; 
+            background: linear-gradient(135deg, #ba68c8 0%, #8e24aa 100%); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            box-shadow: 0 4px 10px rgba(142,36,170,0.25);
+            transition: background 0.3s, transform 0.1s, box-shadow 0.3s;
+        }
+        .btn-morado:hover { 
+            background: linear-gradient(135deg, #ce93d8 0%, #aa00ff 100%) !important;
+            box-shadow: 0 6px 15px rgba(170,0,255,0.4);
+            transform: scale(1.01);
+        }
+        
         .btn-danger { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .btn-danger:hover { background: #bd2130; }
         .btn-warning { background: #ffc107; color: #212529; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .btn-warning:hover { background: #e0a800; }
+
         .d-none { display: none !important; }
         .panel-box { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.05); margin-top: 20px; }
         .user-tag { background: #e1bee7; color: #4a148c; padding: 8px 15px; border-radius: 20px; display: inline-block; font-weight: bold; margin-bottom: 20px; font-size: 14px; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; }
         th { background-color: #f3e5f5; color: #4a148c; font-weight: 600; }
+        
+        /* Cajas del Súper Calendario del Médico */
+        .slot-pill { display: block; margin: 4px 0; padding: 4px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; }
+        .slot-available { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .slot-unavailable { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
+
     <header>
         <h1>Bienvenido a MediAgenda</h1>
-                <p style="margin: 5px 0 0 0; opacity: 0.9;">Selecciona tu rol para ingresar al sistema de gestión de citas</p>
+        <p style="margin: 5px 0 0 0; opacity: 0.9;">Selecciona tu rol para ingresar al sistema de gestión de citas</p>
     </header>
+
     <div class="container">
+        <!-- Barra de Identificación de Sesión Superior -->
         <div id="user-tag" style="display: none; text-align: right; margin-bottom: 20px;">
             <span class="user-tag" id="user-display">Usuario: </span>
             <span class="user-tag" id="role-display" style="background:#bbdefb; color:#0d47a1;">ROL</span>
             <button type="button" class="btn-morado" style="width:auto; padding: 6px 15px; margin:0; font-size:14px;" onclick="logOut()">Cerrar Sesión</button>
         </div>
+
+        <!-- 🏢 PANTALLA INICIAL: SELECCIÓN DE ROLES MINIMALISTA -->
         <div id="view-roles" class="view-roles-container">
             <div class="role-card" onclick="openModal('Paciente')">
                 <span class="role-icon">👤</span>
                 <div class="role-title">Paciente</div>
-                <div class="role-desc">Reserva tu cita escogiendo fechas y turnos disponibles liberados por los médicos.</div>
+                <div class="role-desc"></div>
             </div>
             <div class="role-card" onclick="openModal('Medico')">
                 <span class="role-icon">🩺</span>
                 <div class="role-title">Médico</div>
-                <div class="role-desc">Accede a tu agenda, abre tu calendario grande, libera turnos o cancela citas.</div>
+                <div class="role-desc"></div>
             </div>
             <div class="role-card" onclick="openModal('Admin')">
                 <span class="role-icon">⚙️</span>
                 <div class="role-title">Administrador</div>
-                <div class="role-desc">Monitorea conexiones en tiempo real, gestiona los 8 médicos y usuarios globales.</div>
+                <div class="role-desc"></div>
             </div>
         </div>
         <!-- 👤 VISTA EXCLUSIVA: PACIENTE -->
@@ -87,7 +132,7 @@
                 </select>
             </div>
             
-            <!-- 📅 3. SELECCIÓN DE FECHA DE CONSULTA -->
+            <!-- 📅 3. SELECCIÓN DE FECHA DE CONSULTA FUTURA -->
             <div class="form-group">
                 <label>3. Selecciona la Fecha de tu Consulta (Meses futuros)</label>
                 <input type="date" id="select-fecha" class="form-control" onchange="updateTurnosPaciente()">
@@ -124,7 +169,6 @@
                 </div>
             </div>
         </div>
-
         <!-- 🩺 VISTA EXCLUSIVA: MÉDICO (Panel de Control y Modificación de Horarios) -->
         <div id="view-medico" class="d-none panel-box">
             <h3 style="color:#2575fc; margin-top:0; margin-bottom: 5px;">🩺 Panel Operativo de Gestión Médica</h3>
@@ -160,7 +204,7 @@
                 </table>
             </div>
         </div>
-        <!-- 👑 VISTA EXCLUSIVA: ADMINISTRADOR (Estadísticas e Integración Completa) -->
+        <!-- 👑 VISTA EXCLUSIVA: ADMINISTRADOR (Estadísticas, Dispositivos Globales y 8 Médicos) -->
         <div id="view-admin" class="d-none panel-box" style="margin-top: 20px;">
             <h2 style="color: #4A4A4A; margin-bottom:20px; margin-top:0;">⚙️ Panel Administrativo General (Nube Espejo Global)</h2>
             
@@ -207,7 +251,6 @@
             </div>
         </div>
     </div> <!-- Cierre del div container principal -->
-
     <!-- VENTANA FLOTANTE (MODAL DE AUTENTICACIÓN) -->
     <div class="modal-overlay" id="auth-modal">
         <div class="modal-box">
@@ -258,7 +301,7 @@
             </div>
         </div>
     </div>
-    <!-- 🧠 LÓGICA DE PROGRAMACIÓN GENERAL AVANZADA - MITAD A -->
+    <!-- 🧠 LÓGICA DE PROGRAMACIÓN GENERAL AVANZADA - SECCIÓN 1 -->
     <script>
         let currentRole = ''; 
         let currentTab = 'login';
@@ -299,7 +342,7 @@
             localStorage.setItem('cloud_users', JSON.stringify(usuariosIniciales));
         }
 
-        // Historial de últimas conexiones globales simuladas
+        // Historial de últimas conexiones globales sincronizadas en español ("conexiones")
         if (!localStorage.getItem('cloud_connections')) {
             const conexionesIniciales = {
                 "grace1804": "Activo ahora (Tu dispositivo)",
@@ -328,7 +371,6 @@
             const modal = document.getElementById('auth-modal');
             if (modal) modal.style.display = 'none'; 
         }
-        
         function switchTab(tab) {
             currentTab = tab;
             if (tab === 'login') {
@@ -401,6 +443,7 @@
                 alert('Credenciales incorrectas para el rol ' + currentRole.toUpperCase()); 
             }
         }
+
         function grantAccess(user) {
             closeModal(); 
             if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.add('d-none'); 
@@ -414,8 +457,8 @@
             if (currentRole === 'paciente') {
                 showPatientAppointments(user); 
             } else if (currentRole === 'medico') {
-                const hoyInput = new Date().toISOString().split('T');
-                document.getElementById('medico-fecha-gestion').value = hoyInput[0];
+                const hoyInput = new Date().toISOString().split('T')[0];
+                document.getElementById('medico-fecha-gestion').value = hoyInput;
                 renderCalendarioMedico();
                 showDoctorAppointments(user);
             } else if (currentRole === 'admin') {
@@ -498,7 +541,7 @@
             citasGuardadas.push(nuevaCita);
             localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
 
-            alert('¡Tu cita ha sido agendada exitosamente!\n\nRevisa la parte inferior de tu pantalla para ver el registro detallado en tu Agenda Personal de Paciente.');
+            alert('¡Tu cita ha sido agendada exitosamente!\n\nRevisar la parte inferior de tu pantalla para ver el registro detallado en tu Agenda Personal de Paciente.');
             showPatientAppointments(currentUser);
 
             document.getElementById('select-esp').value = "";
@@ -507,123 +550,6 @@
             document.getElementById('select-med').disabled = true;
             document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige una fecha primero --</option>';
             document.getElementById('select-hor').disabled = true;
-        }
-
-        function showPatientAppointments(username) {
-            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
-            if (panelSeccion) panelSeccion.classList.remove('d-none');
-            const contenedor = document.getElementById('tabla-citas-paciente');
-            if (!contenedor) return;
-
-            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-            const misCitas = citasGuardadas.filter(c => c.paciente === username);
-
-            if (misCitas.length === 0) {
-                contenedor.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:15px;">No tienes citas próximas agendadas.</td></tr>';
-                return;
-            }
-
-            contenedor.innerHTML = '';
-            misCitas.forEach(c => {
-                contenedor.innerHTML += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding:12px;"><strong>${c.especialidad}</strong></td>
-                        <td style="padding:12px;">${c.medicoName}</td>
-                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px; color:#8e24aa;">${c.horario}</code></td>
-                        <td style="padding:12px;"><span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:bold;">Confirmada</span></td>
-                        <td style="padding:12px; display:flex; gap:5px;">
-                            <button class="btn-warning" onclick="reagendarCita(${c.id})">Reagendar</button>
-                            <button class="btn-danger" onclick="cancelarCita(${c.id})">Cancelar Cita</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function cancelarCita(idCita) {
-            if (confirm("🚨 ADVERTENCIA DE SEGURIDAD OPERATIVA 🚨\n\n¿Está completamente seguro de que desea cancelar esta cita médica?\n\n* Recuerde: Como mínimo 24 horas antes de la cita se puede cancelar de forma válida.")) {
-                let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-                citasGuardadas = citasGuardadas.filter(c => c.id !== idCita);
-                localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
-                
-                alert("La cita ha sido cancelada con éxito.");
-                const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-                if (currentRole === 'paciente') showPatientAppointments(currentUser);
-                else showDoctorAppointments(currentUser);
-            }
-        }
-
-        function reagendarCita(idCita) {
-            alert("Acción de Reagendamiento:\n\nPor favor, selecciona una nueva fecha y turno libre en el formulario de arriba y dale a 'Agendar Cita'. Procederemos a actualizar tu registro.");
-            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-            citasGuardadas = citasGuardadas.filter(c => c.id !== idCita);
-            localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
-            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-            showPatientAppointments(currentUser);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function renderCalendarioMedico() {
-            const fecha = document.getElementById('medico-fecha-gestion').value;
-            const container = document.getElementById('medico-slots-container');
-            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-            
-            if(!fecha) return;
-            document.getElementById('medico-titulo-fecha').innerText = "Gestión de Turnos Operativos para el día: " + fecha;
-            container.innerHTML = '';
-
-            let allSlots = JSON.parse(localStorage.getItem('cloud_medical_slots')) || {};
-            const key = currentUser + '_' + fecha;
-        function showPatientAppointments(username) {
-            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
-            if (panelSeccion) panelSeccion.classList.remove('d-none');
-            const contenedor = document.getElementById('tabla-citas-paciente');
-            if (!contenedor) return;
-
-            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-            const misCitas = citasGuardadas.filter(c => c.paciente === username);
-
-            if (misCitas.length === 0) {
-                contenedor.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:15px;">No tienes citas próximas agendadas.</td></tr>';
-                return;
-            }
-
-            contenedor.innerHTML = '';
-            misCitas.forEach(c => {
-                contenedor.innerHTML += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding:12px;"><strong>${c.especialidad}</strong></td>
-                        <td style="padding:12px;">${c.medicoName}</td>
-                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px; color:#8e24aa;">${c.horario}</code></td>
-                        <td style="padding:12px;"><span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:bold;">Confirmada</span></td>
-                        <td style="padding:12px; display:flex; gap:5px;">
-                            <button class="btn-warning" onclick="reagendarCita(${c.id})">Reagendar</button>
-                            <button class="btn-danger" onclick="cancelarCita(${c.id})">Cancelar Cita</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function cancelarCita(idCita) {
-            if (confirm("🚨 ADVERTENCIA DE SEGURIDAD OPERATIVA 🚨\n\n¿Está completamente seguro de que desea cancelar esta cita médica?\n\n* Recuerde: Como mínimo 24 horas antes de la cita se puede cancelar de forma válida.")) {
-                let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-                citasGuardadas = citasGuardadas.filter(c => c.id !== idCita);
-                localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
-                
-                alert("La cita ha sido cancelada con éxito.");
-                const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-                if (currentRole === 'paciente') showPatientAppointments(currentUser);
-                else showDoctorAppointments(currentUser);
-            }
-        }
-
-        function reagendarCita(idCita) {
-            alert("Acción de Reagendamiento:\n\nPor favor, selecciona una nueva fecha y turno libre en el formulario de arriba y dale a 'Agendar Cita'. Procederemos a actualizar tu registro.");
-            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-            citasGuardadas = citasGuardadas.filter(c => c.id !== idCita);
-            localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
-            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-            showPatientAppointments(currentUser);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         function renderCalendarioMedico() {
             const fecha = document.getElementById('medico-fecha-gestion').value;
@@ -676,7 +602,7 @@
             const misPacientes = citasGuardadas.filter(c => c.medicoUser === doctorName || doctorName === 'doctor');
 
             if (misPacientes.length === 0) {
-                contenedor.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:15px;">No tienes consultas programadas en tu agenda para fechas libres.</td></tr>';
+                contenedor.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:15px;">No tienes consultas programadas en tu agenda.</td></tr>';
                 return;
             }
 
@@ -689,7 +615,7 @@
                         <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px; color:#2575fc;">${c.horario}</code></td>
                         <td style="padding:12px;"><button class="btn-danger" onclick="cancelarCita(${c.id})">Cancelar Cita</button></td>
                     </tr>`;
-            });
+                });
         }
         function showAdminUsers() {
             const contenedor = document.getElementById('tabla-usuarios-admin');
