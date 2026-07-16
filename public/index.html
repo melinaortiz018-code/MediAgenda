@@ -329,13 +329,60 @@
             selectMed.disabled = false;
         }
 
-        function updateHorarios() {
+                function updateHorarios() {
             const selectHor = document.getElementById('select-hor'); 
             selectHor.innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
             hours.forEach(h => { selectHor.innerHTML += `<option value="${h}">${h}</option>`; });
             selectHor.disabled = false;
         }
 
+        // FUNCIÓN DE AGENDAR CITA CORREGIDA Y CONECTADA
+        function executeSchedule() {
+            const esp = document.getElementById('select-esp').value;
+            const med = document.getElementById('select-med').value;
+            const hor = document.getElementById('select-hor').value;
+
+            if(!esp || !med || !hor) {
+                alert('Por favor, selecciona la especialidad, el médico y el horario.');
+                return;
+            }
+
+            // Simulador de base de datos de citas persistente en el navegador
+            let citasGuardadas = localStorage.getItem('cloud_appointments');
+            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
+
+            // Creamos la nueva cita
+            const nuevaCita = {
+                especialidad: esp,
+                medico: med,
+                horario: hor,
+                paciente: document.getElementById('user-display').innerText.replace("Usuario: ", "")
+            };
+
+            // La guardamos en el listado
+            citasGuardadas.push(nuevaCita);
+            localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
+
+            alert('¡Cita agendada con éxito en tu agenda personal! El médico la verá en su sistema.');
+            
+            // Limpiamos los campos
+            document.getElementById('select-esp').value = "";
+            document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
+            document.getElementById('select-med').disabled = true;
+            document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
+            document.getElementById('select-hor').disabled = true;
+        }
+
+        // Conectar TODAS las funciones al navegador de forma obligatoria
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.switchTab = switchTab;
+        window.executeRegister = executeRegister;
+        window.executeLogin = executeLogin;
+        window.logOut = logOut;
+        window.updateMedicos = updateMedicos;
+        window.updateHorarios = updateHorarios;
+        window.executeSchedule = executeSchedule; // <-- Activamos el botón de agendar cita
     </script>
 </body>
 </html>
