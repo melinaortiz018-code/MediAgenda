@@ -4,187 +4,337 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediAgenda - Sistema de Citas Médicas</title>
-    <!-- Bootstrap para un diseño limpio -->
-    <link href="https://jsdelivr.net" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* PALETA MORADO PASTEL Y GRIS SUAVE */
+        body { background-color: #f8f9fa; color: #5a626a; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; }
+        .navbar { background-color: #f3e5f5; padding: 15px 30px; border-bottom: 2px solid #e1bee7; display: flex; justify-content: space-between; align-items: center; }
+        .navbar-brand { color: #7e57c2; font-size: 24px; font-weight: bold; text-decoration: none; }
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; text-align: center; }
+        h1 { color: #7e57c2; font-size: 32px; margin-bottom: 10px; font-weight: 600; }
+        .subtitle { color: #718096; margin-bottom: 40px; font-size: 15px; }
+        .roles-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .card-rol { background: white; border: 2px solid #e9ecef; border-radius: 16px; padding: 30px; width: 240px; cursor: pointer; transition: 0.3s; box-sizing: border-box; }
+        .card-rol:hover { transform: translateY(-3px); border-color: #d1c4e9; box-shadow: 0 6px 15px rgba(179, 157, 219, 0.15); }
+        .card-rol .icon { font-size: 40px; margin-bottom: 15px; }
+        .card-rol h3 { color: #7e57c2; margin: 0 0 10px 0; font-size: 20px; }
+        .card-rol p { color: #718096; font-size: 13px; margin: 0; line-height: 1.4; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.35); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-box { background: white; padding: 30px; border-radius: 16px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); position: relative; text-align: left; border: 1px solid #e9ecef; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #a0aec0; }
+        .close-btn:hover { color: #718096; }
+        .tab-container { display: flex; border-bottom: 2px solid #f1f3f5; margin-bottom: 20px; }
+        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #718096; font-weight: 600; font-size: 14px; }
+        .tab.active { color: #7e57c2; border-bottom: 2px solid #7e57c2; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #5a626a; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; color: #4a5568; background-color: #ffffff; }
+        .form-control:focus { outline: none; border-color: #b39ddb; box-shadow: 0 0 0 3px rgba(179, 157, 219, 0.2); }
+        .btn-morado { width: 100%; padding: 12px; background-color: #d1c4e9; color: #512da8; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-morado:hover { background-color: #b39ddb; }
+        .d-none { display: none !important; }
+        .portal-layout { display: flex; gap: 20px; margin-top: 30px; text-align: left; flex-wrap: wrap; }
+        .main-panel { flex: 7; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e9ecef; min-width: 320px; box-sizing: border-box; }
+        .side-panel { flex: 5; background: #f1f3f5; padding: 25px; border-radius: 16px; border: 1px solid #e9ecef; min-width: 320px; box-sizing: border-box; }
+        .btn-atras { padding: 8px 16px; background: #e9ecef; color: #5a626a; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .btn-atras:hover { background: #dee2e6; }
+        .list-medicos { padding-left: 0; list-style: none; margin: 15px 0 0 0; }
+        .list-medicos li { padding: 10px 15px; background: #ffffff; border: 1px solid #e9ecef; margin-bottom: 8px; border-radius: 8px; color: #5a626a; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .badge-status { background: #f3e5f5; color: #7e57c2; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #e1bee7; }
+    </style>
 </head>
 <body>
-
-    <!-- SELECCIÓN DE ROL INICIAL -->
-    <div id="role-selection" class="container text-center my-5">
-        <h1 class="mb-4">Bienvenido a MediAgenda</h1>
-        <p class="text-muted">Por favor, seleccione su rol para ingresar al sistema</p>
-        <div class="row justify-content-center gap-3">
-            <div class="card col-md-3 role-card p-4" onclick="selectRole('Paciente')">
-                <div class="fs-1">👤</div>
-                <h3>Paciente</h3>
-            </div>
-            <div class="card col-md-3 role-card p-4" onclick="selectRole('Medico')">
-                <div class="fs-1">🥼</div>
-                <h3>Médico</h3>
-            </div>
-            <div class="card col-md-3 role-card p-4" onclick="selectRole('Administrador')">
-                <div class="fs-1">⚙️</div>
-                <h3>Administrador</h3>
-            </div>
+    <nav class="navbar">
+        <a href="#" class="navbar-brand">🔮 MediAgenda</a>
+        <div id="user-tag" style="display: none; text-align: right;">
+            <span id="user-display" style="font-weight: bold; display: block; color: #5a626a; font-size: 14px;">Usuario</span>
+            <span id="role-display" style="font-size: 11px; background: #f3e5f5; color: #7e57c2; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #e1bee7;">PACIENTE</span>
         </div>
-    </div>
-
-    <!-- FORMULARIO DE INGRESO / REGISTRO -->
-    <div id="auth-section" class="container my-5 d-none">
-        <button class="btn btn-secondary mb-3" onclick="backToRoles()">← Volver</button>
-        <div class="row justify-content-center">
-            <div class="col-md-6 card p-4">
-                <h2 id="auth-title" class="text-center mb-4">Iniciar Sesión</h2>
-                
-                <form id="auth-form">
-                    <div class="mb-3">
-                        <label class="form-label">Número de Cédula de Identidad (CI)</label>
-                        <input type="text" id="auth-ci" class="form-control" required placeholder="Ej. 1712345678">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Contraseña</label>
-                        <input type="password" id="auth-password" class="form-control" required>
-                        <small class="text-muted d-none" id="pass-requirements">
-                            Mínimo 8 caracteres, una mayúscula, un número y un carácter especial.
-                        </small>
-                    </div>
-                    <div class="mb-3 d-none" id="email-group">
-                        <label class="form-label">Correo Electrónico</label>
-                        <input type="email" id="auth-email" class="form-control">
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100" id="btn-auth-submit">Ingresar</button>
-                </form>
-                <div class="text-center mt-3">
-                    <a href="#" id="toggle-auth-mode" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate como Paciente</a>
+    </nav>
+    <div class="container">
+        <div id="view-roles">
+            <h1>Bienvenido a MediAgenda</h1>
+            <p class="subtitle">Selecciona tu rol para ingresar al sistema de gestión de citas</p>
+            <div class="roles-container">
+                <div class="card-rol" onclick="openModal('paciente')">
+                    <div class="icon">👤</div>
+                    <h3>Paciente</h3>
+                    <p>Reserva y gestiona tus citas médicas en línea</p>
+                </div>
+                <div class="card-rol" onclick="openModal('medico')">
+                    <div class="icon">🩺</div>
+                    <h3>Médico</h3>
+                    <p>Accede a tu agenda y revisa tus consultas</p>
+                </div>
+                <div class="card-rol" onclick="openModal('admin')">
+                    <div class="icon">⚙️</div>
+                    <h3>Administrador</h3>
+                    <p>Gestiona el personal médico y configuraciones</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- SECCIÓN DE VERIFICACIÓN DE CÓDIGO (EMAIL) -->
-    <div id="verification-section" class="container my-5 d-none text-center">
-        <div class="row justify-content-center">
-            <div class="col-md-5 card p-4">
-                <h3>Verificación de Correo</h3>
-                <p>Hemos enviado un código a tu correo electrónico. Ingrésalo abajo:</p>
-                <input type="text" id="verification-code" class="form-control mb-3 text-center fs-4" placeholder="000000">
-                <button class="btn btn-success w-100" onclick="verifyCode()">Verificar y Activar Cuenta</button>
+        <div class="modal-overlay" id="auth-modal">
+            <div class="modal-box">
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <div class="tab-container">
+                    <div class="tab active" id="tab-login" onclick="switchTab('login')">Iniciar Sesión</div>
+                    <div class="tab" id="tab-register" onclick="switchTab('register')">Registrarse</div>
+                </div>
+                <div id="form-login-container">
+                    <div class="form-group">
+                        <label>Usuario de Acceso</label>
+                        <input type="text" id="login-user" class="form-control" placeholder="Ej. manu o grace1804">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" id="login-pass" class="form-control" placeholder="•••••">
+                    </div>
+                    <button class="btn-morado" onclick="executeLogin()">Ingresar al Sistema</button>
+                </div>
+                <div id="form-register-container" class="d-none">
+                    <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="reg-name" class="form-control" placeholder="Ej. Diana Ortiz">
+                    </div>
+                    <div class="form-group">
+                        <label>Número de Cédula (CI)</label>
+                        <input type="text" id="reg-ci" class="form-control" placeholder="Ej. 0912345678">
+                    </div>
+                    <div class="form-group">
+                        <label>Crear Nombre de Usuario</label>
+                        <input type="text" id="reg-user" class="form-control" placeholder="Ej. diana01">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" id="reg-pass" class="form-control" placeholder="•••••">
+                    </div>
+                    <button class="btn-morado" onclick="executeRegister()">Crear Cuenta y Guardar</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- PANEL PRINCIPAL DE TRABAJO -->
-    <div id="dashboard-section" class="container-fluid my-4 d-none">
-        <div class="row">
+        <div id="view-paciente" class="d-none" style="text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2 style="color: #7e57c2; margin: 0; font-size: 24px;">Portal del Paciente</h2>
+                    <p style="color: #718096; margin: 5px 0 0 0; font-size: 14px;">Registra tus consultas seleccionando especialidades y médicos</p>
+                </div>
+                <button class="btn-atras" onclick="logOut()">Cerrar Sesión</button>
+            </div>
+            <div class="portal-layout">
+                <div class="main-panel">
+                    <h3 style="color: #7e57c2; margin-top: 0; font-size: 18px;">✅ Registro de Nueva Cita</h3>
+                    <div class="form-group">
+                        <label>1. Especialidad Médica</label>
+                        <select id="select-esp" class="form-control" onchange="updateMedicos()">
+                            <option value="" selected disabled>-- Elige especialidad --</option>
+                            <option value="Medicina General">Medicina General</option>
+                            <option value="Psicología">Psicología</option>
+                            <option value="Nutrición">Nutrición</option>
+                            <option value="Odontología">Odontología</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>2. Médico Especialista</label>
+                        <select id="select-med" class="form-control" disabled onchange="updateHorarios()">
+                            <option value="" selected disabled>-- Selecciona un área primero --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>3. Horario Disponible</label>
+                        <select id="select-hor" class="form-control" disabled>
+                            <option value="" selected disabled>-- Selecciona un médico primero --</option>
+                        </select>
+                    </div>
+                    <button class="btn-morado" onclick="bookAppointment()">Confirmar Reservación</button>
+                </div>
+                <div class="side-panel">
+                    <h3 style="color: #7e57c2; margin-top: 0; font-size: 18px;">Consulta de Citas</h3>
+                    <div id="appointment-list">
+                        <p id="empty-msg" style="color: #718096; font-size: 13px; text-align: center; padding: 30px 0; margin: 0;">No registras turnos agendados en este momento.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-admin" class="d-none" style="text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #7e57c2; margin: 0; font-size: 24px;">⚙️ Panel Administrativo</h2>
+                <button class="btn-atras" onclick="logOut()">Cerrar Sesión</button>
+            </div>
+            <div class="main-panel">
+                <h4 style="margin-top:0; color: #7e57c2; font-size: 18px;">Listado de Control Operativo de los 8 Médicos</h4>
+                <ul class="list-medicos">
+                    <li><span><strong>Medicina General:</strong> Dr. Juan Pérez</span> <span class="badge-status">Activo</span></li>
+                    <li><span><strong>Medicina General:</strong> Dra. Ana Gómez</span> <span class="badge-status">Activo</span></li>
+                    <li><span><strong>Psicología:</strong> Dra. Joselin Noboa</span> <span class="badge-status">Activo</span></li>
+                    <li><span><strong>Psicología:</strong> Dr. Carlos Ruíz</span> <span class="badge-status">Activo</span></li>
+                    <li><span><strong>Nutrición:</strong> Dra. María Loor</span> <span class="badge-status">Activo</span></li>
+                    <li><span><strong>Nutrición:</strong> Dr. Luis Alba</span> <span class="badge-status">Activo</span></li>
+                    <li><span><strong>Odontología:</strong> Dr. Paúl Vera</span> <span class="badge-status">Activo</span></li>
+                    <li><span><strong>Odontología:</strong> Dra. Elena Silva</span> <span class="badge-status">Activo</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="view-medico" class="d-none" style="text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #7e57c2; margin: 0; font-size: 24px;">🩺 Agenda de Consultas Médicas</h2>
+                <button class="btn-atras" onclick="logOut()">Cerrar Sesión</button>
+            </div>
+            <div class="main-panel" style="text-align: center; padding: 40px; color: #718096; font-size: 14px;">
+                No tienes pacientes agendados en tu lista para la jornada de hoy.
+            </div>
+        </div>
+
+        <footer style="margin-top: 50px; font-size: 12px; color: #a0aec0; border-top: 1px solid #e9ecef; padding-top: 15px;">Copyright © 2026 MediAgenda. Todos los derechos reservados.</footer>
+    </div>
+        <!-- IMPORTANTE: Usamos type="module" para conectar con tu Firebase real -->
+    <!-- 1. Cargamos Firebase de forma clásica para saltarnos el bloqueo del navegador -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+
+    <!-- 2. Tu lógica de negocio normal sin type="module" -->
+    <!-- Solución de contingencia local autoejecutable -->
+    <script>
+        // Simulador de base de datos en la nube local (Persistente)
+        // Si no existen usuarios guardados en la máquina, inicializamos los de prueba
+        if (!localStorage.getItem('cloud_users')) {
+            const usuariosIniciales = {
+                "admin": { "grace1804": "11111" },
+                "paciente": { "manu": "11111" },
+                "medico": { "doctor": "11111" }
+            };
+            localStorage.setItem('cloud_users', JSON.stringify(usuariosIniciales));
+        }
+
+        // Variables de control de la página
+        let currentRole = ''; 
+        let currentTab = 'login';
+        
+        const database = {
+            "Medicina General": ["Dr. Juan Pérez", "Dra. Ana Gómez"],
+            "Psicología": ["Dra. Joselin Noboa", "Dr. Carlos Ruíz"],
+            "Nutrición": ["Dra. María Loor", "Dr. Luis Alba"],
+            "Odontología": ["Dr. Paúl Vera", "Dra. Elena Silva"]
+        };
+        const hours = ["08:00 - 08:40", "10:00 - 10:40", "14:00 - 14:40", "16:00 - 16:40"];
+
+        // Funciones de la Interfaz
+        function openModal(role) { 
+            currentRole = role.toLowerCase(); 
+            document.getElementById('auth-modal').style.display = 'flex'; 
+            switchTab('login'); 
+        }
+        
+        function closeModal() { 
+            document.getElementById('auth-modal').style.display = 'none'; 
+        }
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            if (tab === 'login') {
+                document.getElementById('tab-login').classList.add('active'); 
+                document.getElementById('tab-register').classList.remove('active');
+                document.getElementById('form-login-container').classList.remove('d-none'); 
+                document.getElementById('form-register-container').classList.add('d-none');
+            } else {
+                document.getElementById('tab-register').classList.add('active'); 
+                document.getElementById('tab-login').classList.remove('active');
+                document.getElementById('form-register-container').classList.remove('d-none'); 
+                document.getElementById('form-login-container').classList.add('d-none');
+            }
+        }
+
+        // FUNCIÓN DE REGISTRO PERSISTENTE
+        function executeRegister() {
+            const name = document.getElementById('reg-name').value.trim(); 
+            const user = document.getElementById('reg-user').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const ci = document.getElementById('reg-ci').value.trim();
+
+            if(!name || !user || !pass || !ci) { 
+                alert('Por favor, completa todos los campos de registro.'); 
+                return; 
+            }
+
+            if(pass.length < 5) {
+                alert('La contraseña debe tener al menos 5 caracteres.');
+                return;
+            }
+
+            // Extraemos la base de datos local
+            let usuariosRegistrados = JSON.stringify(localStorage.getItem('cloud_users'));
+            usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
+
+            if (!usuariosRegistrados[currentRole]) {
+                usuariosRegistrados[currentRole] = {};
+            }
+
+            // Guardamos el nuevo usuario
+            usuariosRegistrados[currentRole][user] = pass;
+
+            // Actualizamos la base de datos local permanente
+            localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
+
+            alert('¡Cuenta de ' + currentRole.toUpperCase() + ' guardada con éxito en la base de datos!'); 
+            switchTab('login'); 
+            document.getElementById('login-user').value = user;
+            document.getElementById('login-pass').value = '';
+        }
+
+        // FUNCIÓN DE INICIO DE SESIÓN PERSISTENTE
+        function executeLogin() {
+            const user = document.getElementById('login-user').value.trim(); 
+            const pass = document.getElementById('login-pass').value.trim();
             
-            <!-- CONTENIDO PRINCIPAL SEGÚN EL ROL -->
-            <div class="col-md-8 px-4">
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-                    <h2 id="dashboard-welcome">Panel de Control</h2>
-                    <button class="btn btn-danger btn-sm" onclick="logout()">Cerrar Sesión</button>
-                </div>
+            if(!user || !pass) { 
+                alert('Ingresa tu usuario y contraseña.'); 
+                return; 
+            }
 
-                <!-- VISTA PACIENTE: AGENDAR CITAS -->
-                <div id="view-paciente" class="d-none">
-                    <h4>Agendar Nueva Cita</h4>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Especialidad</label>
-                            <select id="select-especialidad" class="form-select" onchange="loadMedicos()">
-                                <option value="">Seleccione una opción...</option>
-                                <option value="Medicina General">Medicina General</option>
-                                <option value="Odontologia">Odontología</option>
-                                <option value="Psicologia">Psicología</option>
-                                <option value="Pediatria">Pediatría</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Médico Disponible</label>
-                            <select id="select-medico" class="form-select">
-                                <option value="">Primero elija la especialidad...</option>
-                            </select>
-                        </div>
-                    </div>
+            // Obtenemos los usuarios actualizados de la memoria persistente
+            const usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
+            const contraseñaCorrecta = usuariosRegistrados[currentRole] ? usuariosRegistrados[currentRole][user] : null;
 
-                    <!-- Calendario de Horarios Disponibles -->
-                    <h5 class="mt-4">Horarios Disponibles para Mañana</h5>
-                    <div class="calendar-grid id='calendar-container'">
-                        <!-- Casillas generadas por JavaScript en colores pasteles -->
-                    </div>
-                </div>
+            if (contraseñaCorrecta && contraseñaCorrecta === pass) {
+                grantAccess(user);
+            } else { 
+                alert('Credenciales incorrectas para el rol ' + currentRole.toUpperCase() + '. Si eres nuevo, asegúrate de registrarte primero.'); 
+            }
+        }
 
-                <!-- VISTA MÉDICO: GESTIÓN PERFIL Y HORARIOS -->
-                <div id="view-medico" class="d-none">
-                    <h4>Agenda de Citas Asignadas</h4>
-                    <p class="text-muted">A continuación se muestran los pacientes que agendaron contigo hoy.</p>
-                    <div id="medico-appointments-list" class="list-group mb-4"></div>
-                </div>
+        function grantAccess(user) {
+            closeModal(); 
+            document.getElementById('view-roles').classList.add('d-none'); 
+            document.getElementById('user-tag').style.display = 'block';
+            document.getElementById('user-display').innerText = "Usuario: " + user; 
+            document.getElementById('role-display').innerText = currentRole.toUpperCase();
+            document.getElementById('view-' + currentRole).classList.remove('d-none');
+        }
 
-                <!-- VISTA ADMINISTRADOR: ESTADÍSTICAS -->
-                <div id="view-admin" class="d-none">
-                    <h4>Dashboard Estadístico de Control</h4>
-                    <div class="row mt-4 gap-3 justify-content-center">
-                        <div class="col-md-2 stats-card text-center p-3 bg-light border rounded">
-                            <h6>Diario</h6>
-                            <h2 class="text-primary">12</h2>
-                            <small>Atendidos</small>
-                        </div>
-                        <div class="col-md-2 stats-card text-center p-3 bg-light border rounded">
-                            <h6>Semanal</h6>
-                            <h2 class="text-success">84</h2>
-                            <small>Atendidos</small>
-                        </div>
-                        <div class="col-md-2 stats-card text-center p-3 bg-light border rounded">
-                            <h6>Mensual</h6>
-                            <h2 class="text-warning">340</h2>
-                            <small>Atendidos</small>
-                        </div>
-                        <div class="col-md-2 stats-card text-center p-3 bg-light border rounded">
-                            <h6>Anual</h6>
-                            <h2 class="text-danger">4,120</h2>
-                            <small>Atendidos</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        function logOut() { 
+            document.getElementById('view-' + currentRole).classList.add('d-none'); 
+            document.getElementById('user-tag').style.display = 'none'; 
+            document.getElementById('view-roles').classList.remove('d-none'); 
+        }
 
-            <!-- PARTE LATERAL: MIS CITAS Y DATOS PERSONALES -->
-            <div class="col-md-4 border-start bg-light p-3" id="sidebar-right">
-                <!-- Gestión de Perfil -->
-                <div id="profile-box" class="mb-4 p-3 bg-white border rounded">
-                    <h5>Mi Perfil</h5>
-                    <div class="text-center mb-2">
-                        <img id="profile-img-preview" src="https://placeholder.com" class="rounded-circle profile-avatar" alt="Avatar">
-                    </div>
-                    <form id="profile-form" enctype="multipart/form-data">
-                        <div class="mb-2">
-                            <label class="form-label small">Cambiar Foto</label>
-                            <input type="file" id="profile-file" class="form-control form-control-sm" accept="image/*" onchange="uploadAvatar()">
-                        </div>
-                        <div id="paciente-extra-fields">
-                            <div class="mb-2">
-                                <label class="form-label small">Nombre Completo</label>
-                                <input type="text" id="profile-name" class="form-control form-control-sm" placeholder="Tu Nombre">
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-primary w-100" onclick="saveProfileData()">Actualizar Datos</button>
-                    </form>
-                </div>
+        function updateMedicos() {
+            const esp = document.getElementById('select-esp').value; 
+            const selectMed = document.getElementById('select-med');
+            selectMed.innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
+            if(database[esp]) {
+                database[esp].forEach(m => { selectMed.innerHTML += `<option value="${m}">${m}</option>`; }); 
+            }
+            selectMed.disabled = false;
+        }
 
-                <!-- Sección Mis Citas (Solo para Pacientes) -->
-                <div id="my-appointments-box">
-                    <h5 class="border-bottom pb-2">Mis Citas</h5>
-                    <div id="appointments-sidebar-list">
-                        <!-- Citas Agendadas Dinámicas -->
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <script src="/js/app.js"></script>
+        function updateHorarios() {
+            const selectHor = document.getElementById('select-hor'); 
+            selectHor.innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
+            hours.forEach(h => { selectHor.innerHTML += `<option value="${h}">${h}</option>`; });
+            selectHor.disabled = false;
+        }
+    </script>
 </body>
 </html>
