@@ -679,6 +679,16 @@
                 showAdminUsers(); 
             }
         }
+        function executeForgotPassword() {
+            if (confirm("🔒 MÓDULO DE RECUPERACIÓN DE CREDENCIALES 🔒\n\n¿Deseas restablecer y sincronizar la base de datos global de MediAgenda?\n\n* Esto limpiará el caché antiguo de tu navegador y activará los accesos de los 8 nuevos médicos oficiales del sistema.")) {
+                // Borramos el LocalStorage viejo para forzar al sistema a leer el código nuevo con los 8 doctores
+                localStorage.removeItem('cloud_users');
+                localStorage.removeItem('cloud_connections');
+                
+                alert("¡Base de datos global sincronizada con éxito!\n\nPor favor, presiona Ctrl + F5 en tu teclado de inmediato para aplicar los cambios e intenta iniciar sesión.");
+                location.reload();
+            }
+        }
 
         function togglePassword(inputId, button) {
             const input = document.getElementById(inputId);
@@ -691,6 +701,8 @@
         window.updateMedicos = updateMedicos; window.updateCalendarioPaciente = updateCalendarioPaciente;
         window.updateTurnosPaciente = updateTurnosPaciente; window.executeSchedule = executeSchedule;
         window.deleteUser = deleteUser; window.togglePassword = togglePassword;
+        window.executeForgotPassword = executeForgotPassword;
+
     </script>
 </body>
 </html>
