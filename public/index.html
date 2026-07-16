@@ -5,295 +5,223 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediAgenda - Sistema de Citas Médicas</title>
     <style>
-        /* PALETA MORADO PASTEL Y GRIS SUAVE */
-        body { background-color: #f8f9fa; color: #5a626a; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; }
-        .navbar { background-color: #f3e5f5; padding: 15px 30px; border-bottom: 2px solid #e1bee7; display: flex; justify-content: space-between; align-items: center; }
-        .navbar-brand { color: #7e57c2; font-size: 24px; font-weight: bold; text-decoration: none; }
-        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; text-align: center; }
-        h1 { color: #7e57c2; font-size: 32px; margin-bottom: 10px; font-weight: 600; }
-        .subtitle { color: #718096; margin-bottom: 40px; font-size: 15px; }
-        .roles-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-        .card-rol { background: white; border: 2px solid #e9ecef; border-radius: 16px; padding: 30px; width: 240px; cursor: pointer; transition: 0.3s; box-sizing: border-box; }
-        .card-rol:hover { transform: translateY(-3px); border-color: #d1c4e9; box-shadow: 0 6px 15px rgba(179, 157, 219, 0.15); }
-        .card-rol .icon { font-size: 40px; margin-bottom: 15px; }
-        .card-rol h3 { color: #7e57c2; margin: 0 0 10px 0; font-size: 20px; }
-        .card-rol p { color: #718096; font-size: 13px; margin: 0; line-height: 1.4; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.35); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: white; padding: 30px; border-radius: 16px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); position: relative; text-align: left; border: 1px solid #e9ecef; }
-        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #a0aec0; }
-        .close-btn:hover { color: #718096; }
-        .tab-container { display: flex; border-bottom: 2px solid #f1f3f5; margin-bottom: 20px; }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #718096; font-weight: 600; font-size: 14px; }
-        .tab.active { color: #7e57c2; border-bottom: 2px solid #7e57c2; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f5fa; margin: 0; padding: 0; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 30px 0; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        h1 { margin: 0; font-size: 32px; font-weight: 700; }
+        .view-roles-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+        .role-card { background: white; border-radius: 12px; padding: 25px; width: 260px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent; }
+        .role-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(106,17,203,0.15); border-color: #6a11cb; }
+        .role-icon { font-size: 45px; margin-bottom: 15px; display: inline-block; }
+        .role-title { font-size: 20px; font-weight: bold; color: #4a148c; margin-bottom: 10px; }
+        .role-desc { font-size: 14px; color: #666; line-height: 1.4; }
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-box { background: white; padding: 30px; border-radius: 16px; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 15px; font-size: 22px; cursor: pointer; color: #999; }
+        .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .tab { flex: 1; text-align: center; padding: 10px 0; font-weight: bold; cursor: pointer; color: #888; }
+        .tab.active { color: #6a11cb; border-bottom: 3px solid #6a11cb; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #5a626a; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; color: #4a5568; background-color: #ffffff; }
-        .form-control:focus { outline: none; border-color: #b39ddb; box-shadow: 0 0 0 3px rgba(179, 157, 219, 0.2); }
-        .btn-morado { width: 100%; padding: 12px; background-color: #d1c4e9; color: #512da8; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn-morado:hover { background-color: #b39ddb; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #444; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .form-control:focus { outline: none; border-color: #2575fc; }
+        .btn-morado { width: 100%; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 10px rgba(106,17,203,0.2); }
+        .btn-morado:hover { opacity: 0.9; }
         .d-none { display: none !important; }
-        .portal-layout { display: flex; gap: 20px; margin-top: 30px; text-align: left; flex-wrap: wrap; }
-        .main-panel { flex: 7; background: white; padding: 25px; border-radius: 16px; border: 1px solid #e9ecef; min-width: 320px; box-sizing: border-box; }
-        .side-panel { flex: 5; background: #f1f3f5; padding: 25px; border-radius: 16px; border: 1px solid #e9ecef; min-width: 320px; box-sizing: border-box; }
-        .btn-atras { padding: 8px 16px; background: #e9ecef; color: #5a626a; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .btn-atras:hover { background: #dee2e6; }
-        .list-medicos { padding-left: 0; list-style: none; margin: 15px 0 0 0; }
-        .list-medicos li { padding: 10px 15px; background: #ffffff; border: 1px solid #e9ecef; margin-bottom: 8px; border-radius: 8px; color: #5a626a; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
-        .badge-status { background: #f3e5f5; color: #7e57c2; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #e1bee7; }
+        
+        .panel-box { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.05); margin-top: 20px; }
+        .user-tag { background: #e1bee7; color: #4a148c; padding: 8px 15px; border-radius: 20px; display: inline-block; font-weight: bold; margin-bottom: 20px; font-size: 14px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #555; font-weight: 600; }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="#" class="navbar-brand">🔮 MediAgenda</a>
-        <div id="user-tag" style="display: none; text-align: right;">
-            <span id="user-display" style="font-weight: bold; display: block; color: #5a626a; font-size: 14px;">Usuario</span>
-            <span id="role-display" style="font-size: 11px; background: #f3e5f5; color: #7e57c2; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #e1bee7;">PACIENTE</span>
-        </div>
-    </nav>
+
+    <header>
+        <h1>Bienvenido a MediAgenda</h1>
+        <p style="margin: 5px 0 0 0; opacity: 0.9;">Selecciona tu rol para ingresar al sistema de gestión de citas</p>
+    </header>
+
     <div class="container">
-        <div id="view-roles">
-            <h1>Bienvenido a MediAgenda</h1>
-            <p class="subtitle">Selecciona tu rol para ingresar al sistema de gestión de citas</p>
-            <div class="roles-container">
-                <div class="card-rol" onclick="openModal('paciente')">
-                    <div class="icon">👤</div>
-                    <h3>Paciente</h3>
-                    <p>Reserva y gestiona tus citas médicas en línea</p>
-                </div>
-                <div class="card-rol" onclick="openModal('medico')">
-                    <div class="icon">🩺</div>
-                    <h3>Médico</h3>
-                    <p>Accede a tu agenda y revisa tus consultas</p>
-                </div>
-                <div class="card-rol" onclick="openModal('admin')">
-                    <div class="icon">⚙️</div>
-                    <h3>Administrador</h3>
-                    <p>Gestiona el personal médico y configuraciones</p>
-                </div>
-                    <!-- 👑 SECCIÓN DEL ADMINISTRADOR CON GESTIÓN Y ESTADÍSTICAS -->
-    <div id="view-admin" class="d-none" style="margin-top: 20px;">
-        <h2 style="margin-bottom: 20px; color: #4A4A4A;">Panel de Control General (Administrador)</h2>
-        
-        <!-- 📊 TARJETAS DE ESTADÍSTICAS -->
-        <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-            <div style="flex: 1; background-color: #28a745; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h5 style="margin: 0; font-size: 16px;">Citas Agendadas Próximas</h5>
-                <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-agendadas">0</p>
+        <div id="user-tag" style="display: none; text-align: right; margin-bottom: 20px;">
+            <span class="user-tag" id="user-display">Usuario: </span>
+            <span class="user-tag" id="role-display" style="background:#bbdefb; color:#0d47a1;">ROL</span>
+            <button type="button" class="btn-morado" style="width:auto; padding: 6px 15px; margin:0; font-size:14px;" onclick="logOut()">Cerrar Sesión</button>
+        </div>
+
+        <div id="view-roles" class="view-roles-container">
+            <div class="role-card" onclick="openModal('Paciente')">
+                <span class="role-icon">👤</span>
+                <div class="role-title">Paciente</div>
+                <div class="role-desc">Reserva y gestiona tus citas médicas en línea de forma rápida.</div>
             </div>
-            <div style="flex: 1; background-color: #dc3545; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h5 style="margin: 0; font-size: 16px;">Citas Canceladas / Historial</h5>
-                <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-canceladas">0</p>
+            <div class="role-card" onclick="openModal('Medico')">
+                <span class="role-icon">🩺</span>
+                <div class="role-title">Médico</div>
+                <div class="role-desc">Accede a tu agenda y revisa las consultas próximas asignadas.</div>
+            </div>
+            <div class="role-card" onclick="openModal('Admin')">
+                <span class="role-icon">⚙️</span>
+                <div class="role-title">Administrador</div>
+                <div class="role-desc">Gestiona el personal médico, cuentas de usuarios y configuraciones.</div>
             </div>
         </div>
 
-        <!-- 👥 TABLA DE GESTIÓN DE USUARIOS -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Gestión de Usuarios y Credenciales en la Nube</h4>
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead style="background-color: #f8f9fa;">
+        <div id="view-paciente" class="d-none panel-box">
+            <h3 style="color:#6a11cb; margin-top:0;">Reserva tu Cita Médica</h3>
+            <div class="form-group">
+                <label>1. Especialidad Médica</label>
+                <select id="select-esp" class="form-control" onchange="updateMedicos()">
+                    <option value="" selected disabled>-- Elige especialidad --</option>
+                    <option value="Medicina General">Medicina General</option>
+                    <option value="Psicología">Psicología</option>
+                    <option value="Nutrición">Nutrición</option>
+                    <option value="Odontología">Odontología</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>2. Médico Especialista</label>
+                <select id="select-med" class="form-control" disabled onchange="updateHorarios()">
+                    <option value="" selected disabled>-- Selecciona un área primero --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>3. Horario Disponible</label>
+                <select id="select-hor" class="form-control" disabled>
+                    <option value="" selected disabled>-- Elige un horario --</option>
+                </select>
+            </div>
+            <button type="button" class="btn-morado" onclick="executeSchedule()">Agendar Cita</button>
+        </div>
+
+        <div id="view-medico" class="d-none panel-box">
+            <h3 style="color:#2575fc; margin-top:0;">Próximas Citas Programadas</h3>
+            <table>
+                <thead>
                     <tr>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Usuario</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Rol</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Contraseña</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                        <th>Paciente</th>
+                        <th>Especialidad</th>
+                        <th>Horario</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-usuarios-admin">
-                    <!-- Aquí se cargarán los usuarios automáticamente -->
+                <tbody id="tabla-citas-medico">
                 </tbody>
             </table>
         </div>
-    </div>
+        <!-- 👑 VISTA EXCLUSIVA: ADMINISTRADOR (Estadísticas e Integración) -->
+        <div id="view-admin" class="d-none" style="margin-top: 20px;">
+            <h2 style="color: #4A4A4A; margin-bottom:20px;">⚙️ Panel Administrativo General</h2>
+            
+            <!-- Tarjetas de Estadísticas numéricas -->
+            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <div style="flex: 1; background-color: #28a745; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h5 style="margin: 0; font-size: 16px;">Citas Agendadas Próximas</h5>
+                    <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-agendadas">0</p>
+                </div>
+                <div style="flex: 1; background-color: #dc3545; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h5 style="margin: 0; font-size: 16px;">Citas Canceladas / Historial</h5>
+                    <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-canceladas">0</p>
+                </div>
+            </div>
 
+            <!-- Tabla de Gestión de Cuentas y Credenciales expuestas -->
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px;">
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Gestión de Usuarios y Credenciales en la Nube</h4>
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Usuario</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Rol</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Contraseña</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-usuarios-admin">
+                        <!-- Se carga con JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Listado de Control Operativo de los Médicos</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                        <span><strong>Medicina General:</strong> Dr. Juan Pérez</span>
+                        <span style="color: #28a745; font-weight: bold;">Activo</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                        <span><strong>Medicina General:</strong> Dra. Ana Gómez</span>
+                        <span style="color: #28a745; font-weight: bold;">Activo</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                        <span><strong>Psicología:</strong> Dra. Joselin Noboa</span>
+                        <span style="color: #28a745; font-weight: bold;">Activo</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                        <span><strong>Psicología:</strong> Dr. Carlos Ruíz</span>
+                        <span style="color: #28a745; font-weight: bold;">Activo</span>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="modal-overlay" id="auth-modal">
-            <div class="modal-box">
-                <span class="close-btn" onclick="closeModal()">&times;</span>
-                <div class="tab-container">
-                    <div class="tab active" id="tab-login" onclick="switchTab('login')">Iniciar Sesión</div>
-                    <div class="tab" id="tab-register" onclick="switchTab('register')">Registrarse</div>
+    <!-- VENTANA FLOTANTE DE AUTENTICACIÓN -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-box">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div class="tabs">
+                <div class="tab active" id="tab-login" onclick="switchTab('login')">Ingresar</div>
+                <div class="tab" id="tab-register" onclick="switchTab('register')">Registrarse</div>
+            </div>
+            
+            <div id="form-login-container">
+                <div class="form-group">
+                    <label>Nombre de Usuario</label>
+                    <input type="text" id="login-user" class="form-control" placeholder="Ingresa tu usuario">
                 </div>
-                <div id="form-login-container">
-                    <div class="form-group">
-                        <label>Usuario de Acceso</label>
-                        <input type="text" id="login-user" class="form-control" placeholder="Ej. manu o grace1804">
-                    </div>
-                    <div class="form-group">
-                                            <label>Contraseña</label>
+                <div class="form-group">
+                    <label>Contraseña</label>
                     <div style="display: flex; gap: 5px;">
                         <input type="password" id="login-pass" class="form-control" placeholder="Ingresa tu contraseña">
-                        <button type="button" class="btn-morado" style="padding: 0 12px; margin-top: 0;" onclick="togglePassword('login-pass', this)">👁️</button>
+                        <button type="button" class="btn-morado" style="padding: 0 12px; margin-top: 0; width: auto;" onclick="togglePassword('login-pass', this)">👁️</button>
                     </div>
-                    </div>
-                    <button class="btn-morado" onclick="executeLogin()">Ingresar al Sistema</button>
                 </div>
-                <div id="form-register-container" class="d-none">
-                    <div class="form-group">
-                        <label>Nombre Completo</label>
-                        <input type="text" id="reg-name" class="form-control" placeholder="Ej. Diana Ortiz">
-                    </div>
-                    <div class="form-group">
-                        <label>Número de Cédula (CI)</label>
-                        <input type="text" id="reg-ci" class="form-control" placeholder="Ej. 0912345678">
-                    </div>
-                    <div class="form-group">
-                        <label>Crear Nombre de Usuario</label>
-                        <input type="text" id="reg-user" class="form-control" placeholder="Ej. diana01">
-                    </div>
-                    <div class="form-group">
-                        <label>Contraseña</label>
-                        <input type="password" id="reg-pass" class="form-control" placeholder="•••••">
-                    </div>
-                    <button class="btn-morado" onclick="executeRegister()">Crear Cuenta y Guardar</button>
-                </div>
+                <button type="button" class="btn-morado" onclick="executeLogin()">Iniciar Sesión</button>
             </div>
-        </div>
 
-            <!-- 👑 PANEL ADMINISTRATIVO INTEGRADO COMPLETO -->
-    <div id="view-admin" class="d-none" style="margin-top: 20px; padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="color: #4A4A4A; margin: 0;">⚙️ Panel Administrativo General</h2>
-            <button type="button" class="btn-morado" style="margin: 0;" onclick="logOut()">Cerrar Sesión</button>
-        </div>
-        
-        <!-- 📊 TARJETAS DE ESTADÍSTICAS EN TIEMPO REAL -->
-        <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-            <div style="flex: 1; background-color: #28a745; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h5 style="margin: 0; font-size: 16px;">Citas Agendadas Próximas</h5>
-                <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-agendadas">0</p>
-            </div>
-            <div style="flex: 1; background-color: #dc3545; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h5 style="margin: 0; font-size: 16px;">Citas Canceladas / Historial</h5>
-                <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-canceladas">0</p>
-            </div>
-        </div>
-
-        <!-- 👥 TABLA DE GESTIÓN DE USUARIOS Y CREDENCIALES -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px;">
-            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Gestión de Usuarios y Credenciales en la Nube</h4>
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead style="background-color: #f8f9fa;">
-                    <tr>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; color: #333;">Usuario</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; color: #333;">Rol</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; color: #333;">Contraseña</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; color: #333;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-usuarios-admin">
-                    <!-- Aquí se cargarán los usuarios automáticamente -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 💡 TU DISEÑO ORIGINAL DE MÉDICOS (Abajo del panel nuevo) -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Listado de Control Operativo de los Médicos</h4>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
-                    <span><strong>Medicina General:</strong> Dr. Juan Pérez</span>
-                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+            <div id="form-register-container" class="d-none">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="reg-name" class="form-control" placeholder="Ej. Diana Ortiz">
                 </div>
-                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
-                    <span><strong>Medicina General:</strong> Dra. Ana Gómez</span>
-                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                <div class="form-group">
+                    <label>Cédula de Identidad</label>
+                    <input type="text" id="reg-ci" class="form-control" placeholder="Número de cédula">
                 </div>
-                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
-                    <span><strong>Psicología:</strong> Dra. Joselin Noboa</span>
-                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                <div class="form-group">
+                    <label>Nombre de Usuario</label>
+                    <input type="text" id="reg-user" class="form-control" placeholder="Crea tu usuario único">
                 </div>
-                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
-                    <span><strong>Psicología:</strong> Dr. Carlos Ruíz</span>
-                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                <div class="form-group">
+                    <label>Crear Contraseña Segura</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="password" id="reg-pass" class="form-control" placeholder="Mínimo 8 caracteres (A-Z y 0-9)">
+                        <button type="button" class="btn-morado" style="padding: 0 12px; margin-top: 0; width: auto;" onclick="togglePassword('reg-pass', this)">👁️</button>
+                    </div>
                 </div>
+                <button type="button" class="btn-morado" onclick="executeRegister()">Registrarse</button>
             </div>
         </div>
     </div>
-
-        <!-- 👥 TABLA DE GESTIÓN DE USUARIOS Y CREDENCIALES -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px;">
-            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Gestión de Usuarios y Credenciales en la Nube</h4>
-            <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                <thead style="background-color: #f8f9fa;">
-                    <tr>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Usuario</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Rol</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Contraseña</th>
-                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-usuarios-admin">
-                    <!-- Aquí se cargarán los usuarios automáticamente -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 🩺 LISTADO DE CONTROL OPERATIVO (Tu diseño original de Médicos) -->
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Listado de Control Operativo de los Médicos</h4>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
-                    <span><strong>Medicina General:</strong> Dr. Juan Pérez</span>
-                    <span style="color: #28a745; font-weight: bold;">Activo</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
-                    <span><strong>Medicina General:</strong> Dra. Ana Gómez</span>
-                    <span style="color: #28a745; font-weight: bold;">Activo</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
-                    <span><strong>Psicología:</strong> Dra. Joselin Noboa</span>
-                    <span style="color: #28a745; font-weight: bold;">Activo</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
-                    <span><strong>Psicología:</strong> Dr. Carlos Ruíz</span>
-                    <span style="color: #28a745; font-weight: bold;">Activo</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-        <div id="view-admin"  style="text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: #7e57c2; margin: 0; font-size: 24px;">⚙️ Panel Administrativo</h2>
-                <button class="btn-atras" onclick="logOut()">Cerrar Sesión</button>
-            </div>
-            <div class="main-panel">
-                <h4 style="margin-top:0; color: #7e57c2; font-size: 18px;">Listado de Control Operativo de los 8 Médicos</h4>
-                <ul class="list-medicos">
-                    <li><span><strong>Medicina General:</strong> Dr. Juan Pérez</span> <span class="badge-status">Activo</span></li>
-                    <li><span><strong>Medicina General:</strong> Dra. Ana Gómez</span> <span class="badge-status">Activo</span></li>
-                    <li><span><strong>Psicología:</strong> Dra. Joselin Noboa</span> <span class="badge-status">Activo</span></li>
-                    <li><span><strong>Psicología:</strong> Dr. Carlos Ruíz</span> <span class="badge-status">Activo</span></li>
-                    <li><span><strong>Nutrición:</strong> Dra. María Loor</span> <span class="badge-status">Activo</span></li>
-                    <li><span><strong>Nutrición:</strong> Dr. Luis Alba</span> <span class="badge-status">Activo</span></li>
-                    <li><span><strong>Odontología:</strong> Dr. Paúl Vera</span> <span class="badge-status">Activo</span></li>
-                    <li><span><strong>Odontología:</strong> Dra. Elena Silva</span> <span class="badge-status">Activo</span></li>
-                </ul>
-            </div>
-        </div>
-
-        <div id="view-medico" class="d-none" style="text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: #7e57c2; margin: 0; font-size: 24px;">🩺 Agenda de Consultas Médicas</h2>
-                <button class="btn-atras" onclick="logOut()">Cerrar Sesión</button>
-            </div>
-            <div class="main-panel" style="text-align: center; padding: 40px; color: #718096; font-size: 14px;">
-                No tienes pacientes agendados en tu lista para la jornada de hoy.
-            </div>
-        </div>
-
-        <footer style="margin-top: 50px; font-size: 12px; color: #a0aec0; border-top: 1px solid #e9ecef; padding-top: 15px;">Copyright © 2026 MediAgenda. Todos los derechos reservados.</footer>
-    </div>
+    <!-- 🧠 SCRIPT DE PROGRAMACIÓN LOGICA INTEGRADA -->
     <script>
-
-                // Variables globales de control
         let currentRole = ''; 
         let currentTab = 'login';
         
-        // Base de datos de especialistas fija
         const database = {
             "Medicina General": ["Dr. Juan Pérez", "Dra. Ana Gómez"],
             "Psicología": ["Dra. Joselin Noboa", "Dr. Carlos Ruíz"],
@@ -302,7 +230,6 @@
         };
         const hours = ["08:00 - 08:40", "10:00 - 10:40", "14:00 - 14:40", "16:00 - 16:40"];
 
-        // Simulador de Base de Datos Permanente de Usuarios
         if (!localStorage.getItem('cloud_users')) {
             const usuariosIniciales = {
                 "admin": { "grace1804": "11111" },
@@ -312,7 +239,6 @@
             localStorage.setItem('cloud_users', JSON.stringify(usuariosIniciales));
         }
 
-        // CONTROL DE VENTANAS FLOTANTES
         function openModal(role) { 
             currentRole = role.toLowerCase(); 
             const modal = document.getElementById('auth-modal');
@@ -324,6 +250,7 @@
             const modal = document.getElementById('auth-modal');
             if (modal) modal.style.display = 'none'; 
         }
+        
         function switchTab(tab) {
             currentTab = tab;
             if (tab === 'login') {
@@ -339,7 +266,6 @@
             }
         }
 
-        // REGISTRO CON PARÁMETROS PROFESIONALES DE SEGURIDAD
         function executeRegister() {
             const name = document.getElementById('reg-name').value.trim(); 
             const user = document.getElementById('reg-user').value.trim();
@@ -351,7 +277,6 @@
                 return; 
             }
 
-            // Validaciones de seguridad reales
             const tieneMayuscula = /[A-Z]/.test(pass);
             const tieneNumero = /[0-9]/.test(pass);
 
@@ -382,7 +307,6 @@
             if(document.getElementById('login-pass')) document.getElementById('login-pass').value = '';
         }
 
-        // INICIO DE SESIÓN
         function executeLogin() {
             const user = document.getElementById('login-user').value.trim(); 
             const pass = document.getElementById('login-pass').value.trim();
@@ -411,7 +335,6 @@
             const viewElement = document.getElementById('view-' + currentRole);
             if(viewElement) viewElement.classList.remove('d-none');
 
-            // Cargar datos en paneles según el rol de la sesión
             if (currentRole === 'paciente') {
                 if (typeof showPatientAppointments === 'function') showPatientAppointments(user);
             } else if (currentRole === 'medico') {
@@ -470,7 +393,6 @@
             localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
 
             alert('¡Cita agendada con éxito!');
-            if (typeof showPatientAppointments === 'function') showPatientAppointments(currentUser);
 
             document.getElementById('select-esp').value = "";
             document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
@@ -479,9 +401,68 @@
             document.getElementById('select-hor').disabled = true;
         }
 
-        
+        function showAdminUsers() {
+            const contenedor = document.getElementById('tabla-usuarios-admin');
+            if (!contenedor) return;
 
-        // FUNCIÓN DEL OJITO CONTRASEÑA
+            let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
+            if (!usuariosRegistrados) {
+                usuariosRegistrados = {
+                    "admin": { "grace1804": "11111" },
+                    "paciente": { "manu": "11111" },
+                    "medico": { "doctor": "11111" }
+                };
+                localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
+            }
+
+            contenedor.innerHTML = '';
+
+            for (let rol in usuariosRegistrados) {
+                for (let usuario in usuariosRegistrados[rol]) {
+                    const clave = usuariosRegistrados[rol][usuario];
+                    contenedor.innerHTML += `
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 12px;"><strong>${usuario}</strong></td>
+                            <td style="padding: 12px;"><span style="background: #6c757d; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">${rol.toUpperCase()}</span></td>
+                            <td style="padding: 12px;"><code style="background: #f1f1f1; padding: 4px 6px; border-radius: 4px; font-size: 13px; color: #d63384;">${clave}</code></td>
+                            <td style="padding: 12px;">
+                                <button style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="deleteUser('${rol}', '${usuario}')">Eliminar</button>
+                            </td>
+                        </tr>`;
+                }
+            }
+
+            let citasGuardadas = localStorage.getItem('cloud_appointments');
+            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
+            
+            let citasCanceladas = localStorage.getItem('cloud_cancelled_appointments');
+            citasCanceladas = citasCanceladas ? JSON.parse(citasCanceladas) : [];
+
+            if (document.getElementById('stat-agendadas')) {
+                document.getElementById('stat-agendadas').innerText = citasGuardadas.length;
+            }
+            if (document.getElementById('stat-canceladas')) {
+                document.getElementById('stat-canceladas').innerText = citasCanceladas.length;
+            }
+        }
+
+        function deleteUser(rol, usuario) {
+            if (usuario === 'manu' || usuario === 'grace1804' || usuario === 'doctor') {
+                alert('Seguridad: No puedes eliminar los usuarios base del sistema.');
+                return;
+            }
+
+            if (confirm(`¿Deseas eliminar permanentemente al usuario "${usuario}"?`)) {
+                let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
+                if (usuariosRegistrados[rol] && usuariosRegistrados[rol][usuario]) {
+                    delete usuariosRegistrados[rol][usuario];
+                    localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
+                    alert('Usuario eliminado correctamente.');
+                    showAdminUsers(); 
+                }
+            }
+        }
+
         function togglePassword(inputId, button) {
             const input = document.getElementById(inputId);
             if (input.type === "password") {
@@ -493,7 +474,6 @@
             }
         }
 
-        // Conexiones de funciones globales al objeto window del navegador
         window.openModal = openModal;
         window.closeModal = closeModal;
         window.switchTab = switchTab;
