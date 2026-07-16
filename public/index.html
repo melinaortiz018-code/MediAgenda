@@ -516,7 +516,7 @@
             }
         }
 
-        function executeSchedule() {
+                 function executeSchedule() {
             const esp = document.getElementById('select-esp').value;
             const medUser = document.getElementById('select-med').value;
             const medSelect = document.getElementById('select-med');
@@ -546,10 +546,12 @@
             citasGuardadas.push(nuevaCita);
             localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
 
-            alert('¡Tu cita ha sido agendada exitosamente!\n\nRevisar la parte inferior de tu pantalla para ver el registro detallado en tu Agenda Personal de Paciente.');
-            showPatientAppointments(document.getElementById('user-display').innerText.replace("Usuario: ", ""));
+            alert('¡Tu cita ha sido agendada exitosamente!\n\nRevisa la parte inferior de tu pantalla para ver el registro detallado en tu Agenda Personal de Paciente.');
+            
+            // Forzamos a encender la tabla de inmediato
+            showPatientAppointments(currentUser);
 
-
+            // Reseteamos los campos del formulario limpios
             document.getElementById('select-esp').value = "";
             document.getElementById('select-fecha').value = ""; 
             document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
@@ -557,6 +559,39 @@
             document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige una fecha primero --</option>';
             document.getElementById('select-hor').disabled = true;
         }
+
+        function showPatientAppointments(username) {
+            // Quitamos el d-none para que la sección sea 100% visible
+            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
+            if (panelSeccion) panelSeccion.classList.remove('d-none');
+
+            const contenedor = document.getElementById('tabla-citas-paciente');
+            if (!contenedor) return;
+
+            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
+            const misCitas = citasGuardadas.filter(c => c.paciente === username);
+
+            if (misCitas.length === 0) {
+                contenedor.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:15px;">No tienes citas próximas agendadas.</td></tr>';
+                return;
+            }
+
+            contenedor.innerHTML = '';
+            misCitas.forEach(c => {
+                contenedor.innerHTML += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding:12px;"><strong>${c.especialidad}</strong></td>
+                        <td style="padding:12px;">${c.medicoName}</td>
+                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px; color:#8e24aa;">${c.horario}</code></td>
+                        <td style="padding:12px;"><span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:bold;">Confirmada</span></td>
+                        <td style="padding:12px; display:flex; gap:5px;">
+                            <button class="btn-warning" onclick="reagendarCita(${c.id})">Reagendar</button>
+                            <button class="btn-danger" onclick="cancelarCita(${c.id})">Cancelar Cita</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
         function renderCalendarioMedico() {
             const fecha = document.getElementById('medico-fecha-gestion').value;
             const container = document.getElementById('medico-slots-container');
