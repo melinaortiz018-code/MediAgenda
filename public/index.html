@@ -21,7 +21,7 @@
         h1 { margin: 0; font-size: 32px; font-weight: 700; }
         
         .view-roles-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
-        .role-card { background: white; border-radius: 12px; padding: 25px; width: 260px; text-align: center; box-shadow: 0 6px 18 rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent; }
+        .role-card { background: white; border-radius: 12px; padding: 25px; width: 260px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent; }
         .role-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(126,87,194,0.2); border-color: #7e57c2; }
         .role-icon { font-size: 45px; margin-bottom: 15px; display: inline-block; }
         .role-title { font-size: 20px; font-weight: bold; color: #4a148c; margin-bottom: 10px; }
@@ -38,7 +38,7 @@
         .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         .form-control:focus { outline: none; border-color: #7e57c2; }
         
-        /* Botón de Agendar: ¡Morado Brillante de Alta Interactividad! */
+        /* Botón de Agendar: ¡Morado Brillante Intenso y Vibrante! */
         .btn-morado { 
             width: 100%; 
             background: linear-gradient(135deg, #ba68c8 0%, #8e24aa 100%); 
@@ -54,8 +54,7 @@
             transition: background 0.3s, transform 0.1s, box-shadow 0.3s;
         }
         .btn-morado:hover { 
-            background: linear-gradient(135deg, #d32f2f 0%, #ab47bc 100%) !important; /* Cambia notablemente al pasar el mouse */
-            background-image: linear-gradient(135deg, #ce93d8 0%, #aa00ff 100%) !important;
+            background: linear-gradient(135deg, #ce93d8 0%, #aa00ff 100%) !important;
             box-shadow: 0 6px 15px rgba(170,0,255,0.4);
             transform: scale(1.01);
         }
@@ -243,7 +242,7 @@
             
             <!-- Formulario de Iniciar Sesión -->
             <div id="form-login-container">
-                   <div class="form-group">
+                <div class="form-group">
                     <label>Nombre de Usuario</label>
                     <input type="text" id="login-user" class="form-control" placeholder="Ingresa tu usuario">
                 </div>
@@ -255,6 +254,7 @@
                     </div>
                 </div>
                 <button type="button" class="btn-morado" onclick="executeLogin()">Iniciar Sesión</button>
+            </div>
 
             <!-- Formulario de Registrarse -->
             <div id="form-register-container" class="d-none">
@@ -281,7 +281,7 @@
             </div>
         </div>
     </div>
-    <!-- 🧠 LÓGICA DE PROGRAMACIÓN GENERAL COMPLETA Y CORREGIDA -->
+    <!-- 🧠 LÓGICA DE PROGRAMACIÓN GENERAL COMPLETA - MITAD A -->
     <script>
         let currentRole = ''; 
         let currentTab = 'login';
@@ -389,90 +389,166 @@
                 alert('Credenciales incorrectas para el rol ' + currentRole.toUpperCase() + '. Verifica los datos.'); 
             }
         }
-        function showAdminUsers() {
-            const contenedor = document.getElementById('tabla-usuarios-admin');
-            if (!contenedor) return;
+        function grantAccess(user) {
+            closeModal(); 
+            if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.add('d-none'); 
+            if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'block';
+            if(document.getElementById('user-display')) document.getElementById('user-display').innerText = "Usuario: " + user; 
+            if(document.getElementById('role-display')) document.getElementById('role-display').innerText = currentRole.toUpperCase();
+            
+            const viewElement = document.getElementById('view-' + currentRole);
+            if(viewElement) viewElement.classList.remove('d-none');
 
-            let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
-            if (!usuariosRegistrados) {
-                usuariosRegistrados = {
-                    "admin": { "grace1804": "11111" },
-                    "paciente": { "manu": "11111" },
-                    "medico": { "doctor": "11111" }
-                };
-                localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
+            if (currentRole === 'paciente') {
+                showPatientAppointments(user); 
+            } else if (currentRole === 'medico') {
+                showDoctorAppointments(user);
+            } else if (currentRole === 'admin') {
+                showAdminUsers(); 
+            }
+        }
+
+        function logOut() { 
+            const viewElement = document.getElementById('view-' + currentRole);
+            if(viewElement) viewElement.classList.add('d-none'); 
+            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
+            if (panelSeccion) panelSeccion.classList.add('d-none');
+            if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'none'; 
+            if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.remove('d-none'); 
+        }
+
+        function updateMedicos() {
+            const esp = document.getElementById('select-esp').value; 
+            const selectMed = document.getElementById('select-med');
+            selectMed.innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
+            if(database[esp]) {
+                database[esp].forEach(m => { selectMed.innerHTML += `<option value="${m}">${m}</option>`; }); 
+            }
+            selectMed.disabled = false;
+        }
+
+        function updateHorarios() {
+            const selectHor = document.getElementById('select-hor'); 
+            selectHor.innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
+            hours.forEach(h => { selectHor.innerHTML += `<option value="${h}">${h}</option>`; });
+            selectHor.disabled = false;
+        }
+
+        function executeSchedule() {
+            const esp = document.getElementById('select-esp').value;
+            const med = document.getElementById('select-med').value;
+            const hor = document.getElementById('select-hor').value;
+            const fechaSeleccionada = document.getElementById('select-fecha').value; 
+            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
+
+            if(!esp || !med || !hor || !fechaSeleccionada) {
+                alert('Por favor, selecciona la especialidad, el médico, el horario y la fecha en el calendario.');
+                return;
             }
 
-            contenedor.innerHTML = '';
-
-            for (let rol in usuariosRegistrados) {
-                for (let usuario in usuariosRegistrados[rol]) {
-                    const clave = usuariosRegistrados[rol][usuario];
-                    contenedor.innerHTML += `
-                        <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px;"><strong>${usuario}</strong></td>
-                            <td style="padding: 12px;"><span style="background: #6c757d; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">${rol.toUpperCase()}</span></td>
-                            <td style="padding: 12px;"><code style="background: #f1f1f1; padding: 4px 6px; border-radius: 4px; font-size: 13px; color: #d63384;">${clave}</code></td>
-                            <td style="padding: 12px;">
-                                <button style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="deleteUser('${rol}', '${usuario}')">Eliminar</button>
-                            </td>
-                        </tr>`;
-                }
-            }
+            const partes = fechaSeleccionada.split('-');
+            const fechaFormateada = partes[2] + '/' + partes[1] + '/' + partes[0];
 
             let citasGuardadas = localStorage.getItem('cloud_appointments');
             citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
-            
-            let citasCanceladas = localStorage.getItem('cloud_cancelled_appointments');
-            citasCanceladas = citasCanceladas ? JSON.parse(citasCanceladas) : [];
 
-            if (document.getElementById('stat-agendadas')) {
-                document.getElementById('stat-agendadas').innerText = citasGuardadas.length;
+            const nuevaCita = {
+                especialidad: esp,
+                medico: med,
+                horario: hor + ' (' + fechaFormateada + ')', 
+                paciente: currentUser
+            };
+
+            citasGuardadas.push(nuevaCita);
+            localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
+
+            alert('¡Tu cita ha sido agendada exitosamente!\n\nRevisa la parte inferior de tu pantalla para ver el registro detallado en tu Agenda Personal de Paciente.');
+            
+            showPatientAppointments(currentUser);
+
+            document.getElementById('select-esp').value = "";
+            document.getElementById('select-fecha').value = ""; 
+            document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
+            document.getElementById('select-med').disabled = true;
+            document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
+            document.getElementById('select-hor').disabled = true;
+        }
+
+        function showPatientAppointments(username) {
+            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
+            if (panelSeccion) panelSeccion.classList.remove('d-none');
+            const contenedor = document.getElementById('tabla-citas-paciente');
+            if (!contenedor) return;
+
+            let citasGuardadas = localStorage.getItem('cloud_appointments');
+            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
+            const misCitas = citasGuardadas.filter(c => c.paciente === username);
+
+            if (misCitas.length === 0) {
+                contenedor.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:15px;">No tienes citas próximas agendadas.</td></tr>';
+                return;
             }
-            if (document.getElementById('stat-canceladas')) {
-                document.getElementById('stat-canceladas').innerText = citasCanceladas.length;
+
+            contenedor.innerHTML = '';
+            misCitas.forEach(c => {
+                contenedor.innerHTML += `<tr><td><strong>${c.especialidad}</strong></td><td>${c.medico}</td><td><code>${c.horario}</code></td><td><span>Confirmada</span></td></tr>`;
+            });
+        }
+
+        function showDoctorAppointments(doctorName) {
+            const contenedor = document.getElementById('tabla-citas-medico');
+            if (!contenedor) return;
+            let citasGuardadas = localStorage.getItem('cloud_appointments');
+            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
+            const misPacientes = citasGuardadas.filter(c => c.medico.toLowerCase().includes(doctorName.toLowerCase()) || doctorName === 'doctor');
+
+            if (misPacientes.length === 0) {
+                contenedor.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888; padding:15px;">No hay consultas programadas.</td></tr>';
+                return;
             }
+            contenedor.innerHTML = '';
+            misPacientes.forEach(c => {
+                contenedor.innerHTML += `<tr><td><strong>${c.paciente}</strong></td><td>${c.especialidad}</td><td><code>${c.horario}</code></td></tr>`;
+            });
+        }
+
+        function showAdminUsers() {
+            const contenedor = document.getElementById('tabla-usuarios-admin');
+            if (!contenedor) return;
+            let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
+            contenedor.innerHTML = '';
+            for (let rol in usuariosRegistrados) {
+                for (let usuario in usuariosRegistrados[rol]) {
+                    const clave = usuariosRegistrados[rol][usuario];
+                    contenedor.innerHTML += `<tr><td><strong>${usuario}</strong></td><td><span>${rol.toUpperCase()}</span></td><td><code>${clave}</code></td><td><button onclick="deleteUser('${rol}', '${usuario}')">Eliminar</button></td></tr>`;
+                }
+            }
+            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
+            document.getElementById('stat-agendadas').innerText = citasGuardadas.length;
         }
 
         function deleteUser(rol, usuario) {
             if (usuario === 'manu' || usuario === 'grace1804' || usuario === 'doctor') {
-                alert('Seguridad: No puedes eliminar los usuarios base del sistema.');
-                return;
+                alert('No puedes eliminar los usuarios base.'); return;
             }
-
-            if (confirm(`¿Deseas eliminar permanentemente al usuario "${usuario}"?`)) {
+            if (confirm(`¿Deseas eliminar a "${usuario}"?`)) {
                 let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
-                if (usuariosRegistrados[rol] && usuariosRegistrados[rol][usuario]) {
-                    delete usuariosRegistrados[rol][usuario];
-                    localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
-                    alert('Usuario eliminado correctamente.');
-                    showAdminUsers(); 
-                }
+                delete usuariosRegistrados[rol][usuario];
+                localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
+                showAdminUsers();
             }
         }
 
         function togglePassword(inputId, button) {
             const input = document.getElementById(inputId);
-            if (input.type === "password") {
-                input.type = "text";
-                button.innerText = "🙈";
-            } else {
-                input.type = "password";
-                button.innerText = "👁️";
-            }
+            if (input.type === "password") { input.type = "text"; button.innerText = "🙈"; } 
+            else { input.type = "password"; button.innerText = "👁️"; }
         }
 
-        window.openModal = openModal;
-        window.closeModal = closeModal;
-        window.switchTab = switchTab;
-        window.executeRegister = executeRegister;
-        window.executeLogin = executeLogin;
-        window.logOut = logOut;
-        window.updateMedicos = updateMedicos;
-        window.updateHorarios = updateHorarios;
-        window.executeSchedule = executeSchedule;
-        window.deleteUser = deleteUser;
-        window.togglePassword = togglePassword;
+        window.openModal = openModal; window.closeModal = closeModal; window.switchTab = switchTab;
+        window.executeRegister = executeRegister; window.executeLogin = executeLogin; window.logOut = logOut;
+        window.updateMedicos = updateMedicos; window.updateHorarios = updateHorarios; window.executeSchedule = executeSchedule;
+        window.deleteUser = deleteUser; window.togglePassword = togglePassword;
     </script>
 </body>
-</html>           
+</html> 
