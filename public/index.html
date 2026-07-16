@@ -547,7 +547,8 @@
             localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
 
             alert('¡Tu cita ha sido agendada exitosamente!\n\nRevisar la parte inferior de tu pantalla para ver el registro detallado en tu Agenda Personal de Paciente.');
-            showPatientAppointments(currentUser);
+            showPatientAppointments(document.getElementById('user-display').innerText.replace("Usuario: ", ""));
+
 
             document.getElementById('select-esp').value = "";
             document.getElementById('select-fecha').value = ""; 
