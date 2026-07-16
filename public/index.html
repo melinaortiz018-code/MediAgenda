@@ -4,25 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediAgenda - Sistema de Citas Médicas</title>
-        <style>
+    <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f5fa; margin: 0; padding: 0; color: #333; }
         .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
         
-        /* 1. Degradado Morado Pastel Hermoso para tu Banner Principal */
+        /* Banner Principal: Hermoso Morado Pastel Vivo */
         header { 
             text-align: center; 
             padding: 30px 0; 
-            background: linear-gradient(135deg, #b39ddb 0%, #9575cd 100%); 
+            background: linear-gradient(135deg, #b39ddb 0%, #7e57c2 100%); 
             color: white; 
             border-radius: 0 0 20px 20px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
             margin-bottom: 30px; 
         }
-        
         h1 { margin: 0; font-size: 32px; font-weight: 700; }
+        
         .view-roles-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
-        .role-card { background: white; border-radius: 12px; padding: 25px; width: 260px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent; }
-        .role-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(106,17,203,0.15); border-color: #6a11cb; }
+        .role-card { background: white; border-radius: 12px; padding: 25px; width: 260px; text-align: center; box-shadow: 0 6px 18 rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent; }
+        .role-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(126,87,194,0.2); border-color: #7e57c2; }
         .role-icon { font-size: 45px; margin-bottom: 15px; display: inline-block; }
         .role-title { font-size: 20px; font-weight: bold; color: #4a148c; margin-bottom: 10px; }
         .role-desc { font-size: 14px; color: #666; line-height: 1.4; }
@@ -32,18 +32,16 @@
         .modal-close { position: absolute; top: 15px; right: 15px; font-size: 22px; cursor: pointer; color: #999; }
         .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
         .tab { flex: 1; text-align: center; padding: 10px 0; font-weight: bold; cursor: pointer; color: #888; }
-        .tab.active { color: #6a11cb; border-bottom: 3px solid #6a11cb; }
+        .tab.active { color: #7e57c2; border-bottom: 3px solid #7e57c2; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #444; }
         .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        .form-control:focus { outline: none; border-color: #2575fc; }
+        .form-control:focus { outline: none; border-color: #7e57c2; }
         
-        /* 2. Botones de Acción en Color Morado Pastel Combinado */
-        .btn-morado { 
-                    /* Color base del botón: Morado Pastel Vivo */
+        /* Botón de Agendar: ¡Morado Brillante de Alta Interactividad! */
         .btn-morado { 
             width: 100%; 
-            background: linear-gradient(135deg, #ab47bc 0%, #7b1fa2 100%); 
+            background: linear-gradient(135deg, #ba68c8 0%, #8e24aa 100%); 
             color: white; 
             border: none; 
             padding: 12px; 
@@ -52,30 +50,15 @@
             font-size: 16px; 
             cursor: pointer; 
             margin-top: 10px; 
-            box-shadow: 0 4px 10px rgba(123,31,162,0.2);
-            transition: background 0.3s, transform 0.1s;
+            box-shadow: 0 4px 10px rgba(142,36,170,0.25);
+            transition: background 0.3s, transform 0.1s, box-shadow 0.3s;
         }
-        
-        /* 🌟 EFECTO AL PASAR EL MOUSE: Se vuelve más encendido e interactivo */
         .btn-morado:hover { 
-            background: linear-gradient(135deg, #ba68c8 0%, #8e24aa 100%);
-            box-shadow: 0 6px 15px rgba(123,31,162,0.3);
+            background: linear-gradient(135deg, #d32f2f 0%, #ab47bc 100%) !important; /* Cambia notablemente al pasar el mouse */
+            background-image: linear-gradient(135deg, #ce93d8 0%, #aa00ff 100%) !important;
+            box-shadow: 0 6px 15px rgba(170,0,255,0.4);
+            transform: scale(1.01);
         }
-
-            width: 100%; 
-            background: linear-gradient(135deg, #ce93d8 0%, #b39ddb 100%); 
-            color: white; 
-            border: none; 
-            padding: 12px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            font-size: 16px; 
-            cursor: pointer; 
-            margin-top: 10px; 
-            box-shadow: 0 4px 10px rgba(179,157,219,0.3); 
-        }
-        
-        .btn-morado:hover { opacity: 0.9; }
         .d-none { display: none !important; }
         
         .panel-box { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.05); margin-top: 20px; }
@@ -83,9 +66,8 @@
         
         table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; color: #555; font-weight: 600; }
+        th { background-color: #f3e5f5; color: #4a148c; font-weight: 600; }
     </style>
-
 </head>
 <body>
 
@@ -95,12 +77,14 @@
     </header>
 
     <div class="container">
+        <!-- Barra de Identificación de Sesión Superior -->
         <div id="user-tag" style="display: none; text-align: right; margin-bottom: 20px;">
             <span class="user-tag" id="user-display">Usuario: </span>
             <span class="user-tag" id="role-display" style="background:#bbdefb; color:#0d47a1;">ROL</span>
             <button type="button" class="btn-morado" style="width:auto; padding: 6px 15px; margin:0; font-size:14px;" onclick="logOut()">Cerrar Sesión</button>
         </div>
 
+        <!-- 🏢 PANTALLA INICIAL: SELECCIÓN DE ROLES -->
         <div id="view-roles" class="view-roles-container">
             <div class="role-card" onclick="openModal('Paciente')">
                 <span class="role-icon">👤</span>
@@ -118,9 +102,9 @@
                 <div class="role-desc">Gestiona el personal médico, cuentas de usuarios y configuraciones.</div>
             </div>
         </div>
-
+        <!-- 👤 VISTA EXCLUSIVA: PACIENTE -->
         <div id="view-paciente" class="d-none panel-box">
-            <h3 style="color:#6a11cb; margin-top:0;">Reserva tu Cita Médica</h3>
+            <h3 style="color:#7e57c2; margin-top:0;">Reserva tu Cita Médica</h3>
             <div class="form-group">
                 <label>1. Especialidad Médica</label>
                 <select id="select-esp" class="form-control" onchange="updateMedicos()">
@@ -142,59 +126,62 @@
                 <select id="select-hor" class="form-control" disabled>
                     <option value="" selected disabled>-- Elige un horario --</option>
                 </select>
-            </div>             <!-- 📅 4. CAMPO DE CALENDARIO -->
-            <div class="form-group" style="margin-top: 15px;">
-                <label>4. Selecciona la Fecha de tu Consulta</label>
+            </div>
+            
+            <!-- 📅 4. CAMPO DE CALENDARIO INTERACTIVO LIBRE -->
+            <div class="form-group">
+                <label>4. Selecciona la Fecha de tu Consulta (Meses futuros)</label>
                 <input type="date" id="select-fecha" class="form-control">
             </div>
-
+            
             <button type="button" class="btn-morado" onclick="executeSchedule()">Agendar Cita</button>
-        </div>
-                    <!-- 📅 NUEVA TABLA: CITAS AGENDADAS DEL PACIENTE EN TIEMPO REAL -->
-            <div id="panel-citas-paciente-seccion" class="d-none" style="background: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 25px;">
 
-                <h4 style="margin-top: 0; color: #512da8; margin-bottom: 12px;">🗓️ Mis Citas Próximas Agendadas</h4>
+            <!-- 📅 TABLA INTERNA: CITAS AGENDADAS DEL PACIENTE (Se enciende al loguearse) -->
+            <div id="panel-citas-paciente-seccion" class="d-none" style="background: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 25px;">
+                <h4 style="margin-top: 0; color: #4a148c; margin-bottom: 12px;">🗓️ Mis Citas Próximas Agendadas</h4>
                 <table>
                     <thead>
-                        <tr style="background-color: #f3e5f5;">
-                            <th style="padding: 10px; border-bottom: 2px solid #e1bee7; color: #4a148c;">Especialidad</th>
-                            <th style="padding: 10px; border-bottom: 2px solid #e1bee7; color: #4a148c;">Médico</th>
-                            <th style="padding: 10px; border-bottom: 2px solid #e1bee7; color: #4a148c;">Horario</th>
-                            <th style="padding: 10px; border-bottom: 2px solid #e1bee7; color: #4a148c;">Estado</th>
+                        <tr>
+                            <th>Especialidad</th>
+                            <th>Médico</th>
+                            <th>Horario y Fecha</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-citas-paciente">
-                        <!-- Aquí se pintará la cita agendada de inmediato -->
+                        <!-- Controlado por JS -->
                     </tbody>
                 </table>
             </div>
+        </div>
 
-
+        <!-- 🩺 VISTA EXCLUSIVA: MÉDICO -->
         <div id="view-medico" class="d-none panel-box">
-            <h3 style="color:#2575fc; margin-top:0;">Próximas Citas Programadas</h3>
+            <h3 style="color:#2575fc; margin-top:0;">Próximas Citas Programadas (Agenda Médica)</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Paciente</th>
                         <th>Especialidad</th>
-                        <th>Horario</th>
+                        <th>Horario y Fecha</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-citas-medico">
+                    <!-- Controlado por JS -->
                 </tbody>
             </table>
         </div>
-        <!-- 👑 VISTA EXCLUSIVA: ADMINISTRADOR (Estadísticas e Integración) -->
-        <div id="view-admin" class="d-none" style="margin-top: 20px;">
-            <h2 style="color: #4A4A4A; margin-bottom:20px;">⚙️ Panel Administrativo General</h2>
+        <!-- 👑 VISTA EXCLUSIVA: ADMINISTRADOR (Estadísticas e Integración Completa) -->
+        <div id="view-admin" class="d-none panel-box" style="margin-top: 20px;">
+            <h2 style="color: #4A4A4A; margin-bottom:20px; margin-top:0;">⚙️ Panel Administrativo General</h2>
             
-            <!-- Tarjetas de Estadísticas numéricas -->
-            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-                <div style="flex: 1; background-color: #28a745; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <!-- Tarjetas de Estadísticas numéricas en Tiempo Real -->
+            <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px; background-color: #28a745; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <h5 style="margin: 0; font-size: 16px;">Citas Agendadas Próximas</h5>
                     <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-agendadas">0</p>
                 </div>
-                <div style="flex: 1; background-color: #dc3545; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="flex: 1; min-width: 200px; background-color: #dc3545; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <h5 style="margin: 0; font-size: 16px;">Citas Canceladas / Historial</h5>
                     <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-canceladas">0</p>
                 </div>
@@ -203,46 +190,49 @@
             <!-- Tabla de Gestión de Cuentas y Credenciales expuestas -->
             <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px;">
                 <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Gestión de Usuarios y Credenciales en la Nube</h4>
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead style="background-color: #f8f9fa;">
-                        <tr>
-                            <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Usuario</th>
-                            <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Rol</th>
-                            <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Contraseña</th>
-                            <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-usuarios-admin">
-                        <!-- Se carga con JS -->
-                    </tbody>
-                </table>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Usuario</th>
+                                <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Rol</th>
+                                <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Contraseña</th>
+                                <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-usuarios-admin">
+                            <!-- Se carga con JS automáticamente -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
+            <!-- Listado Operativo de Médicos Fijos -->
             <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Listado de Control Operativo de los Médicos</h4>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #7e57c2;">
                         <span><strong>Medicina General:</strong> Dr. Juan Pérez</span>
                         <span style="color: #28a745; font-weight: bold;">Activo</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #7e57c2;">
                         <span><strong>Medicina General:</strong> Dra. Ana Gómez</span>
                         <span style="color: #28a745; font-weight: bold;">Activo</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #7e57c2;">
                         <span><strong>Psicología:</strong> Dra. Joselin Noboa</span>
                         <span style="color: #28a745; font-weight: bold;">Activo</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #7e57c2;">
                         <span><strong>Psicología:</strong> Dr. Carlos Ruíz</span>
                         <span style="color: #28a745; font-weight: bold;">Activo</span>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </div> <!-- Cierre del div container principal -->
 
-    <!-- VENTANA FLOTANTE DE AUTENTICACIÓN -->
+    <!-- VENTANA FLOTANTE (MODAL DE AUTENTICACIÓN) -->
     <div class="modal-overlay" id="auth-modal">
         <div class="modal-box">
             <span class="modal-close" onclick="closeModal()">&times;</span>
@@ -251,6 +241,7 @@
                 <div class="tab" id="tab-register" onclick="switchTab('register')">Registrarse</div>
             </div>
             
+            <!-- Formulario de Iniciar Sesión -->
             <div id="form-login-container">
                 <div class="form-group">
                     <label>Nombre de Usuario</label>
@@ -266,6 +257,7 @@
                 <button type="button" class="btn-morado" onclick="executeLogin()">Iniciar Sesión</button>
             </div>
 
+            <!-- Formulario de Registrarse -->
             <div id="form-register-container" class="d-none">
                 <div class="form-group">
                     <label>Nombre Completo</label>
@@ -290,7 +282,7 @@
             </div>
         </div>
     </div>
-    <!-- 🧠 SCRIPT DE PROGRAMACIÓN LOGICA INTEGRADA -->
+    <!-- 🧠 LÓGICA DE PROGRAMACIÓN GENERAL COMPLETA Y CORREGIDA -->
     <script>
         let currentRole = ''; 
         let currentTab = 'login';
@@ -398,138 +390,6 @@
                 alert('Credenciales incorrectas para el rol ' + currentRole.toUpperCase() + '. Verifica los datos.'); 
             }
         }
-                function grantAccess(user) {
-            closeModal(); 
-            if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.add('d-none'); 
-            if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'block';
-            if(document.getElementById('user-display')) document.getElementById('user-display').innerText = "Usuario: " + user; 
-            if(document.getElementById('role-display')) document.getElementById('role-display').innerText = currentRole.toUpperCase();
-            
-            const viewElement = document.getElementById('view-' + currentRole);
-            if(viewElement) viewElement.classList.remove('d-none');
-
-            if (currentRole === 'paciente') {
-                showPatientAppointments(user); // 🔄 Carga las citas al ingresar
-            } else if (currentRole === 'medico') {
-                if (typeof showDoctorAppointments === 'function') showDoctorAppointments(user);
-            } else if (currentRole === 'admin') {
-                showAdminUsers(); 
-            }
-        }
-
-        // 🗓️ NUEVA FUNCIÓN: Dibuja las citas del paciente en su tabla
-                function showPatientAppointments(username) {
-            // 1. Buscamos el contenedor general de la tabla y lo volvemos visible quitando el d-none
-            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
-            if (panelSeccion) panelSeccion.classList.remove('d-none');
-
-            const contenedor = document.getElementById('tabla-citas-paciente');
-            if (!contenedor) return;
-
-            let citasGuardadas = localStorage.getItem('cloud_appointments');
-            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
-
-            // Filtramos las citas de este paciente específico
-            const misCitas = citasGuardadas.filter(c => c.paciente === username);
-
-            if (misCitas.length === 0) {
-                contenedor.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:15px;">No tienes citas próximas agendadas.</td></tr>';
-                return;
-            }
-
-            contenedor.innerHTML = '';
-            misCitas.forEach(c => {
-                contenedor.innerHTML += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding:12px;"><strong>${c.especialidad}</strong></td>
-                        <td style="padding:12px;">${c.medico}</td>
-                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px; color:#7b1fa2;">${c.horario}</code></td>
-                        <td style="padding:12px;"><span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:bold;">Confirmada</span></td>
-                    </tr>`;
-            });
-        }
-
-            contenedor.innerHTML = '';
-            misCitas.forEach(c => {
-                contenedor.innerHTML += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding:12px;"><strong>${c.especialidad}</strong></td>
-                        <td style="padding:12px;">${c.medico}</td>
-                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px;">${c.horario}</code></td>
-                        <td style="padding:12px;"><span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:bold;">Confirmada</span></td>
-                    </tr>`;
-            });
-        }
-
-        function logOut() { 
-            const viewElement = document.getElementById('view-' + currentRole);
-            if(viewElement) viewElement.classList.add('d-none'); 
-            if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'none'; 
-            if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.remove('d-none'); 
-        }
-
-        function updateMedicos() {
-            const esp = document.getElementById('select-esp').value; 
-            const selectMed = document.getElementById('select-med');
-            selectMed.innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
-            if(database[esp]) {
-                database[esp].forEach(m => { selectMed.innerHTML += `<option value="${m}">${m}</option>`; }); 
-            }
-            selectMed.disabled = false;
-        }
-
-        function updateHorarios() {
-            const selectHor = document.getElementById('select-hor'); 
-            selectHor.innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
-            hours.forEach(h => { selectHor.innerHTML += `<option value="${h}">${h}</option>`; });
-            selectHor.disabled = false;
-        }
-        function executeSchedule() {
-            const esp = document.getElementById('select-esp').value;
-            const med = document.getElementById('select-med').value;
-            const hor = document.getElementById('select-hor').value;
-            // Capturamos el valor del calendario
-            const fechaSeleccionada = document.getElementById('select-fecha').value; 
-            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-
-            if(!esp || !med || !hor || !fechaSeleccionada) {
-                alert('Por favor, selecciona la especialidad, el médico, el horario y la fecha en el calendario.');
-                return;
-            }
-
-            // Acomodamos la fecha en formato natural (día/mes/año)
-            const partes = fechaSeleccionada.split('-');
-            const fechaFormateada = partes[2] + '/' + partes[1] + '/' + partes[0];
-
-
-            let citasGuardadas = localStorage.getItem('cloud_appointments');
-            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
-
-            const nuevaCita = {
-                especialidad: esp,
-                medico: med,
-                horario: hor + ' (' + fechaFormateada + ')', // Guardamos hora y fecha libre juntas
-                paciente: currentUser
-            };
-
-            citasGuardadas.push(nuevaCita);
-            localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
-
-            alert('¡Cita agendada con éxito!');
-            
-            // Renderizamos y mostramos la tabla del paciente de inmediato
-            if (typeof showPatientAppointments === 'function') showPatientAppointments(currentUser);
-
-            // Limpiamos los campos del formulario
-            document.getElementById('select-esp').value = "";
-            document.getElementById('select-fecha').value = ""; 
-            document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
-            document.getElementById('select-med').disabled = true;
-            document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
-            document.getElementById('select-hor').disabled = true;
-        }
-
-                
         function showAdminUsers() {
             const contenedor = document.getElementById('tabla-usuarios-admin');
             if (!contenedor) return;
@@ -616,5 +476,4 @@
         window.togglePassword = togglePassword;
     </script>
 </body>
-</html>
-                   
+</html>           
