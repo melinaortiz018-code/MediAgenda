@@ -40,6 +40,28 @@
         
         /* 2. Botones de Acción en Color Morado Pastel Combinado */
         .btn-morado { 
+                    /* Color base del botón: Morado Pastel Vivo */
+        .btn-morado { 
+            width: 100%; 
+            background: linear-gradient(135deg, #ab47bc 0%, #7b1fa2 100%); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            box-shadow: 0 4px 10px rgba(123,31,162,0.2);
+            transition: background 0.3s, transform 0.1s;
+        }
+        
+        /* 🌟 EFECTO AL PASAR EL MOUSE: Se vuelve más encendido e interactivo */
+        .btn-morado:hover { 
+            background: linear-gradient(135deg, #ba68c8 0%, #8e24aa 100%);
+            box-shadow: 0 6px 15px rgba(123,31,162,0.3);
+        }
+
             width: 100%; 
             background: linear-gradient(135deg, #ce93d8 0%, #b39ddb 100%); 
             color: white; 
@@ -120,7 +142,12 @@
                 <select id="select-hor" class="form-control" disabled>
                     <option value="" selected disabled>-- Elige un horario --</option>
                 </select>
+            </div>             <!-- 📅 4. CAMPO DE CALENDARIO -->
+            <div class="form-group" style="margin-top: 15px;">
+                <label>4. Selecciona la Fecha de tu Consulta</label>
+                <input type="date" id="select-fecha" class="form-control">
             </div>
+
             <button type="button" class="btn-morado" onclick="executeSchedule()">Agendar Cita</button>
         </div>
                     <!-- 📅 NUEVA TABLA: CITAS AGENDADAS DEL PACIENTE EN TIEMPO REAL -->
@@ -391,20 +418,36 @@
         }
 
         // 🗓️ NUEVA FUNCIÓN: Dibuja las citas del paciente en su tabla
-        function showPatientAppointments(username) {
+                function showPatientAppointments(username) {
+            // 1. Buscamos el contenedor general de la tabla y lo volvemos visible quitando el d-none
+            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
+            if (panelSeccion) panelSeccion.classList.remove('d-none');
+
             const contenedor = document.getElementById('tabla-citas-paciente');
             if (!contenedor) return;
 
             let citasGuardadas = localStorage.getItem('cloud_appointments');
             citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
 
-            // Filtramos únicamente las citas que le pertenecen al paciente actual
+            // Filtramos las citas de este paciente específico
             const misCitas = citasGuardadas.filter(c => c.paciente === username);
 
             if (misCitas.length === 0) {
                 contenedor.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:15px;">No tienes citas próximas agendadas.</td></tr>';
                 return;
             }
+
+            contenedor.innerHTML = '';
+            misCitas.forEach(c => {
+                contenedor.innerHTML += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding:12px;"><strong>${c.especialidad}</strong></td>
+                        <td style="padding:12px;">${c.medico}</td>
+                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px; color:#7b1fa2;">${c.horario}</code></td>
+                        <td style="padding:12px;"><span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:bold;">Confirmada</span></td>
+                    </tr>`;
+            });
+        }
 
             contenedor.innerHTML = '';
             misCitas.forEach(c => {
@@ -441,17 +484,22 @@
             hours.forEach(h => { selectHor.innerHTML += `<option value="${h}">${h}</option>`; });
             selectHor.disabled = false;
         }
-
-                function executeSchedule() {
+        function executeSchedule() {
             const esp = document.getElementById('select-esp').value;
             const med = document.getElementById('select-med').value;
             const hor = document.getElementById('select-hor').value;
+            // Capturamos el valor del calendario
+            const fechaSeleccionada = document.getElementById('select-fecha').value; 
             const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
 
-            if(!esp || !med || !hor) {
-                alert('Por favor, selecciona la especialidad, el médico y el horario.');
+            if(!esp || !med || !hor || !fechaSeleccionada) {
+                alert('Por favor, selecciona la especialidad, el médico, el horario y la fecha en el calendario.');
                 return;
             }
+
+            // Acomodamos la fecha en formato natural (día/mes/año)
+            const partes = fechaSeleccionada.split('-');
+            const fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
 
             let citasGuardadas = localStorage.getItem('cloud_appointments');
             citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
@@ -459,7 +507,7 @@
             const nuevaCita = {
                 especialidad: esp,
                 medico: med,
-                horario: hor,
+                horario: hor + ' (' + fechaFormateada + ')', // Guardamos hora y fecha libre juntas
                 paciente: currentUser
             };
 
@@ -468,16 +516,19 @@
 
             alert('¡Cita agendada con éxito!');
             
-            // 🔄 Actualizamos la nueva tabla del paciente de inmediato
-            showPatientAppointments(currentUser);
+            // Renderizamos y mostramos la tabla del paciente de inmediato
+            if (typeof showPatientAppointments === 'function') showPatientAppointments(currentUser);
 
+            // Limpiamos los campos del formulario
             document.getElementById('select-esp').value = "";
+            document.getElementById('select-fecha').value = ""; 
             document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
             document.getElementById('select-med').disabled = true;
             document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
             document.getElementById('select-hor').disabled = true;
         }
 
+                
         function showAdminUsers() {
             const contenedor = document.getElementById('tabla-usuarios-admin');
             if (!contenedor) return;
