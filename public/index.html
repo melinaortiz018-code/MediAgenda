@@ -499,7 +499,8 @@
 
             // Acomodamos la fecha en formato natural (día/mes/año)
             const partes = fechaSeleccionada.split('-');
-            const fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+            const fechaFormateada = partes[2] + '/' + partes[1] + '/' + partes[0];
+
 
             let citasGuardadas = localStorage.getItem('cloud_appointments');
             citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
