@@ -329,20 +329,21 @@
             selectMed.disabled = false;
         }
 
-                function updateHorarios() {
+        function updateHorarios() {
             const selectHor = document.getElementById('select-hor'); 
             selectHor.innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
             hours.forEach(h => { selectHor.innerHTML += `<option value="${h}">${h}</option>`; });
             selectHor.disabled = false;
         }
 
-        // FUNCIÓN DE AGENDAR CITA CORREGIDA Y CONECTADA
+        // FUNCIÓN DE AGENDAR CITA TOTALMENTE CORREGIDA
         function executeSchedule() {
             const esp = document.getElementById('select-esp').value;
             const med = document.getElementById('select-med').value;
-            const hor = document.getElementById('select-hor').value;
+            const hor = document.getElementById('select-hor');
 
-            if(!esp || !med || !hor) {
+            // Validamos que el paciente haya elegido todo antes de presionar el botón
+            if(!esp || !med || !hor || hor.value === "") {
                 alert('Por favor, selecciona la especialidad, el médico y el horario.');
                 return;
             }
@@ -351,29 +352,29 @@
             let citasGuardadas = localStorage.getItem('cloud_appointments');
             citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
 
-            // Creamos la nueva cita
+            // Creamos la estructura de la nueva cita
             const nuevaCita = {
                 especialidad: esp,
                 medico: med,
-                horario: hor,
-                paciente: document.getElementById('user-display').innerText.replace("Usuario: ", "")
+                horario: hor.value,
+                paciente: document.getElementById('user-display') ? document.getElementById('user-display').innerText.replace("Usuario: ", "") : "Paciente Temporal"
             };
 
-            // La guardamos en el listado
+            // La guardamos de forma permanente
             citasGuardadas.push(nuevaCita);
             localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
 
             alert('¡Cita agendada con éxito en tu agenda personal! El médico la verá en su sistema.');
             
-            // Limpiamos los campos
+            // Limpiamos los campos del formulario para que pueda agendar otra
             document.getElementById('select-esp').value = "";
             document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
             document.getElementById('select-med').disabled = true;
-            document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
-            document.getElementById('select-hor').disabled = true;
+            hor.innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
+            hor.disabled = true;
         }
 
-        // Conectar TODAS las funciones al navegador de forma obligatoria
+        // Conectar TODAS las funciones al navegador de forma global (Evita errores de clic)
         window.openModal = openModal;
         window.closeModal = closeModal;
         window.switchTab = switchTab;
@@ -382,7 +383,7 @@
         window.logOut = logOut;
         window.updateMedicos = updateMedicos;
         window.updateHorarios = updateHorarios;
-        window.executeSchedule = executeSchedule; // <-- Activamos el botón de agendar cita
+        window.executeSchedule = executeSchedule; // <-- IMPORTANTE: Esto activa el botón de tu amiga
     </script>
 </body>
 </html>
