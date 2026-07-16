@@ -258,10 +258,23 @@
                 return; 
             }
 
-            if(pass.length < 5) {
-                alert('La contraseña debe tener al menos 5 caracteres.');
+                        // VALIDACIÓN CON PARÁMETROS DE SEGURIDAD REALES
+            const tieneMayuscula = /[A-Z]/.test(pass);
+            const tieneNumero = /[0-9]/.test(pass);
+
+            if (pass.length < 8) {
+                alert('Seguridad insuficiente: La contraseña debe tener al menos 8 caracteres.');
                 return;
             }
+            if (!tieneMayuscula) {
+                alert('Seguridad insuficiente: La contraseña debe incluir al menos una letra mayúscula.');
+                return;
+            }
+            if (!tieneNumero) {
+                alert('Seguridad insuficiente: La contraseña debe incluir al menos un número.');
+                return;
+            }
+
 
             // Extraemos la base de datos local
             let usuariosRegistrados = JSON.stringify(localStorage.getItem('cloud_users'));
@@ -304,13 +317,22 @@
             }
         }
 
-        function grantAccess(user) {
+                function grantAccess(user) {
             closeModal(); 
             document.getElementById('view-roles').classList.add('d-none'); 
             document.getElementById('user-tag').style.display = 'block';
             document.getElementById('user-display').innerText = "Usuario: " + user; 
             document.getElementById('role-display').innerText = currentRole.toUpperCase();
             document.getElementById('view-' + currentRole).classList.remove('d-none');
+
+            // Cargar los datos en las tablas dependiendo de quién inició sesión
+            if (currentRole === 'paciente') {
+                showPatientAppointments(user);
+            } else if (currentRole === 'medico') {
+                showDoctorAppointments(user);
+            } else if (currentRole === 'admin') {
+                showAdminUsers();
+            }
         }
 
         function logOut() { 
@@ -340,41 +362,143 @@
         function executeSchedule() {
             const esp = document.getElementById('select-esp').value;
             const med = document.getElementById('select-med').value;
-            const hor = document.getElementById('select-hor');
+            const hor = document.getElementById('select-hor').value;
+            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
 
-            // Validamos que el paciente haya elegido todo antes de presionar el botón
-            if(!esp || !med || !hor || hor.value === "") {
+            if(!esp || !med || !hor) {
                 alert('Por favor, selecciona la especialidad, el médico y el horario.');
                 return;
             }
 
-            // Simulador de base de datos de citas persistente en el navegador
             let citasGuardadas = localStorage.getItem('cloud_appointments');
             citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
 
-            // Creamos la estructura de la nueva cita
             const nuevaCita = {
                 especialidad: esp,
                 medico: med,
-                horario: hor.value,
-                paciente: document.getElementById('user-display') ? document.getElementById('user-display').innerText.replace("Usuario: ", "") : "Paciente Temporal"
+                horario: hor,
+                paciente: currentUser
             };
 
-            // La guardamos de forma permanente
             citasGuardadas.push(nuevaCita);
             localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
 
-            alert('¡Cita agendada con éxito en tu agenda personal! El médico la verá en su sistema.');
+            alert('¡Cita agendada con éxito!');
             
-            // Limpiamos los campos del formulario para que pueda agendar otra
+            // Recargar la tabla del paciente inmediatamente
+            showPatientAppointments(currentUser);
+
+            // Limpiar campos
             document.getElementById('select-esp').value = "";
             document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
             document.getElementById('select-med').disabled = true;
-            hor.innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
-            hor.disabled = true;
+            document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige un horario --</option>';
+            document.getElementById('select-hor').disabled = true;
         }
 
-        // Conectar TODAS las funciones al navegador de forma global (Evita errores de clic)
+        // VISTA PACIENTE: Muestra sus propias citas agendadas
+        function showPatientAppointments(username) {
+            // Busca o crea un contenedor para la tabla en tu HTML (asegúrate de tener un id="tabla-citas-paciente" o similar en tu sección de paciente)
+            const contenedor = document.getElementById('tabla-citas-paciente');
+            if (!contenedor) return;
+
+            let citasGuardadas = localStorage.getItem('cloud_appointments');
+            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
+
+            // Filtramos solo las citas de este paciente
+            const misCitas = citasGuardadas.filter(c => c.paciente === username);
+
+            if (misCitas.length === 0) {
+                contenedor.innerHTML = '<tr><td colspan="4" class="text-center">No tienes citas próximas agendadas.</td></tr>';
+                return;
+            }
+
+            contenedor.innerHTML = '';
+            misCitas.forEach(c => {
+                contenedor.innerHTML += `
+                    <tr>
+                        <td>${c.especialidad}</td>
+                        <td>${c.medico}</td>
+                        <td>${c.horario}</td>
+                        <td><span class="badge bg-success">Confirmada</span></td>
+                    </tr>`;
+            });
+        }
+
+        // VISTA MÉDICO: Muestra las próximas citas que tiene asignadas
+        function showDoctorAppointments(doctorName) {
+            const contenedor = document.getElementById('tabla-citas-medico');
+            if (!contenedor) return;
+
+            let citasGuardadas = localStorage.getItem('cloud_appointments');
+            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
+
+            // El médico ve las citas donde coincide el nombre del médico de fábrica o el usuario
+            const misPacientes = citasGuardadas.filter(c => c.medico.toLowerCase().includes(doctorName.toLowerCase()) || doctorName === 'doctor');
+
+            if (misPacientes.length === 0) {
+                contenedor.innerHTML = '<tr><td colspan="3" class="text-center">No tienes citas programadas.</td></tr>';
+                return;
+            }
+
+            contenedor.innerHTML = '';
+            misPacientes.forEach(c => {
+                contenedor.innerHTML += `
+                    <tr>
+                        <td>${c.paciente}</td>
+                        <td>${c.especialidad}</td>
+                        <td>${c.horario}</td>
+                    </tr>`;
+            });
+        }
+
+        // VISTA ADMINISTRADOR: Lista usuarios, muestra credenciales y permite eliminarlos
+        function showAdminUsers() {
+            const contenedor = document.getElementById('tabla-usuarios-admin');
+            if (!contenedor) return;
+
+            const usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
+            contenedor.innerHTML = '';
+
+            // Recorremos los roles y los usuarios guardados
+            for (let rol in usuariosRegistrados) {
+                for (let usuario in usuariosRegistrados[rol]) {
+                    const clave = usuariosRegistrados[rol][usuario];
+                    contenedor.innerHTML += `
+                        <tr>
+                            <td><strong>${usuario}</strong></td>
+                            <td>${rol.toUpperCase()}</td>
+                            <td><code>${clave}</code></td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser('${rol}', '${usuario}')">Eliminar</button>
+                            </td>
+                        </tr>`;
+                }
+            }
+        }
+
+        // FUNCIÓN DEL ADMINISTRADOR PARA QUITAR USUARIOS
+        function deleteUser(rol, usuario) {
+            if (usuario === 'manu' || usuario === 'grace1804' || usuario === 'doctor') {
+                alert('No puedes eliminar los usuarios base del sistema.');
+                return;
+            }
+
+            if (confirm(`¿Estás segura de que deseas eliminar al usuario "${usuario}"?`)) {
+                let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
+                
+                // Borramos la propiedad del objeto
+                delete usuariosRegistrados[rol][usuario];
+                
+                // Guardamos la base de datos actualizada
+                localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
+                
+                alert('Usuario eliminado correctamente.');
+                showAdminUsers(); // Recargar tabla de administración
+            }
+        }
+
+        // Vincular funciones a la ventana global
         window.openModal = openModal;
         window.closeModal = closeModal;
         window.switchTab = switchTab;
@@ -383,7 +507,8 @@
         window.logOut = logOut;
         window.updateMedicos = updateMedicos;
         window.updateHorarios = updateHorarios;
-        window.executeSchedule = executeSchedule; // <-- IMPORTANTE: Esto activa el botón de tu amiga
+        window.executeSchedule = executeSchedule;
+        window.deleteUser = deleteUser;
     </script>
 </body>
 </html>
