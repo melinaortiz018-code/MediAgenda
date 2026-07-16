@@ -86,8 +86,11 @@
                         <input type="text" id="login-user" class="form-control" placeholder="Ej. manu o grace1804">
                     </div>
                     <div class="form-group">
-                        <label>Contraseña</label>
-                        <input type="password" id="login-pass" class="form-control" placeholder="•••••">
+                                            <label>Contraseña</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="password" id="login-pass" class="form-control" placeholder="Ingresa tu contraseña">
+                        <button type="button" class="btn-morado" style="padding: 0 12px; margin-top: 0;" onclick="togglePassword('login-pass', this)">👁️</button>
+                    </div>
                     </div>
                     <button class="btn-morado" onclick="executeLogin()">Ingresar al Sistema</button>
                 </div>
@@ -509,6 +512,18 @@
         window.updateHorarios = updateHorarios;
         window.executeSchedule = executeSchedule;
         window.deleteUser = deleteUser;
+                function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                button.innerText = "🙈";
+            } else {
+                input.type = "password";
+                button.innerText = "👁️";
+            }
+        }
+        window.togglePassword = togglePassword;
+
     </script>
 </body>
 </html>
