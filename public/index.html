@@ -40,7 +40,7 @@
 <body>
     <header>
         <h1>Bienvenido a MediAgenda</h1>
-        <p style="margin: 5px 0 0 0; opacity: 0.9;">Gestión Profesional de Citas y Control Operativo Clínico</p>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;">Selecciona tu rol para ingresar al sistema de gestión de citas</p>
     </header>
     <div class="container">
         <div id="user-tag" style="display: none; text-align: right; margin-bottom: 20px;">
@@ -370,7 +370,7 @@
             localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
 
             let conexiones = JSON.parse(localStorage.getItem('cloud_connections')) || {};
-            connections[user] = "Registrado recientemente";
+            conexiones[user] = "Registrado recientemente";
             localStorage.setItem('cloud_connections', JSON.stringify(conexiones));
 
             alert('¡Cuenta creada con éxito en la Nube Global de MediAgenda!'); 
