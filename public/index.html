@@ -4,10 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MediAgenda - Sistema de Citas Médicas</title>
-    <style>
+        <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f5fa; margin: 0; padding: 0; color: #333; }
         .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
-        header { text-align: center; padding: 30px 0; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        
+        /* 1. Degradado Morado Pastel Hermoso para tu Banner Principal */
+        header { 
+            text-align: center; 
+            padding: 30px 0; 
+            background: linear-gradient(135deg, #b39ddb 0%, #9575cd 100%); 
+            color: white; 
+            border-radius: 0 0 20px 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            margin-bottom: 30px; 
+        }
+        
         h1 { margin: 0; font-size: 32px; font-weight: 700; }
         .view-roles-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
         .role-card { background: white; border-radius: 12px; padding: 25px; width: 260px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent; }
@@ -26,7 +37,22 @@
         .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #444; }
         .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         .form-control:focus { outline: none; border-color: #2575fc; }
-        .btn-morado { width: 100%; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 10px rgba(106,17,203,0.2); }
+        
+        /* 2. Botones de Acción en Color Morado Pastel Combinado */
+        .btn-morado { 
+            width: 100%; 
+            background: linear-gradient(135deg, #ce93d8 0%, #b39ddb 100%); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            box-shadow: 0 4px 10px rgba(179,157,219,0.3); 
+        }
+        
         .btn-morado:hover { opacity: 0.9; }
         .d-none { display: none !important; }
         
@@ -37,6 +63,7 @@
         th, td { padding: 12px; border-bottom: 1px solid #eee; }
         th { background-color: #f8f9fa; color: #555; font-weight: 600; }
     </style>
+
 </head>
 <body>
 
@@ -96,6 +123,24 @@
             </div>
             <button type="button" class="btn-morado" onclick="executeSchedule()">Agendar Cita</button>
         </div>
+                    <!-- 📅 NUEVA TABLA: CITAS AGENDADAS DEL PACIENTE EN TIEMPO REAL -->
+            <div style="background: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 25px;">
+                <h4 style="margin-top: 0; color: #512da8; margin-bottom: 12px;">🗓️ Mis Citas Próximas Agendadas</h4>
+                <table>
+                    <thead>
+                        <tr style="background-color: #f3e5f5;">
+                            <th style="padding: 10px; border-bottom: 2px solid #e1bee7; color: #4a148c;">Especialidad</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #e1bee7; color: #4a148c;">Médico</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #e1bee7; color: #4a148c;">Horario</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #e1bee7; color: #4a148c;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-citas-paciente">
+                        <!-- Aquí se pintará la cita agendada de inmediato -->
+                    </tbody>
+                </table>
+            </div>
+
 
         <div id="view-medico" class="d-none panel-box">
             <h3 style="color:#2575fc; margin-top:0;">Próximas Citas Programadas</h3>
@@ -325,7 +370,7 @@
                 alert('Credenciales incorrectas para el rol ' + currentRole.toUpperCase() + '. Verifica los datos.'); 
             }
         }
-        function grantAccess(user) {
+                function grantAccess(user) {
             closeModal(); 
             if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.add('d-none'); 
             if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'block';
@@ -336,12 +381,40 @@
             if(viewElement) viewElement.classList.remove('d-none');
 
             if (currentRole === 'paciente') {
-                if (typeof showPatientAppointments === 'function') showPatientAppointments(user);
+                showPatientAppointments(user); // 🔄 Carga las citas al ingresar
             } else if (currentRole === 'medico') {
                 if (typeof showDoctorAppointments === 'function') showDoctorAppointments(user);
             } else if (currentRole === 'admin') {
                 showAdminUsers(); 
             }
+        }
+
+        // 🗓️ NUEVA FUNCIÓN: Dibuja las citas del paciente en su tabla
+        function showPatientAppointments(username) {
+            const contenedor = document.getElementById('tabla-citas-paciente');
+            if (!contenedor) return;
+
+            let citasGuardadas = localStorage.getItem('cloud_appointments');
+            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
+
+            // Filtramos únicamente las citas que le pertenecen al paciente actual
+            const misCitas = citasGuardadas.filter(c => c.paciente === username);
+
+            if (misCitas.length === 0) {
+                contenedor.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:15px;">No tienes citas próximas agendadas.</td></tr>';
+                return;
+            }
+
+            contenedor.innerHTML = '';
+            misCitas.forEach(c => {
+                contenedor.innerHTML += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding:12px;"><strong>${c.especialidad}</strong></td>
+                        <td style="padding:12px;">${c.medico}</td>
+                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px;">${c.horario}</code></td>
+                        <td style="padding:12px;"><span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:bold;">Confirmada</span></td>
+                    </tr>`;
+            });
         }
 
         function logOut() { 
@@ -368,7 +441,7 @@
             selectHor.disabled = false;
         }
 
-        function executeSchedule() {
+                function executeSchedule() {
             const esp = document.getElementById('select-esp').value;
             const med = document.getElementById('select-med').value;
             const hor = document.getElementById('select-hor').value;
@@ -393,6 +466,9 @@
             localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
 
             alert('¡Cita agendada con éxito!');
+            
+            // 🔄 Actualizamos la nueva tabla del paciente de inmediato
+            showPatientAppointments(currentUser);
 
             document.getElementById('select-esp').value = "";
             document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
@@ -488,3 +564,4 @@
     </script>
 </body>
 </html>
+                   
