@@ -70,6 +70,41 @@
                     <h3>Administrador</h3>
                     <p>Gestiona el personal médico y configuraciones</p>
                 </div>
+                    <!-- 👑 SECCIÓN DEL ADMINISTRADOR CON GESTIÓN Y ESTADÍSTICAS -->
+    <div id="view-admin" class="d-none" style="margin-top: 20px;">
+        <h2 style="margin-bottom: 20px; color: #4A4A4A;">Panel de Control General (Administrador)</h2>
+        
+        <!-- 📊 TARJETAS DE ESTADÍSTICAS -->
+        <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+            <div style="flex: 1; background-color: #28a745; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h5 style="margin: 0; font-size: 16px;">Citas Agendadas Próximas</h5>
+                <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-agendadas">0</p>
+            </div>
+            <div style="flex: 1; background-color: #dc3545; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h5 style="margin: 0; font-size: 16px;">Citas Canceladas / Historial</h5>
+                <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-canceladas">0</p>
+            </div>
+        </div>
+
+        <!-- 👥 TABLA DE GESTIÓN DE USUARIOS -->
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Gestión de Usuarios y Credenciales en la Nube</h4>
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead style="background-color: #f8f9fa;">
+                    <tr>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Usuario</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Rol</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Contraseña</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-usuarios-admin">
+                    <!-- Aquí se cargarán los usuarios automáticamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
             </div>
         </div>
 
@@ -320,7 +355,7 @@
             }
         }
 
-                function grantAccess(user) {
+                (user) {
             closeModal(); 
             document.getElementById('view-roles').classList.add('d-none'); 
             document.getElementById('user-tag').style.display = 'block';
@@ -370,7 +405,7 @@
 
             if(!esp || !med || !hor) {
                 alert('Por favor, selecciona la especialidad, el médico y el horario.');
-                return;
+                return;function grantAccess
             }
 
             let citasGuardadas = localStorage.getItem('cloud_appointments');
@@ -455,13 +490,85 @@
             });
         }
 
-        // VISTA ADMINISTRADOR: Lista usuarios, muestra credenciales y permite eliminarlos
+                function grantAccess(user) {
+            closeModal(); 
+            document.getElementById('view-roles').classList.add('d-none'); 
+            document.getElementById('user-tag').style.display = 'block';
+            document.getElementById('user-display').innerText = "Usuario: " + user; 
+            document.getElementById('role-display').innerText = currentRole.toUpperCase();
+            document.getElementById('view-' + currentRole).classList.remove('d-none');
+
+            // Cargamos la información correspondiente al rol seleccionado
+            if (currentRole === 'paciente') {
+                if (typeof showPatientAppointments === 'function') showPatientAppointments(user);
+            } else if (currentRole === 'medico') {
+                if (typeof showDoctorAppointments === 'function') showDoctorAppointments(user);
+            } else if (currentRole === 'admin') {
+                showAdminUsers(); // Carga usuarios, claves y estadísticas
+            }
+        }
+
+        // VISTA ADMINISTRADOR COMPLETA: Carga usuarios, contraseñas y calcula estadísticas
         function showAdminUsers() {
             const contenedor = document.getElementById('tabla-usuarios-admin');
             if (!contenedor) return;
 
-            const usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
+            // 1. Renderizar Listado de Usuarios y Credenciales
+            const usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
             contenedor.innerHTML = '';
+
+            for (let rol in usuariosRegistrados) {
+                for (let usuario in usuariosRegistrados[rol]) {
+                    const clave = usuariosRegistrados[rol][usuario];
+                    contenedor.innerHTML += `
+                        <tr>
+                            <td><strong>${usuario}</strong></td>
+                            <td><span class="badge bg-secondary">${rol.toUpperCase()}</span></td>
+                            <td><code>${clave}</code></td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser('${rol}', '${usuario}')">Eliminar de la Nube</button>
+                            </td>
+                        </tr>`;
+                }
+            }
+
+            // 2. Calcular y Actualizar Estadísticas en Pantalla en Tiempo Real
+            let citasGuardadas = localStorage.getItem('cloud_appointments');
+            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
+            
+            let citasCanceladas = localStorage.getItem('cloud_cancelled_appointments');
+            citasCanceladas = citasCanceladas ? JSON.parse(citasCanceladas) : [];
+
+            if (document.getElementById('stat-agendadas')) {
+                document.getElementById('stat-agendadas').innerText = citasGuardadas.length;
+            }
+            if (document.getElementById('stat-canceladas')) {
+                document.getElementById('stat-canceladas').innerText = citasCanceladas.length;
+            }
+        }
+
+        // FUNCIÓN EXCLUSIVA DEL ADMINISTRADOR PARA QUITAR USUARIOS
+        function deleteUser(rol, usuario) {
+            if (usuario === 'manu' || usuario === 'grace1804' || usuario === 'doctor') {
+                alert('Seguridad del Sistema: No puedes eliminar los usuarios base fijados de fábrica.');
+                return;
+            }
+
+            if (confirm(`¿Estás segura de que deseas eliminar permanentemente al usuario "${usuario}" del sistema?`)) {
+                let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
+                
+                if (usuariosRegistrados[rol] && usuariosRegistrados[rol][usuario]) {
+                    delete usuariosRegistrados[rol][usuario];
+                    localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
+                    alert('Usuario removido con éxito de la base de datos.');
+                    showAdminUsers(); // Recarga instantánea de la tabla y estadísticas
+                }
+            }
+        }
+
+        // Aseguramos la conexión de las funciones al navegador
+        window.showAdminUsers = showAdminUsers;
+        window.deleteUser = deleteUser;
 
             // Recorremos los roles y los usuarios guardados
             for (let rol in usuariosRegistrados) {
