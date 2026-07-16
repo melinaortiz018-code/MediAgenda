@@ -151,49 +151,67 @@
             </div>
         </div>
 
-        <div id="view-paciente" class="d-none" style="text-align: left;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <div>
-                    <h2 style="color: #7e57c2; margin: 0; font-size: 24px;">Portal del Paciente</h2>
-                    <p style="color: #718096; margin: 5px 0 0 0; font-size: 14px;">Registra tus consultas seleccionando especialidades y médicos</p>
-                </div>
-                <button class="btn-atras" onclick="logOut()">Cerrar Sesión</button>
+        <!-- 👑 PANEL ADMINISTRATIVO INTEGRADO COMPLETO -->
+    <div id="view-admin" class="d-none" style="margin-top: 20px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="color: #4A4A4A; margin: 0;">⚙️ Panel Administrativo General</h2>
+            <button type="button" class="btn-morado" style="margin: 0;" onclick="logOut()">Cerrar Sesión</button>
+        </div>
+        
+        <!-- 📊 TARJETAS DE ESTADÍSTICAS EN TIEMPO REAL -->
+        <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+            <div style="flex: 1; background-color: #28a745; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h5 style="margin: 0; font-size: 16px;">Citas Agendadas Próximas</h5>
+                <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-agendadas">0</p>
             </div>
-            <div class="portal-layout">
-                <div class="main-panel">
-                    <h3 style="color: #7e57c2; margin-top: 0; font-size: 18px;">✅ Registro de Nueva Cita</h3>
-                    <div class="form-group">
-                        <label>1. Especialidad Médica</label>
-                        <select id="select-esp" class="form-control" onchange="updateMedicos()">
-                            <option value="" selected disabled>-- Elige especialidad --</option>
-                            <option value="Medicina General">Medicina General</option>
-                            <option value="Psicología">Psicología</option>
-                            <option value="Nutrición">Nutrición</option>
-                            <option value="Odontología">Odontología</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>2. Médico Especialista</label>
-                        <select id="select-med" class="form-control" disabled onchange="updateHorarios()">
-                            <option value="" selected disabled>-- Selecciona un área primero --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>3. Horario Disponible</label>
-                        <select id="select-hor" class="form-control" disabled>
-                            <option value="" selected disabled>-- Selecciona un médico primero --</option>
-                        </select>
-                    </div>
-                    <button class="btn-morado" onclick="bookAppointment()">Confirmar Reservación</button>
+            <div style="flex: 1; background-color: #dc3545; color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h5 style="margin: 0; font-size: 16px;">Citas Canceladas / Historial</h5>
+                <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-canceladas">0</p>
+            </div>
+        </div>
+
+        <!-- 👥 TABLA DE GESTIÓN DE USUARIOS Y CREDENCIALES -->
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px;">
+            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Gestión de Usuarios y Credenciales en la Nube</h4>
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead style="background-color: #f8f9fa;">
+                    <tr>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Usuario</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Rol</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Contraseña</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-usuarios-admin">
+                    <!-- Aquí se cargarán los usuarios automáticamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 🩺 LISTADO DE CONTROL OPERATIVO (Tu diseño original de Médicos) -->
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Listado de Control Operativo de los Médicos</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <span><strong>Medicina General:</strong> Dr. Juan Pérez</span>
+                    <span style="color: #28a745; font-weight: bold;">Activo</span>
                 </div>
-                <div class="side-panel">
-                    <h3 style="color: #7e57c2; margin-top: 0; font-size: 18px;">Consulta de Citas</h3>
-                    <div id="appointment-list">
-                        <p id="empty-msg" style="color: #718096; font-size: 13px; text-align: center; padding: 30px 0; margin: 0;">No registras turnos agendados en este momento.</p>
-                    </div>
+                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <span><strong>Medicina General:</strong> Dra. Ana Gómez</span>
+                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <span><strong>Psicología:</strong> Dra. Joselin Noboa</span>
+                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <span><strong>Psicología:</strong> Dr. Carlos Ruíz</span>
+                    <span style="color: #28a745; font-weight: bold;">Activo</span>
                 </div>
             </div>
         </div>
+    </div>
+
 
         <div id="view-admin"  style="text-align: left;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
