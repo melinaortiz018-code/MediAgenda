@@ -151,7 +151,7 @@
             </div>
         </div>
 
-        <!-- 👑 PANEL ADMINISTRATIVO INTEGRADO COMPLETO -->
+            <!-- 👑 PANEL ADMINISTRATIVO INTEGRADO COMPLETO -->
     <div id="view-admin" class="d-none" style="margin-top: 20px; padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="color: #4A4A4A; margin: 0;">⚙️ Panel Administrativo General</h2>
@@ -169,6 +169,48 @@
                 <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-canceladas">0</p>
             </div>
         </div>
+
+        <!-- 👥 TABLA DE GESTIÓN DE USUARIOS Y CREDENCIALES -->
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px;">
+            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Gestión de Usuarios y Credenciales en la Nube</h4>
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead style="background-color: #f8f9fa;">
+                    <tr>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; color: #333;">Usuario</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; color: #333;">Rol</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; color: #333;">Contraseña</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; color: #333;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-usuarios-admin">
+                    <!-- Aquí se cargarán los usuarios automáticamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 💡 TU DISEÑO ORIGINAL DE MÉDICOS (Abajo del panel nuevo) -->
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Listado de Control Operativo de los Médicos</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <span><strong>Medicina General:</strong> Dr. Juan Pérez</span>
+                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <span><strong>Medicina General:</strong> Dra. Ana Gómez</span>
+                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <span><strong>Psicología:</strong> Dra. Joselin Noboa</span>
+                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #9b5de5;">
+                    <span><strong>Psicología:</strong> Dr. Carlos Ruíz</span>
+                    <span style="color: #28a745; font-weight: bold;">Activo</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
         <!-- 👥 TABLA DE GESTIÓN DE USUARIOS Y CREDENCIALES -->
         <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px;">
