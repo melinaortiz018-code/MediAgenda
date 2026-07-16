@@ -227,16 +227,20 @@
 
         <footer style="margin-top: 50px; font-size: 12px; color: #a0aec0; border-top: 1px solid #e9ecef; padding-top: 15px;">Copyright © 2026 MediAgenda. Todos los derechos reservados.</footer>
     </div>
-        <!-- IMPORTANTE: Usamos type="module" para conectar con tu Firebase real -->
-    <!-- 1. Cargamos Firebase de forma clásica para saltarnos el bloqueo del navegador -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+                // Variables globales de control
+        let currentRole = ''; 
+        let currentTab = 'login';
+        
+        // Base de datos de especialistas fija
+        const database = {
+            "Medicina General": ["Dr. Juan Pérez", "Dra. Ana Gómez"],
+            "Psicología": ["Dra. Joselin Noboa", "Dr. Carlos Ruíz"],
+            "Nutrición": ["Dra. María Loor", "Dr. Luis Alba"],
+            "Odontología": ["Dr. Paúl Vera", "Dra. Elena Silva"]
+        };
+        const hours = ["08:00 - 08:40", "10:00 - 10:40", "14:00 - 14:40", "16:00 - 16:40"];
 
-    <!-- 2. Tu lógica de negocio normal sin type="module" -->
-    <!-- Solución de contingencia local autoejecutable -->
-    <script>
-        // Simulador de base de datos en la nube local (Persistente)
-        // Si no existen usuarios guardados en la máquina, inicializamos los de prueba
+        // Simulador de Base de Datos Permanente de Usuarios
         if (!localStorage.getItem('cloud_users')) {
             const usuariosIniciales = {
                 "admin": { "grace1804": "11111" },
@@ -246,45 +250,34 @@
             localStorage.setItem('cloud_users', JSON.stringify(usuariosIniciales));
         }
 
-        // Variables de control de la página
-        let currentRole = ''; 
-        let currentTab = 'login';
-        
-        const database = {
-            "Medicina General": ["Dr. Juan Pérez", "Dra. Ana Gómez"],
-            "Psicología": ["Dra. Joselin Noboa", "Dr. Carlos Ruíz"],
-            "Nutrición": ["Dra. María Loor", "Dr. Luis Alba"],
-            "Odontología": ["Dr. Paúl Vera", "Dra. Elena Silva"]
-        };
-        const hours = ["08:00 - 08:40", "10:00 - 10:40", "14:00 - 14:40", "16:00 - 16:40"];
-
-        // Funciones de la Interfaz
+        // CONTROL DE VENTANAS FLOTANTES
         function openModal(role) { 
             currentRole = role.toLowerCase(); 
-            document.getElementById('auth-modal').style.display = 'flex'; 
+            const modal = document.getElementById('auth-modal');
+            if (modal) modal.style.display = 'flex'; 
             switchTab('login'); 
         }
         
         function closeModal() { 
-            document.getElementById('auth-modal').style.display = 'none'; 
+            const modal = document.getElementById('auth-modal');
+            if (modal) modal.style.display = 'none'; 
         }
-        
         function switchTab(tab) {
             currentTab = tab;
             if (tab === 'login') {
-                document.getElementById('tab-login').classList.add('active'); 
-                document.getElementById('tab-register').classList.remove('active');
-                document.getElementById('form-login-container').classList.remove('d-none'); 
-                document.getElementById('form-register-container').classList.add('d-none');
+                if(document.getElementById('tab-login')) document.getElementById('tab-login').classList.add('active'); 
+                if(document.getElementById('tab-register')) document.getElementById('tab-register').classList.remove('active');
+                if(document.getElementById('form-login-container')) document.getElementById('form-login-container').classList.remove('d-none'); 
+                if(document.getElementById('form-register-container')) document.getElementById('form-register-container').classList.add('d-none');
             } else {
-                document.getElementById('tab-register').classList.add('active'); 
-                document.getElementById('tab-login').classList.remove('active');
-                document.getElementById('form-register-container').classList.remove('d-none'); 
-                document.getElementById('form-login-container').classList.add('d-none');
+                if(document.getElementById('tab-register')) document.getElementById('tab-register').classList.add('active'); 
+                if(document.getElementById('tab-login')) document.getElementById('tab-login').classList.remove('active');
+                if(document.getElementById('form-register-container')) document.getElementById('form-register-container').classList.remove('d-none'); 
+                if(document.getElementById('form-login-container')) document.getElementById('form-login-container').classList.add('d-none');
             }
         }
 
-        // FUNCIÓN DE REGISTRO PERSISTENTE
+        // REGISTRO CON PARÁMETROS PROFESIONALES DE SEGURIDAD
         function executeRegister() {
             const name = document.getElementById('reg-name').value.trim(); 
             const user = document.getElementById('reg-user').value.trim();
@@ -296,7 +289,7 @@
                 return; 
             }
 
-                        // VALIDACIÓN CON PARÁMETROS DE SEGURIDAD REALES
+            // Validaciones de seguridad reales
             const tieneMayuscula = /[A-Z]/.test(pass);
             const tieneNumero = /[0-9]/.test(pass);
 
@@ -312,29 +305,22 @@
                 alert('Seguridad insuficiente: La contraseña debe incluir al menos un número.');
                 return;
             }
-
-
-            // Extraemos la base de datos local
-            let usuariosRegistrados = JSON.stringify(localStorage.getItem('cloud_users'));
-            usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
-
+            
+            let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
             if (!usuariosRegistrados[currentRole]) {
                 usuariosRegistrados[currentRole] = {};
             }
 
-            // Guardamos el nuevo usuario
             usuariosRegistrados[currentRole][user] = pass;
-
-            // Actualizamos la base de datos local permanente
             localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
 
-            alert('¡Cuenta de ' + currentRole.toUpperCase() + ' guardada con éxito en la base de datos!'); 
+            alert('¡Cuenta de ' + currentRole.toUpperCase() + ' creada con éxito en la base de datos!'); 
             switchTab('login'); 
-            document.getElementById('login-user').value = user;
-            document.getElementById('login-pass').value = '';
+            if(document.getElementById('login-user')) document.getElementById('login-user').value = user;
+            if(document.getElementById('login-pass')) document.getElementById('login-pass').value = '';
         }
 
-        // FUNCIÓN DE INICIO DE SESIÓN PERSISTENTE
+        // INICIO DE SESIÓN
         function executeLogin() {
             const user = document.getElementById('login-user').value.trim(); 
             const pass = document.getElementById('login-pass').value.trim();
@@ -344,39 +330,40 @@
                 return; 
             }
 
-            // Obtenemos los usuarios actualizados de la memoria persistente
-            const usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
+            const usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
             const contraseñaCorrecta = usuariosRegistrados[currentRole] ? usuariosRegistrados[currentRole][user] : null;
 
             if (contraseñaCorrecta && contraseñaCorrecta === pass) {
                 grantAccess(user);
             } else { 
-                alert('Credenciales incorrectas para el rol ' + currentRole.toUpperCase() + '. Si eres nuevo, asegúrate de registrarte primero.'); 
+                alert('Credenciales incorrectas para el rol ' + currentRole.toUpperCase() + '. Verifica los datos.'); 
             }
         }
-
-                (user) {
+        function grantAccess(user) {
             closeModal(); 
-            document.getElementById('view-roles').classList.add('d-none'); 
-            document.getElementById('user-tag').style.display = 'block';
-            document.getElementById('user-display').innerText = "Usuario: " + user; 
-            document.getElementById('role-display').innerText = currentRole.toUpperCase();
-            document.getElementById('view-' + currentRole).classList.remove('d-none');
+            if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.add('d-none'); 
+            if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'block';
+            if(document.getElementById('user-display')) document.getElementById('user-display').innerText = "Usuario: " + user; 
+            if(document.getElementById('role-display')) document.getElementById('role-display').innerText = currentRole.toUpperCase();
+            
+            const viewElement = document.getElementById('view-' + currentRole);
+            if(viewElement) viewElement.classList.remove('d-none');
 
-            // Cargar los datos en las tablas dependiendo de quién inició sesión
+            // Cargar datos en paneles según el rol de la sesión
             if (currentRole === 'paciente') {
-                showPatientAppointments(user);
+                if (typeof showPatientAppointments === 'function') showPatientAppointments(user);
             } else if (currentRole === 'medico') {
-                showDoctorAppointments(user);
+                if (typeof showDoctorAppointments === 'function') showDoctorAppointments(user);
             } else if (currentRole === 'admin') {
-                showAdminUsers();
+                showAdminUsers(); 
             }
         }
 
         function logOut() { 
-            document.getElementById('view-' + currentRole).classList.add('d-none'); 
-            document.getElementById('user-tag').style.display = 'none'; 
-            document.getElementById('view-roles').classList.remove('d-none'); 
+            const viewElement = document.getElementById('view-' + currentRole);
+            if(viewElement) viewElement.classList.add('d-none'); 
+            if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'none'; 
+            if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.remove('d-none'); 
         }
 
         function updateMedicos() {
@@ -396,7 +383,6 @@
             selectHor.disabled = false;
         }
 
-        // FUNCIÓN DE AGENDAR CITA TOTALMENTE CORREGIDA
         function executeSchedule() {
             const esp = document.getElementById('select-esp').value;
             const med = document.getElementById('select-med').value;
@@ -405,7 +391,7 @@
 
             if(!esp || !med || !hor) {
                 alert('Por favor, selecciona la especialidad, el médico y el horario.');
-                return;function grantAccess
+                return;
             }
 
             let citasGuardadas = localStorage.getItem('cloud_appointments');
@@ -422,11 +408,8 @@
             localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
 
             alert('¡Cita agendada con éxito!');
-            
-            // Recargar la tabla del paciente inmediatamente
-            showPatientAppointments(currentUser);
+            if (typeof showPatientAppointments === 'function') showPatientAppointments(currentUser);
 
-            // Limpiar campos
             document.getElementById('select-esp').value = "";
             document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
             document.getElementById('select-med').disabled = true;
@@ -434,86 +417,11 @@
             document.getElementById('select-hor').disabled = true;
         }
 
-        // VISTA PACIENTE: Muestra sus propias citas agendadas
-        function showPatientAppointments(username) {
-            // Busca o crea un contenedor para la tabla en tu HTML (asegúrate de tener un id="tabla-citas-paciente" o similar en tu sección de paciente)
-            const contenedor = document.getElementById('tabla-citas-paciente');
-            if (!contenedor) return;
-
-            let citasGuardadas = localStorage.getItem('cloud_appointments');
-            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
-
-            // Filtramos solo las citas de este paciente
-            const misCitas = citasGuardadas.filter(c => c.paciente === username);
-
-            if (misCitas.length === 0) {
-                contenedor.innerHTML = '<tr><td colspan="4" class="text-center">No tienes citas próximas agendadas.</td></tr>';
-                return;
-            }
-
-            contenedor.innerHTML = '';
-            misCitas.forEach(c => {
-                contenedor.innerHTML += `
-                    <tr>
-                        <td>${c.especialidad}</td>
-                        <td>${c.medico}</td>
-                        <td>${c.horario}</td>
-                        <td><span class="badge bg-success">Confirmada</span></td>
-                    </tr>`;
-            });
-        }
-
-        // VISTA MÉDICO: Muestra las próximas citas que tiene asignadas
-        function showDoctorAppointments(doctorName) {
-            const contenedor = document.getElementById('tabla-citas-medico');
-            if (!contenedor) return;
-
-            let citasGuardadas = localStorage.getItem('cloud_appointments');
-            citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
-
-            // El médico ve las citas donde coincide el nombre del médico de fábrica o el usuario
-            const misPacientes = citasGuardadas.filter(c => c.medico.toLowerCase().includes(doctorName.toLowerCase()) || doctorName === 'doctor');
-
-            if (misPacientes.length === 0) {
-                contenedor.innerHTML = '<tr><td colspan="3" class="text-center">No tienes citas programadas.</td></tr>';
-                return;
-            }
-
-            contenedor.innerHTML = '';
-            misPacientes.forEach(c => {
-                contenedor.innerHTML += `
-                    <tr>
-                        <td>${c.paciente}</td>
-                        <td>${c.especialidad}</td>
-                        <td>${c.horario}</td>
-                    </tr>`;
-            });
-        }
-
-                function grantAccess(user) {
-            closeModal(); 
-            document.getElementById('view-roles').classList.add('d-none'); 
-            document.getElementById('user-tag').style.display = 'block';
-            document.getElementById('user-display').innerText = "Usuario: " + user; 
-            document.getElementById('role-display').innerText = currentRole.toUpperCase();
-            document.getElementById('view-' + currentRole).classList.remove('d-none');
-
-            // Cargamos la información correspondiente al rol seleccionado
-            if (currentRole === 'paciente') {
-                if (typeof showPatientAppointments === 'function') showPatientAppointments(user);
-            } else if (currentRole === 'medico') {
-                if (typeof showDoctorAppointments === 'function') showDoctorAppointments(user);
-            } else if (currentRole === 'admin') {
-                showAdminUsers(); // Carga usuarios, claves y estadísticas
-            }
-        }
-
-        // VISTA ADMINISTRADOR COMPLETA: Carga usuarios, contraseñas y calcula estadísticas
+        // PANEL DE ADMINISTRACIÓN (Estadísticas y eliminación)
         function showAdminUsers() {
             const contenedor = document.getElementById('tabla-usuarios-admin');
             if (!contenedor) return;
 
-            // 1. Renderizar Listado de Usuarios y Credenciales
             const usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
             contenedor.innerHTML = '';
 
@@ -522,17 +430,16 @@
                     const clave = usuariosRegistrados[rol][usuario];
                     contenedor.innerHTML += `
                         <tr>
-                            <td><strong>${usuario}</strong></td>
-                            <td><span class="badge bg-secondary">${rol.toUpperCase()}</span></td>
-                            <td><code>${clave}</code></td>
-                            <td>
-                                <button class="btn btn-danger btn-sm" onclick="deleteUser('${rol}', '${usuario}')">Eliminar de la Nube</button>
+                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6;"><strong>${usuario}</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6;"><span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">${rol.toUpperCase()}</span></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6;"><code style="background: #f1f1f1; padding: 2px 4px; border-radius: 4px;">${clave}</code></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">
+                                <button style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="deleteUser('${rol}', '${usuario}')">Eliminar</button>
                             </td>
                         </tr>`;
                 }
             }
 
-            // 2. Calcular y Actualizar Estadísticas en Pantalla en Tiempo Real
             let citasGuardadas = localStorage.getItem('cloud_appointments');
             citasGuardadas = citasGuardadas ? JSON.parse(citasGuardadas) : [];
             
@@ -547,68 +454,36 @@
             }
         }
 
-        // FUNCIÓN EXCLUSIVA DEL ADMINISTRADOR PARA QUITAR USUARIOS
         function deleteUser(rol, usuario) {
             if (usuario === 'manu' || usuario === 'grace1804' || usuario === 'doctor') {
-                alert('Seguridad del Sistema: No puedes eliminar los usuarios base fijados de fábrica.');
+                alert('Seguridad: No puedes eliminar los usuarios base del sistema.');
                 return;
             }
 
-            if (confirm(`¿Estás segura de que deseas eliminar permanentemente al usuario "${usuario}" del sistema?`)) {
+            if (confirm(`¿Deseas eliminar permanentemente al usuario "${usuario}"?`)) {
                 let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
-                
                 if (usuariosRegistrados[rol] && usuariosRegistrados[rol][usuario]) {
                     delete usuariosRegistrados[rol][usuario];
                     localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
-                    alert('Usuario removido con éxito de la base de datos.');
-                    showAdminUsers(); // Recarga instantánea de la tabla y estadísticas
+                    alert('Usuario eliminado correctamente.');
+                    showAdminUsers(); 
                 }
             }
         }
 
-        // Aseguramos la conexión de las funciones al navegador
-        window.showAdminUsers = showAdminUsers;
-        window.deleteUser = deleteUser;
-
-            // Recorremos los roles y los usuarios guardados
-            for (let rol in usuariosRegistrados) {
-                for (let usuario in usuariosRegistrados[rol]) {
-                    const clave = usuariosRegistrados[rol][usuario];
-                    contenedor.innerHTML += `
-                        <tr>
-                            <td><strong>${usuario}</strong></td>
-                            <td>${rol.toUpperCase()}</td>
-                            <td><code>${clave}</code></td>
-                            <td>
-                                <button class="btn btn-danger btn-sm" onclick="deleteUser('${rol}', '${usuario}')">Eliminar</button>
-                            </td>
-                        </tr>`;
-                }
+        // FUNCIÓN DEL OJITO CONTRASEÑA
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                button.innerText = "🙈";
+            } else {
+                input.type = "password";
+                button.innerText = "👁️";
             }
         }
 
-        // FUNCIÓN DEL ADMINISTRADOR PARA QUITAR USUARIOS
-        function deleteUser(rol, usuario) {
-            if (usuario === 'manu' || usuario === 'grace1804' || usuario === 'doctor') {
-                alert('No puedes eliminar los usuarios base del sistema.');
-                return;
-            }
-
-            if (confirm(`¿Estás segura de que deseas eliminar al usuario "${usuario}"?`)) {
-                let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users'));
-                
-                // Borramos la propiedad del objeto
-                delete usuariosRegistrados[rol][usuario];
-                
-                // Guardamos la base de datos actualizada
-                localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
-                
-                alert('Usuario eliminado correctamente.');
-                showAdminUsers(); // Recargar tabla de administración
-            }
-        }
-
-        // Vincular funciones a la ventana global
+        // Conexiones de funciones globales al objeto window del navegador
         window.openModal = openModal;
         window.closeModal = closeModal;
         window.switchTab = switchTab;
@@ -619,18 +494,7 @@
         window.updateHorarios = updateHorarios;
         window.executeSchedule = executeSchedule;
         window.deleteUser = deleteUser;
-                function togglePassword(inputId, button) {
-            const input = document.getElementById(inputId);
-            if (input.type === "password") {
-                input.type = "text";
-                button.innerText = "🙈";
-            } else {
-                input.type = "password";
-                button.innerText = "👁️";
-            }
-        }
         window.togglePassword = togglePassword;
-
     </script>
 </body>
 </html>
