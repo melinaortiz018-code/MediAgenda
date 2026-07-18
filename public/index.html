@@ -738,6 +738,15 @@
             if (input.type === "password") { input.type = "text"; button.innerText = "🙈"; } 
             else { input.type = "password"; button.innerText = "👁️"; }
         }
+function confirmarCancelacion(event) {
+    event.preventDefault(); 
+    const usuarioSeguro = confirm("¿Estás seguro de que deseas cancelar esta cita?");
+    if (usuarioSeguro) {
+        alert("Su cita ha sido cancelada exitosamente.");
+        event.target.closest('form').submit(); 
+    }
+    return false;
+}
 
         window.openModal = openModal; window.closeModal = closeModal; window.switchTab = switchTab;
         window.executeRegister = executeRegister; window.executeLogin = executeLogin; window.logOut = logOut;
