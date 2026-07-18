@@ -57,8 +57,6 @@ function reagendarCita(idCita) {
     // Te envía a la ruta del formulario pasando el ID de la cita para saber cuál modificar
     window.location.href = `/auth/reagendar-cita?id=${idCita}`;
 }
-<!-- Tu botón de Reagendar debe verse algo así -->
-<button onclick="reagendarCita('<%= cita.id %>')" class="btn-reagendar">Reagendar</button>
 
-<!-- Tu botón de Cancelar Cita debe verse algo así -->
-<button onclick="cancelarCita('<%= cita.id %>')" class="btn-cancelar">Cancelar Cita</button>
+ <button onclick="window.reagendarCita('${cita.id}')" class="btn-reagendar">Reagendar</button>
+ <button onclick="window.cancelarCita('${cita.id}')" class="btn-cancelar">Cancelar Cita</button>`
