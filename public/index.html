@@ -738,15 +738,28 @@
             if (input.type === "password") { input.type = "text"; button.innerText = "🙈"; } 
             else { input.type = "password"; button.innerText = "👁️"; }
         }
-function confirmarCancelacion(event) {
-    event.preventDefault(); 
-    const usuarioSeguro = confirm("¿Estás seguro de que deseas cancelar esta cita?");
-    if (usuarioSeguro) {
-        alert("Su cita ha sido cancelada exitosamente.");
-        event.target.closest('form').submit(); 
-    }
-    return false;
-}
+    <script>
+        // Función interactiva de cancelación
+        function confirmarCancelacion(event) {
+            event.preventDefault(); 
+            const usuarioSeguro = confirm("¿Estás seguro de que deseas cancelar esta cita?");
+            if (usuarioSeguro) {
+                alert("Su cita ha sido cancelada exitosamente.");
+                // Si usas un formulario, lo envía automáticamente
+                const form = event.target.closest('form');
+                if (form) form.submit(); 
+            }
+            return false;
+        }
+
+        // Redirección para reagendar a una fecha futura
+        function iniciarReagendacion(idCita) {
+            window.location.href = `/auth/reagendar-cita?id=${idCita}`;
+        }
+
+        // Registro de funciones globales seguras sin romper el resto de la página
+        window.confirmarCancelacion = confirmarCancelacion;
+        window.iniciarReagendacion = iniciarReagendacion;
         window.confirmarCancelacion = confirmarCancelacion;
         window.openModal = openModal; window.closeModal = closeModal; window.switchTab = switchTab;
         window.executeRegister = executeRegister; window.executeLogin = executeLogin; window.logOut = logOut;
@@ -755,8 +768,13 @@ function confirmarCancelacion(event) {
         window.deleteUser = deleteUser; window.togglePassword = togglePassword;
         window.executeForgotPassword = executeForgotPassword;
 
-        <button onclick="window.reagendarCita('1')" class="btn-reagendar">Reagendar</button>
-        <button onclick="window.cancelarCita('1')" class="btn-cancelar">Cancelar Cita</button>
+        <!-- Botón Reagendar -->
+        <button onclick="window.iniciarReagendacion('1')" class="btn-reagendar">Reagendar</button>
+
+        <!-- Botón Cancelar (Envuélvelo en un form simple o usa el evento directo) -->
+        <form onsubmit="return window.confirmarCancelacion(event)" style="display: inline;">
+           <button type="submit" class="btn-cancelar">Cancelar Cita</button>
+        </form>
 
 
     </script>
