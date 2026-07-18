@@ -747,15 +747,17 @@ function confirmarCancelacion(event) {
     }
     return false;
 }
-
+        window.confirmarCancelacion = confirmarCancelacion;
         window.openModal = openModal; window.closeModal = closeModal; window.switchTab = switchTab;
         window.executeRegister = executeRegister; window.executeLogin = executeLogin; window.logOut = logOut;
         window.updateMedicos = updateMedicos; window.updateCalendarioPaciente = updateCalendarioPaciente;
         window.updateTurnosPaciente = updateTurnosPaciente; window.executeSchedule = executeSchedule;
         window.deleteUser = deleteUser; window.togglePassword = togglePassword;
         window.executeForgotPassword = executeForgotPassword;
-        window.cancelarCita = cancelarCita;
-        window.reagendarCita = reagendarCita;
+
+        <button onclick="window.reagendarCita('1')" class="btn-reagendar">Reagendar</button>
+        <button onclick="window.cancelarCita('1')" class="btn-cancelar">Cancelar Cita</button>
+
 
     </script>
     <script src="js/app.js"></script>
