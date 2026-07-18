@@ -30,11 +30,42 @@ function guardarHorarios() {
 
     alert("¡Cambios guardados correctamente!");
 }
-// Función para cancelar la cita con alertas consecutivas
+/// Función para cancelar la cita con alertas consecutivas
 function cancelarCita(idCita) {
+    // 1. Primer cartel interactivo de confirmación
     const usuarioSeguro = confirm("¿Estás seguro de que deseas cancelar esta cita?");
     
     if (usuarioSeguro) {
+        // 2. Hace la petición real al servidor Express pasando el ID de la cita
+        fetch(`/auth/cancelar-cita/${idCita}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => {
+            if (response.ok) {
+                // 3. Segundo cartel consecutivo avisando del éxito
+                alert("Su cita ha sido cancelada exitosamente.");
+                window.location.reload(); // Recarga la tabla de inmediato
+            } else {
+                alert("Hubo un error al intentar cancelar la cita en el servidor.");
+            }
+        })
+        .catch(error => {
+            console.error("Error al cancelar:", error);
+            alert("No se pudo conectar con el servidor.");
+        });
+    }
+}
+
+// Función para reagendar la cita que te envía al formulario del calendario
+function reagendarCita(idCita) {
+    window.location.href = `/auth/reagendar-cita?id=${idCita}`;
+}
+
+// Hacerlas disponibles globalmente para que el index.html las pueda leer
+window.cancelarCita = cancelarCita;
+window.reagendarCita = reagendarCita;
+
         // Hacemos la petición real al servidor Express
         fetch(`/auth/cancelar-cita/${idCita}`, {
             method: 'POST',
