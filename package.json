@@ -1,4 +1,12 @@
 {
+  "name": "mediagenda",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Citas Médicas - MediAgenda",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "express": "^5.2.1",

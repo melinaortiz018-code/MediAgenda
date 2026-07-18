@@ -1,91 +1,202 @@
-// 1. Monitorear cambios en la interfaz en tiempo real
-document.addEventListener("DOMContentLoaded", () => {
-    const contenedorMedico = document.getElementById("view-medico");
-    const botonGuardar = document.getElementById("btnGuardar");
+let selectedRole = '';
+let isRegisterMode = false;
+let currentUser = null;
 
-    if (contenedorMedico && botonGuardar) {
-        // Muestra el botón cuando el usuario escribe o interactúa
-        contenedorMedico.addEventListener("input", () => {
-            botonGuardar.style.display = "block"; 
-        });
-        
-        // Muestra el botón cuando cambia un selector (select/checkbox)
-        contenedorMedico.addEventListener("change", () => {
-            botonGuardar.style.display = "block";
-        });
-    }
-});
+// Médicos pregenerados con consistencia en las claves (sin tildes para evitar fallos de enlace)
+const medicosData = {
+    "Medicina General": [{name: "Dra. Elena Espinoza (F)", ci:"1712345671"}, {name: "Dr. Carlos Mendoza (M)", ci:"1712345672"}],
+    "Odontologia": [{name: "Dra. Valeria Benítez (F)", ci:"1712345673"}, {name: "Dr. Ricardo Alarcón (M)", ci:"1712345674"}],
+    "Psicologia": [{name: "Dra. Camila Restrepo (F)", ci:"1712345675"}, {name: "Dr. Fernando Ortiz (M)", ci:"1712345676"}],
+    "Pediatria": [{name: "Dra. Mariana Silva (F)", ci:"1712345677"}, {name: "Dr. Alejandro Ríos (M)", ci:"1712345678"}]
+};
 
-// 2. Función para procesar y salvar los datos en el sistema
-function guardarHorarios() {
-    console.log("Procesando el guardado de horarios...");
+// Horarios de ejemplo para el Calendario (Mañana)
+let agendaHorarios = [
+    { id: 1, hora: "08:00 AM", disponible: true },
+    { id: 2, hora: "09:00 AM", disponible: false },
+    { id: 3, hora: "10:00 AM", disponible: true },
+    { id: 4, hora: "11:00 AM", disponible: true },
+    { id: 5, hora: "14:00 PM", disponible: false },
+    { id: 6, hora: "15:00 PM", disponible: true }
+];
 
-    // [AQUÍ] Irá tu lógica para recolectar datos de la tabla y enviarlos al servidor
+// Citas iniciales corregidas ("Pediatria" sin tilde)
+let misCitas = [
+    { id: 101, especialidad: "Medicina General", medico: "Dr. Carlos Mendoza", fechaHora: new Date(Date.now() + 30 * 60 * 60 * 1000) }, 
+    { id: 102, especialidad: "Pediatria", medico: "Dra. Mariana Silva", fechaHora: new Date(Date.now() + 5 * 60 * 60 * 1000) }    
+];
 
-    // Una vez guardado con éxito, ocultamos el botón de nuevo
-    const botonGuardar = document.getElementById("btnGuardar");
-    if (botonGuardar) {
-        botonGuardar.style.display = "none";
-    }
-
-    alert("¡Cambios guardados correctamente!");
-}
-/// Función para cancelar la cita con alertas consecutivas
-function cancelarCita(idCita) {
-    // 1. Primer cartel interactivo de confirmación
-    const usuarioSeguro = confirm("¿Estás seguro de que deseas cancelar esta cita?");
+function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('role-selection').classList.add('d-none');
+    document.getElementById('auth-section').classList.remove('d-none');
+    document.getElementById('auth-title').innerText = `Ingreso: ${role}`;
     
-    if (usuarioSeguro) {
-        // 2. Hace la petición real al servidor Express pasando el ID de la cita
-        fetch(`/auth/cancelar-cita/${idCita}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => {
-            if (response.ok) {
-                // 3. Segundo cartel consecutivo avisando del éxito
-                alert("Su cita ha sido cancelada exitosamente.");
-                window.location.reload(); // Recarga la tabla de inmediato
-            } else {
-                alert("Hubo un error al intentar cancelar la cita en el servidor.");
-            }
-        })
-        .catch(error => {
-            console.error("Error al cancelar:", error);
-            alert("No se pudo conectar con el servidor.");
+    if(role !== 'Paciente') {
+        document.getElementById('toggle-auth-mode').classList.add('d-none');
+    } else {
+        document.getElementById('toggle-auth-mode').classList.remove('d-none');
+    }
+}
+
+function backToRoles() {
+    document.getElementById('auth-section').classList.add('d-none');
+    document.getElementById('role-selection').classList.remove('d-none');
+    isRegisterMode = false;
+}
+
+function toggleAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    document.getElementById('auth-title').innerText = isRegisterMode ? "Registro de Paciente" : "Iniciar Sesión";
+    document.getElementById('email-group').classList.toggle('d-none', !isRegisterMode);
+    document.getElementById('pass-requirements').classList.toggle('d-none', !isRegisterMode);
+    document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Enviar Código de Verificación" : "Ingresar";
+}
+
+// Envío de Formulario Auth
+const authForm = document.getElementById('auth-form');
+if (authForm) {
+    authForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (isRegisterMode) {
+            document.getElementById('auth-section').classList.add('d-none');
+            document.getElementById('verification-section').classList.remove('d-none');
+        } else {
+            loginExitoso();
+        }
+    });
+}
+
+function verifyCode() {
+    alert("¡Código Verificado con Éxito!");
+    document.getElementById('verification-section').classList.add('d-none');
+    loginExitoso();
+}
+
+function loginExitoso() {
+    document.getElementById('auth-section').classList.add('d-none');
+    document.getElementById('dashboard-section').classList.remove('d-none');
+    document.getElementById('dashboard-welcome').innerText = `Panel de Control - Rol: ${selectedRole}`;
+    
+    document.getElementById('view-paciente').classList.add('d-none');
+    document.getElementById('view-medico').classList.add('d-none');
+    document.getElementById('view-admin').classList.add('d-none');
+    document.getElementById('my-appointments-box').classList.add('d-none');
+
+    if(selectedRole === 'Paciente') {
+        document.getElementById('view-paciente').classList.remove('d-none');
+        document.getElementById('my-appointments-box').classList.remove('d-none');
+        renderCalendar();
+        renderSidebarAppointments();
+    } else if(selectedRole === 'Medico') {
+        document.getElementById('view-medico').classList.remove('d-none');
+        // Control de protección en caso de que este nodo no exista en el HTML corporativo
+        const extraFields = document.getElementById('paciente-extra-fields');
+        if (extraFields) extraFields.classList.add('d-none');
+    } else if(selectedRole === 'Administrador') {
+        document.getElementById('view-admin').classList.remove('d-none');
+        const sidebarRight = document.getElementById('sidebar-right');
+        if (sidebarRight) sidebarRight.classList.add('d-none');
+    }
+}
+
+function loadMedicos() {
+    const esp = document.getElementById('select-especialidad').value;
+    const selectMed = document.getElementById('select-medico');
+    selectMed.innerHTML = '';
+    
+    if(!esp || !medicosData[esp]) {
+        selectMed.innerHTML = '<option value="">Primero elija la especialidad...</option>';
+        return;
+    }
+    
+    medicosData[esp].forEach(med => {
+        let opt = document.createElement('option');
+        opt.value = med.ci;
+        opt.innerText = med.name;
+        selectMed.appendChild(opt);
+    });
+}
+
+function renderCalendar() {
+    const container = document.getElementById('calendar-container') || document.querySelector('.calendar-grid');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    agendaHorarios.forEach(slot => {
+        let div = document.createElement('div');
+        div.className = `slot-card ${slot.disponible ? 'slot-available' : 'slot-unavailable'}`;
+        div.innerText = `${slot.hora}\n${slot.disponible ? 'Disponible' : 'No Disponible'}`;
+        if(slot.disponible) {
+            div.onclick = () => agendarCasilla(slot);
+        }
+        container.appendChild(div);
+    });
+}
+
+function agendarCasilla(slot) {
+    const specSelect = document.getElementById('select-especialidad');
+    const medSelect = document.getElementById('select-medico');
+    
+    // CORRECCIÓN: Validación previa a la lectura del índice seleccionado para evitar caídas catastróicas
+    if(!specSelect.value || !medSelect.value || medSelect.selectedIndex === -1) {
+        alert("Por favor selecciona una especialidad y un médico antes de elegir un horario.");
+        return;
+    }
+    
+    let medNombre = medSelect.options[medSelect.selectedIndex].text;
+    let confirmacion = confirm(`¿Deseas agendar tu cita a las ${slot.hora} con el especialista ${medNombre}?`);
+    
+    if(confirmacion) {
+        slot.disponible = false;
+        misCitas.push({
+            id: Date.now(),
+            especialidad: specSelect.value,
+            medico: medNombre,
+            fechaHora: new Date(Date.now() + 48 * 60 * 60 * 1000) 
         });
+        renderCalendar();
+        renderSidebarAppointments();
     }
 }
 
-// Función para reagendar la cita que te envía al formulario del calendario
-function reagendarCita(idCita) {
-    window.location.href = `/auth/reagendar-cita?id=${idCita}`;
+function renderSidebarAppointments() {
+    const container = document.getElementById('appointments-sidebar-list');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    misCitas.forEach(cita => {
+        let div = document.createElement('div');
+        div.className = "p-2 border-bottom mb-2 bg-white rounded";
+        div.innerHTML = `
+            <strong>${cita.especialidad}</strong><br>
+            <small class="text-muted">${cita.medico}</small><br>
+            <small class="text-secondary">${cita.fechaHora.toLocaleString()}</small>
+            <button class="btn btn-danger btn-sm w-100 mt-1" onclick="intentarCancelarCita(${cita.id})">Cancelar</button>
+        `;
+        container.appendChild(div);
+    });
 }
 
-// Hacerlas disponibles globalmente para que el index.html las pueda leer
-window.cancelarCita = cancelarCita;
-window.reagendarCita = reagendarCita;
+function intentarCancelarCita(id) {
+    const cita = misCitas.find(c => c.id === id);
+    if (!cita) return;
 
-        // Hacemos la petición real al servidor Express
-        fetch(`/auth/cancelar-cita/${idCita}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => {
-            if (response.ok) {
-                alert("Su cita ha sido cancelada exitosamente.");
-                window.location.reload(); // Recarga la tabla automáticamente para ver el cambio
-            } else {
-                alert("Hubo un error al intentar cancelar la cita.");
-            }
-        })
-        .catch(error => console.error("Error:", error));
+    const ahora = new Date();
+    const diferenciaHoras = (cita.fechaHora - ahora) / (1000 * 60 * 60);
+
+    if (diferenciaHoras < 24) {
+        alert("No se puede cancelar. Las citas solo se pueden cancelar con un mínimo de 24 horas de anticipación.");
+    } else {
+        let seguro = confirm("¿Está seguro de cancelar la cita?");
+        if (seguro) {
+            misCitas = misCitas.filter(c => c.id !== id);
+            alert("Cita cancelada correctamente.");
+            renderSidebarAppointments();
+        }
     }
 }
 
-// Función para reagendar la cita (te redirige a escoger una fecha a futuro)
-function reagendarCita(idCita) {
-    // Te envía a la ruta del formulario pasando el ID de la cita para saber cuál modificar
-    window.location.href = `/auth/reagendar-cita?id=${idCita}`;
+function logout() {
+    location.reload();
 }
-
