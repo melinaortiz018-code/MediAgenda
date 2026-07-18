@@ -101,6 +101,14 @@ app.post('/api/auth/logout', (req, res) => {
     req.session.destroy();
     res.json({ success: true });
 });
+// ====================================================
+// RUTA COMODÍN (FALLBACK): EVITA ERRORES 'CANNOT GET'
+// ====================================================
+
+// Redirige cualquier ruta desconocida (como /paciente o /inicio) al index principal
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Iniciar el servidor vinculando el puerto dinámico de la nube
 app.listen(PORT, () => {
