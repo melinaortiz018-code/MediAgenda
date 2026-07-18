@@ -58,5 +58,3 @@ function reagendarCita(idCita) {
     window.location.href = `/auth/reagendar-cita?id=${idCita}`;
 }
 
- <button onclick="window.reagendarCita('${cita.id}')" class="btn-reagendar">Reagendar</button>
- <button onclick="window.cancelarCita('${cita.id}')" class="btn-cancelar">Cancelar Cita</button>`
