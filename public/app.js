@@ -170,43 +170,43 @@ function executeSchedule() {
 }
 
 function iniciarReagendacionGlobal(id) {
-    idCitaReagendando = id; let cita = misCitas.find(c => c.id === id); if (!cita) return;
-    document.getElementById('view-paciente')?.classList.remove('d-none');
-    document.getElementById('paciente-action-title').innerText = `🔄 Reagendando Cita ID: ${id}`;
-    document.getElementById('btn-paciente-main').innerText = "Aplicar Cambio y Reagendar";
-    document.getElementById('btn-cancelar-reagendar').style.display = "block";
-    document.getElementById('select-esp').value = cita.especialidad; updateMedicos();
-    alert(`🔄 Modo Reagendar Activado.\n\nPor favor elija el nuevo especialista, la fecha y el turno deseado arriba.`);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function cancelarModoReagendar() {
+    function cancelarModoReagendar() {
     idCitaReagendando = null;
-    if(document.getElementById('paciente-action-title')) document.getElementById('paciente-action-title').innerText = "📅 Agendar Nueva Cita Médica";
-    if(document.getElementById('btn-paciente-main')) document.getElementById('btn-paciente-main').innerText = "Confirmar y Agendar Turno";
-    if(document.getElementById('btn-cancelar-reagendar')) document.getElementById('btn-cancelar-reagendar').style.display = "none";
-}
+    
+    // 1. Restablecer los textos originales del panel
+    if(document.getElementById('paciente-action-title')) {
+        document.getElementById('paciente-action-title').innerText = "📅 Agendar Nueva Cita Médica";
+    }
+    if(document.getElementById('btn-paciente-main')) {
+        document.getElementById('btn-paciente-main').innerText = "Confirmar y Agendar Turno";
+    }
+    if(document.getElementById('btn-cancelar-reagendar')) {
+        document.getElementById('btn-cancelar-reagendar').style.display = "none";
+    }
 
-function cancelarCitaGlobal(id, rol) {
-    if (confirm("❌ ¿Desea cancelar esta consulta?")) {
-        misCitas = misCitas.filter(c => c.id !== id); citasCanceladasHistorial++;
-        alert("Cita cancelada con éxito.");
-        if (rol === 'Paciente') renderSidebarAppointments(); else renderTablaMedico(usuarioLogueadoActual);
+    // 2. 🧹 LIMPIEZA ABSOLUTA DE LOS CAMPOS (Para que no se queden congelados)
+    const selectEsp = document.getElementById('select-esp');
+    if (selectEsp) selectEsp.value = ""; // Vacía Especialidad
+
+    const selectMed = document.getElementById('select-med');
+    if (selectMed) {
+        selectMed.innerHTML = '<option value="" selected disabled>-- Elige área primero --</option>';
+        selectMed.disabled = true; // Bloquea y vacía Médico
+    }
+    
+    const selectFecha = document.getElementById('select-fecha');
+    if (selectFecha) {
+        selectFecha.value = ""; // Borra la Fecha
+        selectFecha.disabled = true; // Bloquea Fecha
+    }
+    
+    const selectHor = document.getElementById('select-hor');
+    if (selectHor) {
+        selectHor.innerHTML = '<option value="" selected disabled>-- Elige turno --</option>';
+        selectHor.disabled = true; // Bloquea Horarios
     }
 }
 
-function renderSidebarAppointments() {
-    const tbody = document.getElementById('tabla-citas-paciente'); if (!tbody) return; tbody.innerHTML = '';
-    misCitas.forEach(c => {
-        let tr = document.createElement('tr');
-        tr.innerHTML = `<td>${c.id}</td><td>${c.especialidad}</td><td>${c.medico}</td><td>${c.fechaHora}</td><td><span style='background:#fff3cd; padding:4px;'>${c.estado}</span></td>
-        <td>
-            <button class="btn-warning" onclick="iniciarReagendacionGlobal('${c.id}')">Reagendar</button>
-            <button class="btn-danger" onclick="cancelarCitaGlobal('${c.id}', 'Paciente')">Cancelar</button>
-        </td>`;
-        tbody.appendChild(tr);
-    });
-}
 
 // DIBUJAR LA MATRIZ CALENDARIO SEMANAL HERMOSA DEL MÉDICO
 function renderCalendarioSemanalMedico() {
