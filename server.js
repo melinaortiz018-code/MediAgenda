@@ -5,20 +5,20 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 
-// 1. PRIMERO inicializamos la aplicación Express
+// 1. Inicialización de la aplicación Express
 const app = express();
 
-// Render asigna dinámicamente un puerto mediante process.env.PORT.
+// Render asigna dinámicamente un puerto mediante process.env.PORT
 const PORT = process.env.PORT || 3000;
 
-// 2. SEGUNDO servimos los archivos estáticos de la carpeta public (HTML, JS, CSS)
+// 2. Servir los archivos estáticos de la carpeta public (HTML, JS, CSS)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware para entender JSON y formularios
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuración obligatoria para el manejo de sesiones en memoria
+// Configuración de sesiones en memoria para el servidor
 app.use(session({
     secret: 'clave_secreta_mediagenda_2026',
     resave: false,
@@ -29,7 +29,7 @@ app.use(session({
     }
 }));
 
-// Configuración de almacenamiento absoluta (Crucial para Linux/Render)
+// Configuración de almacenamiento para cargas de archivos (Multer)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, path.join(__dirname, 'public', 'uploads'));
@@ -40,7 +40,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Base de datos simulada en memoria para usuarios
+// Base de datos simulada en memoria para usuarios de la API
 const usuariosDB = [];
 
 // ================= RUTA: SUBIR AVATAR =================
@@ -53,7 +53,7 @@ app.post('/api/upload-avatar', upload.single('avatar'), (req, res) => {
 
 // ================= RUTAS DE AUTENTICACIÓN SIMULADAS =================
 
-// Ruta para Registrar Paciente
+// Ruta para Registrar Paciente (Corregida e integrada limpiamente)
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password, role } = req.body;
@@ -104,22 +104,30 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 // ====================================================
-// 🛠️ RUTA DE EMERGENCIA: REDIRECCIÓN DEL SCRIPT (NUEVA)
+// 🛠️ RUTA DE EMERGENCIA: MAPEO INTELIGENTE DEL SCRIPT
 // ====================================================
 app.get('/app.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'js', 'app.js'));
+    const fs = require('fs');
+    const pathSuelto = path.join(__dirname, 'public', 'app.js');
+    const pathEnCarpetaJs = path.join(__dirname, 'public', 'js', 'app.js');
+    
+    if (fs.existsSync(pathSuelto)) {
+        res.sendFile(pathSuelto);
+    } else if (fs.existsSync(pathEnCarpetaJs)) {
+        res.sendFile(pathEnCarpetaJs);
+    } else {
+        res.status(404).send('Archivo app.js no localizado en el árbol estático');
+    }
 });
 
 // ====================================================
-// RUTA COMODÍN CORREGIDA: EVITA ERRORES 'CANNOT GET'
+// RUTA COMODÍN FINAL: EVITA ERRORES 'CANNOT GET'
 // ====================================================
-
-// Redirige cualquier ruta desconocida al index principal usando 'path' de forma segura
 app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Iniciar el servidor vinculando el puerto dinámico de la nube
+// Inicializar el hilo de escucha vinculando el puerto dinámico de la nube
 app.listen(PORT, () => {
     console.log(`Servidor ejecutándose correctamente en el puerto: ${PORT}`);
 });
