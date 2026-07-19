@@ -9,18 +9,16 @@ const medicosData = {
     "Odontologia": [{name: "Dra. Valeria Benítez", ci:"1712345673"}, {name: "Dr. Ricardo Alarcón", ci:"1712345674"}]
 };
 
-// Horarios base para inyecciones del sistema
 let agendaHorarios = ["08:00 AM", "09:00 AM", "10:30 AM", "11:00 AM", "14:00 PM", "15:00 PM"];
 
-// Citas iniciales simuladas para tus doctores reales del hospital
 let misCitas = [
     { id: "1", paciente: "María Augusta Flores", especialidad: "Medicina General", medico: "Dr. Carlos Mendoza", fechaHora: "10:30 AM - 18/07/2026", estado: "Pendiente" },
     { id: "2", paciente: "Pedro José Andrade", especialidad: "Medicina General", medico: "Dr. Carlos Mendoza", fechaHora: "14:00 PM - 19/07/2026", estado: "Pendiente" }
 ];
 
-// Contador simulado de historial para las tarjetas del administrador
 let citasCanceladasHistorial = 3;
 
+// Función blindada para abrir modales sin importar los IDs del HTML
 function openModal(role) { 
     selectedRole = role; 
     const panelRoles = document.getElementById('view-roles') || document.getElementById('role-selection');
@@ -29,11 +27,13 @@ function openModal(role) {
     const authSection = document.getElementById('auth-section');
     if (authSection) {
         authSection.classList.remove('d-none');
-        document.getElementById('auth-title').innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
+        const authTitle = document.getElementById('auth-title');
+        if (authTitle) authTitle.innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
     } else {
         activarPanelRol(role, "Usuario Invitado");
     }
 }
+
 function selectRole(role) { openModal(role); }
 
 function backToRoles() { 
@@ -85,8 +85,10 @@ function activarPanelRol(role, email) {
 }
 
 function mostrarBarraSesion(nombre, rol) {
-    document.getElementById("user-display").textContent = `Usuario: ${nombre} `;
-    document.getElementById("role-display").textContent = rol.toUpperCase();
+    const uDisplay = document.getElementById("user-display");
+    const rDisplay = document.getElementById("role-display");
+    if (uDisplay) uDisplay.textContent = `Usuario: ${nombre} `;
+    if (rDisplay) rDisplay.textContent = rol.toUpperCase();
     const barra = document.getElementById("user-tag");
     if (barra) barra.style.display = "block";
 }
@@ -130,7 +132,10 @@ function updateMedicos() {
 
 function updateCalendarioPaciente() {
     const selectMed = document.getElementById('select-med');
-    if(selectMed.value) document.getElementById('select-fecha').disabled = false;
+    if(selectMed && selectMed.value) {
+        const selectFecha = document.getElementById('select-fecha');
+        if (selectFecha) selectFecha.disabled = false;
+    }
 }
 
 function updateTurnosPaciente() {
@@ -272,7 +277,7 @@ function renderPanelAdmin() {
 window.cancelarCita = function(id) {
     if (confirm("❌ ¿CANCELAR CITA MÉDICA?\n\nEsta acción cancelará permanentemente tu cita programada.\n\n¿Estás seguro?")) {
         misCitas = misCitas.filter(c => c.id !== id);
-        citasCanceladasHistorial++; // Incrementa el contador para refrescar las estadísticas del Admin
+        citasCanceladasHistorial++; 
         renderSidebarAppointments();
     }
 }
@@ -289,7 +294,7 @@ window.reagendarCita = function(id) {
 }
 
 window.atenderPaciente = function(id) {
-    alert("🩺 Consultando historial clínico del paciente...");
+    alert("%EF%B8%8F Consultando historial clínico del paciente...");
     misCitas = misCitas.filter(c => c.id !== id);
     renderTablaMedico("Dr. Carlos Mendoza");
     renderPanelAdmin();
@@ -306,6 +311,7 @@ window.togglePasswordVisibility = function() {
     if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
 }
 
+// 5. Inicialización limpia y asignación del Login sin duplicados
 document.addEventListener("DOMContentLoaded", () => {
     const authForm = document.getElementById('auth-form');
     if (authForm) {
@@ -331,4 +337,3 @@ document.addEventListener("DOMContentLoaded", () => {
     const vistaMedico = document.getElementById("view-medico");
     const botonGuardar = document.getElementById("btnGuardar");
     if (vistaMedico && botonGuardar) {
-        vistaMedico.addEventListener("input", () => { botonGuardar.style.display = "inline-block"; });
