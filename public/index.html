@@ -110,6 +110,26 @@
                 <div class="role-desc"></div>
             </div>
         </div>
+        <!-- 🔐 1. PANTALLA DE AUTENTICACIÓN (LOGIN Y REGISTRO) -->
+        <div id="auth-section" class="d-none panel-box" style="max-width: 450px; margin: 20px auto;">
+            <h3 id="auth-title" style="color:#7e57c2; margin-top:0; text-align: center;">Iniciar Sesión</h3>
+            <form id="auth-form">
+                <div class="form-group" id="email-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="auth-email" class="form-control" placeholder="ejemplo@correo.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="auth-password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="btn-auth-submit" class="btn-morado">Ingresar</button>
+            </form>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="#" id="toggle-auth-mode" onclick="toggleAuthMode()" style="color: #7e57c2; font-weight: 600; text-decoration: none; font-size: 14px;">¿No tienes cuenta? Regístrate aquí</a>
+            </div>
+            <button type="button" class="btn-warning" style="width: 100%; margin-top: 10px; padding: 10px;" onclick="backToRoles()">Volver a Roles</button>
+        </div>
+
         <!-- 👤 VISTA EXCLUSIVA: PACIENTE -->
         <div id="view-paciente" class="d-none panel-box">
             <h3 style="color:#7e57c2; margin-top:0;">Reserva tu Cita Médica</h3>
@@ -147,34 +167,29 @@
             
             <button type="button" class="btn-morado" onclick="executeSchedule()">Agendar Cita</button>
 
-            <!-- 📅 TABLA INTERNA: CITAS AGENDADAS DEL PACIENTE CON GESTIÓN -->
-            <div id="panel-citas-paciente-seccion" class="d-none" style="background: #ffffff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 25px;">
-                <h4 style="margin-top: 0; color: #4a148c; margin-bottom: 5px;">🗓️ Mis Citas Próximas Agendadas</h4>
-                <p style="margin: 0 0 15px 0; font-size: 11px; color: #777; font-style: italic;">* Nota: Como mínimo 24 horas antes de la cita se puede cancelar o reagendar.</p>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Especialidad</th>
-                                <th>Médico</th>
-                                <th>Horario y Fecha</th>
-                                <th>Estado</th>
-                                <th>Acciones de Gestión</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-citas-paciente">
-                            <tbody id="tabla-citas-paciente">
-                              <tr>
-                                 <td>Dr. Alejandro Martínez</td>
-                                 <td>10:30 AM - 18/07/2026</td>
-                                 <td><span style="background-color: #fef08a; color: #854d0e; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 0.85rem;">Pendiente</span></td>
-                                 <td>
-                                 <!-- Botón Reagendar apuntando a la función correcta de app.js -->
-                                 <button onclick="window.reagendarCita('1')" class="btn-reagendar" style="background-color: #facc15; color: #451a03; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-right: 8px; box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);">Reagendar</button>
-                    
-                                 <!-- Botón Cancelar apuntando a la función correcta de app.js -->
-                                 <button onclick="window.cancelarCita('1')" class="btn-cancelar" style="background-color: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);">Cancelar Cita</button>
-                                 </td>
+        <!-- 📅 TABLA INTERNA: CITAS AGENDADAS DEL PACIENTE CON GESTIÓN -->
+        <div id="panel-citas-paciente-seccion" class="d-none" style="background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 25px;">
+            <h4 style="margin-top: 0; color: #4a148c; margin-bottom: 5px;">🗓️ Mis Citas Próximas Agendadas</h4>
+            <p style="margin: 0 0 15px 0; font-size: 11px; color: #777; font-style: italic;">* Nota: Como mínimo 24 horas antes de la cita se puede cancelar o reagendar.</p>
+            
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Especialidad</th>
+                            <th>Médico</th>
+                            <th>Horario y Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones de Gestión</th>
+                        </tr>
+                    </thead>
+                    <!-- CORRECCIÓN: Un solo tbody limpio; JavaScript se encargará de inyectar las filas dinámicamente -->
+                    <tbody id="tabla-citas-paciente">
+                        <!-- JS insertará aquí las filas de forma segura sin romper el diseño -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         <!-- 🩺 VISTA EXCLUSIVA: MÉDICO (Panel de Control y Modificación de Horarios) -->
         <div id="view-medico" class="d-none panel-box">
@@ -182,7 +197,7 @@
             <p style="margin: 0 0 20px 0; font-size: 13px; color: #666;">Selecciona un día en el calendario para liberar turnos médicos o cancelar citas asignadas.</p>
             
             <div class="form-group" style="max-width: 300px;">
-                <label>Seleccionar Fecha para gestionar:</label>
+                <label style="font-weight: 600; color: #444;">Seleccionar Fecha para gestionar:</label>
                 <input type="date" id="medico-fecha-gestion" class="form-control" onchange="renderCalendarioMedico()">
             </div>
 
@@ -194,8 +209,12 @@
                 </div>
             </div>
 
-<button type="button" id="btnGuardar" onclick="guardarHorarios()" style="display: none;">Guardar y Publicar Horarios</button>
-
+            <!-- CORRECCIÓN: Botón guardar estilizado de forma interactiva e impecable a juego con el panel azul del médico -->
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" id="btnGuardar" onclick="guardarHorarios()" style="display: none; background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%); color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 117, 252, 0.3); transition: transform 0.2s;">
+                    💾 Guardar y Publicar Horarios
+                </button>
+            </div>
 
             <h3 style="color:#2575fc; margin-top:30px; margin-bottom: 10px;">📋 Agenda de Pacientes Programados</h3>
             <div style="overflow-x: auto;">
@@ -209,11 +228,12 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-citas-medico">
-                        <!-- Controlado por JS -->
+                        <!-- Controlado dinámicamente por JS -->
                     </tbody>
                 </table>
             </div>
         </div>
+
         <!-- 👑 VISTA EXCLUSIVA: ADMINISTRADOR (Estadísticas, Dispositivos Globales y 8 Médicos) -->
         <div id="view-admin" class="d-none panel-box" style="margin-top: 20px;">
             <h2 style="color: #4A4A4A; margin-bottom:20px; margin-top:0;">⚙️ Panel Administrativo General (Nube Espejo Global)</h2>
