@@ -53,7 +53,7 @@ app.post('/api/upload-avatar', upload.single('avatar'), (req, res) => {
 
 // ================= RUTAS DE AUTENTICACIÓN SIMULADAS =================
 
-// Ruta para Registrar Paciente (Corregida e integrada limpiamente)
+// Ruta para Registrar Paciente
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password, role } = req.body;
@@ -61,9 +61,7 @@ app.post('/api/auth/register', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Faltan datos requeridos' });
         }
         
-        // Encriptar la contraseña usando bcryptjs antes de guardarla
         const hashedPassword = await bcrypt.hash(password, 10);
-        
         const nuevoUsuario = { email, password: hashedPassword, role: role || 'Paciente' };
         usuariosDB.push(nuevoUsuario);
 
@@ -83,13 +81,11 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'Usuario o rol incorrectos' });
         }
 
-        // Validar la contraseña encriptada
         const passwordCorrecto = await bcrypt.compare(password, usuario.password);
         if (!passwordCorrecto) {
             return res.status(401).json({ success: false, message: 'Contraseña incorrecta' });
         }
 
-        // Guardar al usuario en la sesión del servidor
         req.session.user = { email: usuario.email, role: usuario.role };
         res.json({ success: true, user: req.session.user });
     } catch (error) {
