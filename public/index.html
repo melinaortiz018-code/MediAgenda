@@ -789,45 +789,23 @@
             if (input.type === "password") { input.type = "text"; button.innerText = "🙈"; } 
             else { input.type = "password"; button.innerText = "👁️"; }
         }
+    <!-- ========================================== -->
+    <!--  BLOQUE FINAL DE CONTROL DE LA INTERFAZ   -->
+    <!-- ========================================== -->
     <script>
-        // Función interactiva de cancelación
-        function confirmarCancelacion(event) {
-            event.preventDefault(); 
-            const usuarioSeguro = confirm("¿Estás seguro de que deseas cancelar esta cita?");
-            if (usuarioSeguro) {
-                alert("Su cita ha sido cancelada exitosamente.");
-                const form = event.target.closest('form');
-                if (form) form.submit(); 
+        // Función interactiva para el botón del ojito de la contraseña
+        window.togglePasswordVisibility = function() {
+            const passInput = document.getElementById('auth-password');
+            if (passInput) {
+                passInput.type = passInput.type === "password" ? "text" : "password";
             }
-            return false;
-        }
+        };
+    </script>
 
-        // Redirección para reagendar a una fecha futura
-        function iniciarReagendacion(idCita) {
-            window.location.href = `/auth/reagendar-cita?id=${idCita}`;
-        }
+    <!-- Llamamos a la librería guardada localmente en tu carpeta js -->
+    <script src="/js/sweetalert2.js"></script>
 
-        // Registro de funciones globales seguras sin romper el resto de la página
-        window.confirmarCancelacion = confirmarCancelacion;
-        window.iniciarReagendacion = iniciarReagendacion;
-        window.openModal = openModal; 
-        window.closeModal = closeModal; 
-        window.switchTab = switchTab;
-        window.executeRegister = executeRegister; 
-        window.executeLogin = executeLogin; 
-        window.logOut = logOut;
-        window.updateMedicos = updateMedicos; 
-        window.updateCalendarioPaciente = updateCalendarioPaciente;
-        window.updateTurnosPaciente = updateTurnosPaciente; 
-        window.executeSchedule = executeSchedule;
-        window.deleteUser = deleteUser; 
-        window.togglePassword = togglePassword;
-        window.executeForgotPassword = executeForgotPassword;
-        
-            <!-- Llamamos a la librería guardada localmente en tu carpeta js -->
-    <script src="js/sweetalert2.js"></script>
-    
-    <!-- Tu lógica del sistema web -->
-    <script src="js/app.js"></script>
+    <!-- Tu lógica general del sistema web -->
+    <script src="/js/app.js"></script>
 </body>
 </html>
