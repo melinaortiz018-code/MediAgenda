@@ -20,12 +20,26 @@ let misCitas = [
     { id: "1", especialidad: "Medicina General", medico: "Dr. Alejandro Martínez", fechaHora: "10:30 AM - 18/07/2026", estado: "Pendiente" }
 ];
 
-// Al dar clic en una tarjeta, se muestra el Login correspondiente
+// Función principal corregida con protección contra elementos nulos
 function openModal(role) { 
     selectedRole = role; 
-    document.getElementById('view-roles').classList.add('d-none'); 
-    document.getElementById('auth-section').classList.remove('d-none');
-    document.getElementById('auth-title').innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
+    
+    // Protegemos el código verificando si el elemento de roles existe antes de usar classList
+    const panelRoles = document.getElementById('view-roles') || document.getElementById('role-selection');
+    if (panelRoles) {
+        panelRoles.classList.add('d-none'); 
+    }
+    
+    // Verificamos si tienes la sección de login dibujada
+    const authSection = document.getElementById('auth-section');
+    if (authSection) {
+        authSection.classList.remove('d-none');
+        const authTitle = document.getElementById('auth-title');
+        if (authTitle) authTitle.innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
+    } else {
+        // Si no encuentra la pantalla de login en tu HTML, salta directo a tu panel de trabajo
+        activarPanelRol(role, "Usuario Invitado");
+    }
 }
 
 function selectRole(role) {
