@@ -1,8 +1,6 @@
 let selectedRole = '';
 let isRegisterMode = false;
-let currentUser = null;
 
-// Médicos pregenerados alineados con las opciones de tu menú HTML (sin tildes en las claves)
 const medicosData = { 
     "Medicina General": [{name: "Dra. Elena Espinoza", ci:"1712345671"}, {name: "Dr. Carlos Mendoza", ci:"1712345672"}], 
     "Psicologia": [{name: "Dra. Camila Restrepo", ci:"1712345675"}, {name: "Dr. Fernando Ortiz", ci:"1712345676"}],
@@ -10,17 +8,12 @@ const medicosData = {
     "Odontologia": [{name: "Dra. Valeria Benítez", ci:"1712345673"}, {name: "Dr. Ricardo Alarcón", ci:"1712345674"}]
 };
 
-// Horarios de ejemplo que alimentarán tu lista desplegable
-let agendaHorarios = [ 
-    "08:00 AM", "09:00 AM", "10:30 AM", "11:00 AM", "14:00 PM", "15:00 PM"
-];
+let agendaHorarios = ["08:00 AM", "09:00 AM", "10:30 AM", "11:00 AM", "14:00 PM", "15:00 PM"];
 
-// Citas iniciales alineadas con las 5 columnas exactas de tu tabla
 let misCitas = [ 
     { id: "1", especialidad: "Medicina General", medico: "Dr. Alejandro Martínez", fechaHora: "10:30 AM - 18/07/2026", estado: "Pendiente" }
 ];
 
-// Al dar clic en una tarjeta, se muestra el Login correspondiente
 function openModal(role) { 
     selectedRole = role; 
     document.getElementById('view-roles').classList.add('d-none'); 
@@ -28,9 +21,7 @@ function openModal(role) {
     document.getElementById('auth-title').innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
 }
 
-function selectRole(role) {
-    openModal(role);
-}
+function selectRole(role) { openModal(role); }
 
 function backToRoles() { 
     document.getElementById('auth-section').classList.add('d-none'); 
@@ -41,32 +32,18 @@ function backToRoles() {
 
 function toggleAuthMode() { 
     isRegisterMode = !isRegisterMode; 
-    
-    const authTitle = document.getElementById('auth-title');
+    document.getElementById('auth-title').innerText = isRegisterMode ? "Registro de Cuenta" : `Ingreso: ${selectedRole}`; 
+    document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Registrarse" : "Ingresar";
+    document.getElementById('toggle-auth-mode').innerText = isRegisterMode ? "¿Ya tienes cuenta? Inicia Sesión" : "¿No tienes cuenta? Regístrate aquí";
+
     const nameGroup = document.getElementById('name-group');
     const ciGroup = document.getElementById('ci-group');
-    const btnSubmit = document.getElementById('btn-auth-submit');
-    const toggleLink = document.getElementById('toggle-auth-mode');
-
-    if (authTitle) authTitle.innerText = isRegisterMode ? "Registro de Cuenta" : `Ingreso: ${selectedRole}`; 
-    if (btnSubmit) btnSubmit.innerText = isRegisterMode ? "Registrarse" : "Ingresar";
-    if (toggleLink) toggleLink.innerText = isRegisterMode ? "¿Ya tienes cuenta? Inicia Sesión" : "¿No tienes cuenta? Regístrate aquí";
-
-    // Activamos o removemos los campos extras de CI y Nombre de forma dinámica
     if (isRegisterMode) {
         if (nameGroup) nameGroup.classList.remove('d-none');
         if (ciGroup) ciGroup.classList.remove('d-none');
     } else {
         if (nameGroup) nameGroup.classList.add('d-none');
         if (ciGroup) ciGroup.classList.add('d-none');
-    }
-}
-
-// Función interactiva para el botón del ojito de la contraseña
-window.togglePasswordVisibility = function() {
-    const passInput = document.getElementById('auth-password');
-    if (passInput) {
-        passInput.type = passInput.type === "password" ? "text" : "password";
     }
 }
 
@@ -107,7 +84,7 @@ function logOut() {
     document.getElementById("user-tag").style.display = "none";
     document.getElementById('auth-form').reset();
 }
-// 1. Carga los médicos correspondientes según tu HTML
+
 function updateMedicos() { 
     const esp = document.getElementById('select-esp').value; 
     const selectMed = document.getElementById('select-med'); 
@@ -136,9 +113,7 @@ function updateMedicos() {
 function updateCalendarioPaciente() {
     const selectMed = document.getElementById('select-med');
     const selectFecha = document.getElementById('select-fecha');
-    if(selectMed.value) {
-        selectFecha.disabled = false;
-    }
+    if(selectMed.value) { selectFecha.disabled = false; }
 }
 
 function updateTurnosPaciente() {
@@ -156,7 +131,6 @@ function updateTurnosPaciente() {
     });
 }
 
-// 🔑 NUEVAS ALERTAS INTEGRADAS CON SWEETALERT2
 function executeSchedule() {
     const esp = document.getElementById('select-esp').value;
     const medSelect = document.getElementById('select-med');
@@ -185,7 +159,6 @@ function executeSchedule() {
             renderSidebarAppointments();
             Swal.fire({ icon: 'success', title: '¡Excelente!', text: '¡Cita agendada correctamente!', confirmButtonColor: '#7e57c2' });
             
-            // Reseteo del formulario
             document.getElementById('select-esp').value = "";
             medSelect.innerHTML = '<option value="">-- Selecciona un área primero --</option>';
             medSelect.disabled = true;
@@ -243,64 +216,3 @@ window.reagendarCita = function(id) {
 
     Swal.fire({
         title: 'Reagendar Horario',
-        text: 'Ingresa la nueva fecha y hora para tu consulta:',
-        input: 'text',
-        inputValue: cita.fechaHora,
-        inputPlaceholder: 'Ej: 11:00 AM - 22/07/2026',
-        showCancelButton: true,
-        confirmButtonColor: '#facc15',
-        confirmButtonText: '<span style="color: #451a03">Actualizar Horario</span>',
-        cancelButtonText: 'Volver',
-        inputValidator: (value) => {
-            if (!value) { return '¡Debes escribir un nuevo horario válido!' }
-        }
-    }).then((result) => {
-        if (result.value) {
-            cita.fechaHora = result.value;
-            renderSidebarAppointments();
-            Swal.fire({ icon: 'success', title: '¡Hecho!', text: 'El horario de la cita médica se actualizó con éxito.', confirmButtonColor: '#7e57c2' });
-        }
-    });
-}
-
-function guardarHorarios() {
-    const btn = document.getElementById("btnGuardar");
-    if (btn) btn.style.display = "none";
-    Swal.fire({ icon: 'success', title: 'Cambios Guardados', text: '¡Los cambios en tus horarios se publicaron con éxito!', confirmButtonColor: '#2575fc' });
-}
-
-// Controladores de formularios y accesos por correo
-document.addEventListener("DOMContentLoaded", () => {
-    const authForm = document.getElementById('auth-form');
-    if (authForm) {
-        authForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value.trim().toLowerCase();
-            const nombreInput = document.getElementById('auth-nombre')?.value || "Usuario Invitado";
-
-            // Restricción de accesos solicitada:
-            if (selectedRole === 'Medico' && email !== 'medico@agenda.com') {
-                Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Este correo no está registrado como Médico (Usa: medico@agenda.com).' });
-                return;
-            }
-            if ((selectedRole === 'Admin' || selectedRole === 'Administrador') && email !== 'admin@agenda.com') {
-                Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'Este correo no pertenece al área de Administración (Usa: admin@agenda.com).' });
-                return;
-            }
-
-            if (isRegisterMode) {
-                Swal.fire({ icon: 'success', title: '¡Registro Exitoso!', text: `Bienvenido al sistema MediAgenda, ${nombreInput}.` });
-            }
-
-            const nombreMostrar = isRegisterMode ? nombreInput : email;
-            loginExitoso(nombreMostrar);
-        });
-    }
-
-    const vistaMedico = document.getElementById("view-medico");
-    const botonGuardar = document.getElementById("btnGuardar");
-    if (vistaMedico && botonGuardar) {
-        vistaMedico.addEventListener("input", () => { botonGuardar.style.display = "inline-block"; });
-        vistaMedico.addEventListener("change", () => { botonGuardar.style.display = "inline-block"; });
-    }
-});
