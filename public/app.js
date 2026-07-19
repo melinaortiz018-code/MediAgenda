@@ -200,3 +200,36 @@ function renderPanelAdmin() {
         }
     }
 }
+function switchTab(mode) {
+    isRegisterMode = (mode === 'register');
+    
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const formLogin = document.getElementById('form-login-container');
+    const formRegister = document.getElementById('form-register-container');
+
+    if (isRegisterMode) {
+        tabLogin?.classList.remove('active');
+        tabRegister?.classList.add('active');
+        if (formLogin) formLogin.style.display = 'none';
+        if (formRegister) formRegister.classList.remove('d-none');
+    } else {
+        tabLogin?.classList.add('active');
+        tabRegister?.classList.remove('remove');
+        if (formLogin) formLogin.style.display = 'block';
+        if (formRegister) formRegister.classList.add('d-none');
+    }
+}
+
+function togglePassword(inputId, buttonEl) {
+    const input = document.getElementById(inputId);
+    if (input) {
+        if (input.type === "password") {
+            input.type = "text";
+            buttonEl.textContent = "🙈";
+        } else {
+            input.type = "password";
+            buttonEl.textContent = "👁️";
+        }
+    }
+}
