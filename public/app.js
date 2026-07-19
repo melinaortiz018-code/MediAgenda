@@ -17,13 +17,33 @@ let misCitas = [
 
 let citasCanceladasHistorial = 3;
 
+// --- CREDENCIALES ESTÁTICAS DE ACCESO CONFIGURADAS ---
+const CREDENCIALES_MEDICO = { email: "medico@mediagenda.com", pass: "medico123" };
+const CREDENCIALES_ADMIN = { email: "admin@mediagenda.com", pass: "admin123" };
+
 function openModal(role) { 
     selectedRole = role; 
+    isRegisterMode = false;
+    
     const authModal = document.getElementById('auth-modal');
+    const authTabs = document.getElementById('auth-tabs');
+    const authTitle = document.getElementById('auth-title');
+
     if (authModal) {
         authModal.style.display = 'flex';
-        const authTitle = document.getElementById('auth-title');
-        if (authTitle) authTitle.innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
+        switchTab('login'); // Forzar que abra en vista de login por defecto
+
+        // Regla especial: Ocultar pestañas de registro si es Administrador
+        if (role === 'Admin') {
+            if (authTabs) authTabs.style.display = 'none';
+            if (authTitle) {
+                authTitle.style.display = 'block';
+                authTitle.innerText = "Ingreso Administrativo";
+            }
+        } else {
+            if (authTabs) authTabs.style.display = 'flex';
+            if (authTitle) authTitle.style.display = 'none';
+        }
     }
 }
 
@@ -32,37 +52,73 @@ function selectRole(role) { openModal(role); }
 function closeModal() {
     const authModal = document.getElementById('auth-modal');
     if (authModal) authModal.style.display = 'none';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('reg-name').value = '';
+    document.getElementById('reg-ci').value = '';
+    document.getElementById('reg-email').value = '';
+    document.getElementById('reg-pass').value = '';
 }
 
-function backToRoles() { 
-    closeModal();
-    isRegisterMode = false;
-}
+function switchTab(mode) {
+    isRegisterMode = (mode === 'register');
+    
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const formLogin = document.getElementById('form-login-container');
+    const formRegister = document.getElementById('form-register-container');
 
-function toggleAuthMode() { 
-    isRegisterMode = !isRegisterMode; 
-    document.getElementById('auth-title').innerText = isRegisterMode ? "Registro de Cuenta" : `Ingreso: ${selectedRole}`; 
-    document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Registrarse" : "Ingresar";
-    document.getElementById('toggle-auth-mode').innerText = isRegisterMode ? "¿Ya tienes cuenta? Inicia Sesión" : "¿No tienes cuenta? Regístrate aquí";
-    document.getElementById('name-group')?.classList.toggle('d-none', !isRegisterMode);
-    document.getElementById('ci-group')?.classList.toggle('d-none', !isRegisterMode);
+    if (isRegisterMode) {
+        tabLogin?.classList.remove('active');
+        tabRegister?.classList.add('active');
+        if (formLogin) formLogin.style.display = 'none';
+        if (formRegister) formRegister.classList.remove('d-none');
+    } else {
+        tabLogin?.classList.add('active');
+        tabRegister?.classList.remove('active');
+        if (formLogin) formLogin.style.display = 'block';
+        if (formRegister) formRegister.classList.add('d-none');
+    }
 }
 
 function executeLogin() {
-    const user = document.getElementById('login-user').value.trim();
+    const email = document.getElementById('login-email').value.trim();
     const pass = document.getElementById('login-pass').value.trim();
 
-    if (!user || !pass) {
-        alert("⚠️ Por favor rellenar campos de acceso.");
+    if (!email || !pass) {
+        alert("⚠️ Por favor rellenar los campos de acceso.");
         return;
     }
+
+    // Validación de seguridad de las claves de prueba
+    if (selectedRole === 'Admin') {
+        if (email !== CREDENCIALES_ADMIN.email || pass !== CREDENCIALES_ADMIN.pass) {
+            alert(`❌ Error Administrativo.\n\nPrueba usando:\nCorreo: admin@mediagenda.com\nContraseña: admin123`);
+            return;
+        }
+    } else if (selectedRole === 'Medico') {
+        if (email !== CREDENCIALES_MEDICO.email || pass !== CREDENCIALES_MEDICO.pass) {
+            alert(`❌ Error del Especialista.\n\nPrueba usando:\nCorreo: medico@mediagenda.com\nContraseña: medico123`);
+            return;
+        }
+    }
+
     closeModal();
-    activarPanelRol(selectedRole, user);
+    activarPanelRol(selectedRole, email);
 }
 
 function executeRegister() {
-    alert("🎉 Cuenta registrada de forma exitosa.");
-    toggleAuthMode();
+    const name = document.getElementById('reg-name').value.trim();
+    const ci = document.getElementById('reg-ci').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass = document.getElementById('reg-pass').value.trim();
+
+    if (!name || !ci || !email || !pass) {
+        alert("⚠️ CAMPOS REQUERIDOS INCOMPLETOS\nPor favor llene los 4 campos del formulario de registro.");
+        return;
+    }
+    alert("🎉 Cuenta registrada de forma exitosa. Ahora puede iniciar sesión.");
+    switchTab('login');
 }
 
 function activarPanelRol(role, email) {
@@ -152,10 +208,6 @@ function updateTurnosPaciente() {
     });
 }
 
-function executeSchedule() {
-    alert("🎉 Cita agendada con éxito.");
-}
-
 function renderSidebarAppointments() {
     const tbody = document.getElementById('tabla-citas-paciente');
     if (!tbody) return; tbody.innerHTML = '';
@@ -171,65 +223,10 @@ function renderTablaMedico(medicoNombre) {
     if (!tbody) return; tbody.innerHTML = '';
     misCitas.forEach(cita => {
         let tr = document.createElement('tr');
-        tr.innerHTML = `<td><strong>${cita.paciente}</strong></td><td>${cita.fechaHora}</td><td><span style="background:#d1ecf1; color:#0c5460; padding:3px 8px; border-radius:4px;">${cita.estado}</span></td><td><button class="btn-warning" onclick="alert('Atendiendo...')">Atender</button></td>`;
+        tr.innerHTML = `<td><strong>${cita.paciente}</strong></td><td>${cita.fechaHora}</td><td><span style="background:#d1ecf1; color:#0c5460; padding:3px 8px; border-radius:4px;">${cita.estado}</span></td><td><button class="btn-warning" onclick="alert('Atendiendo paciente...')">Atender</button></td>`;
         tbody.appendChild(tr);
     });
 }
 
 function renderPanelAdmin() {
     if(document.getElementById('stat-agendadas')) document.getElementById('stat-agendadas').innerText = misCitas.length;
-    if(document.getElementById('stat-canceladas')) document.getElementById('stat-canceladas').innerText = citasCanceladasHistorial;
-
-    const tbodyUsers = document.getElementById('tabla-usuarios-admin');
-    if (tbodyUsers) {
-        tbodyUsers.innerHTML = `
-            <tr><td><strong>admin_global</strong></td><td><span style="background:#343a40; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">ADMIN</span></td><td>9999999999</td><td><span style="color:#28a745; font-weight:bold;">🟢 En Línea</span></td></tr>
-        `;
-    }
-
-    const containerMedicos = document.getElementById('admin-lista-medicos-container');
-    if (containerMedicos) {
-        containerMedicos.innerHTML = '';
-        for (let especialidad in medicosData) {
-            medicosData[especialidad].forEach(medico => {
-                let div = document.createElement('div');
-                div.style = "display:flex; justify-content:space-between; align-items:center; padding:10px; background:#fff; border:1px solid #ddd; border-radius:8px;";
-                div.innerHTML = `<div><strong style="color:#4a148c;">${medico.name}</strong><br><small style="color:#666;">${especialidad}</small></div><span style="font-weight:bold; font-size:13px; color:#22c55e;">🟢 Conectado</span>`;
-                containerMedicos.appendChild(div);
-            });
-        }
-    }
-}
-function switchTab(mode) {
-    isRegisterMode = (mode === 'register');
-    
-    const tabLogin = document.getElementById('tab-login');
-    const tabRegister = document.getElementById('tab-register');
-    const formLogin = document.getElementById('form-login-container');
-    const formRegister = document.getElementById('form-register-container');
-
-    if (isRegisterMode) {
-        tabLogin?.classList.remove('active');
-        tabRegister?.classList.add('active');
-        if (formLogin) formLogin.style.display = 'none';
-        if (formRegister) formRegister.classList.remove('d-none');
-    } else {
-        tabLogin?.classList.add('active');
-        tabRegister?.classList.remove('remove');
-        if (formLogin) formLogin.style.display = 'block';
-        if (formRegister) formRegister.classList.add('d-none');
-    }
-}
-
-function togglePassword(inputId, buttonEl) {
-    const input = document.getElementById(inputId);
-    if (input) {
-        if (input.type === "password") {
-            input.type = "text";
-            buttonEl.textContent = "🙈";
-        } else {
-            input.type = "password";
-            buttonEl.textContent = "👁️";
-        }
-    }
-}
