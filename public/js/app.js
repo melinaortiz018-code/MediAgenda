@@ -9,18 +9,21 @@ const medicosData = {
 };
 
 let agendaHorarios = ["08:00 AM", "09:00 AM", "10:30 AM", "11:00 AM", "14:00 PM", "15:00 PM"];
-
-let misCitas = [ 
-    { id: "1", especialidad: "Medicina General", medico: "Dr. Alejandro Martínez", fechaHora: "10:30 AM - 18/07/2026", estado: "Pendiente" }
-];
+let misCitas = [{ id: "1", especialidad: "Medicina General", medico: "Dr. Alejandro Martínez", fechaHora: "10:30 AM - 18/07/2026", estado: "Pendiente" }];
 
 function openModal(role) { 
     selectedRole = role; 
-    document.getElementById('view-roles').classList.add('d-none'); 
-    document.getElementById('auth-section').classList.remove('d-none');
-    document.getElementById('auth-title').innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
+    const panelRoles = document.getElementById('view-roles');
+    if (panelRoles) panelRoles.classList.add('d-none'); 
+    
+    const authSection = document.getElementById('auth-section');
+    if (authSection) {
+        authSection.classList.remove('d-none');
+        document.getElementById('auth-title').innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
+    } else {
+        activarPanelRol(role, "Usuario Invitado");
+    }
 }
-
 function selectRole(role) { openModal(role); }
 
 function backToRoles() { 
@@ -35,16 +38,8 @@ function toggleAuthMode() {
     document.getElementById('auth-title').innerText = isRegisterMode ? "Registro de Cuenta" : `Ingreso: ${selectedRole}`; 
     document.getElementById('btn-auth-submit').innerText = isRegisterMode ? "Registrarse" : "Ingresar";
     document.getElementById('toggle-auth-mode').innerText = isRegisterMode ? "¿Ya tienes cuenta? Inicia Sesión" : "¿No tienes cuenta? Regístrate aquí";
-
-    const nameGroup = document.getElementById('name-group');
-    const ciGroup = document.getElementById('ci-group');
-    if (isRegisterMode) {
-        if (nameGroup) nameGroup.classList.remove('d-none');
-        if (ciGroup) ciGroup.classList.remove('d-none');
-    } else {
-        if (nameGroup) nameGroup.classList.add('d-none');
-        if (ciGroup) ciGroup.classList.add('d-none');
-    }
+    document.getElementById('name-group')?.classList.toggle('d-none', !isRegisterMode);
+    document.getElementById('ci-group')?.classList.toggle('d-none', !isRegisterMode);
 }
 
 function loginExitoso(email) { 
@@ -54,33 +49,33 @@ function loginExitoso(email) {
 
 function activarPanelRol(role, email) {
     document.getElementById('view-roles').classList.add('d-none');
-    if(document.getElementById('view-paciente')) document.getElementById('view-paciente').classList.add('d-none');
-    if(document.getElementById('view-medico')) document.getElementById('view-medico').classList.add('d-none'); 
-    if(document.getElementById('panel-citas-paciente-seccion')) document.getElementById('panel-citas-paciente-seccion').classList.add('d-none');
+    document.getElementById('view-paciente')?.classList.add('d-none');
+    document.getElementById('view-medico')?.classList.add('d-none'); 
+    document.getElementById('panel-citas-paciente-seccion')?.classList.add('d-none');
 
     if(role === 'Paciente') { 
-        document.getElementById('view-paciente').classList.remove('d-none'); 
-        document.getElementById('panel-citas-paciente-seccion').classList.remove('d-none'); 
+        document.getElementById('view-paciente')?.classList.remove('d-none'); 
+        document.getElementById('panel-citas-paciente-seccion')?.classList.remove('d-none'); 
         mostrarBarraSesion(email, "Paciente");
         renderSidebarAppointments(); 
     } else if(role === 'Medico') { 
-        document.getElementById('view-medico').classList.remove('d-none'); 
+        document.getElementById('view-medico')?.classList.remove('d-none'); 
         mostrarBarraSesion(email, "Médico");
     }
 }
 
 function mostrarBarraSesion(nombre, rol) {
-    const barra = document.getElementById("user-tag");
     document.getElementById("user-display").textContent = `Usuario: ${nombre} `;
     document.getElementById("role-display").textContent = rol.toUpperCase();
+    const barra = document.getElementById("user-tag");
     if (barra) barra.style.display = "block";
 }
 
 function logOut() { 
     document.getElementById('view-roles').classList.remove('d-none'); 
-    if(document.getElementById('view-paciente')) document.getElementById('view-paciente').classList.add('d-none'); 
-    if(document.getElementById('view-medico')) document.getElementById('view-medico').classList.add('d-none'); 
-    if(document.getElementById('panel-citas-paciente-seccion')) document.getElementById('panel-citas-paciente-seccion').classList.add('d-none');
+    document.getElementById('view-paciente')?.classList.add('d-none'); 
+    document.getElementById('view-medico')?.classList.add('d-none'); 
+    document.getElementById('panel-citas-paciente-seccion')?.classList.add('d-none');
     document.getElementById("user-tag").style.display = "none";
     document.getElementById('auth-form').reset();
 }
@@ -112,8 +107,7 @@ function updateMedicos() {
 
 function updateCalendarioPaciente() {
     const selectMed = document.getElementById('select-med');
-    const selectFecha = document.getElementById('select-fecha');
-    if(selectMed.value) { selectFecha.disabled = false; }
+    if(selectMed.value) document.getElementById('select-fecha').disabled = false;
 }
 
 function updateTurnosPaciente() {
@@ -130,7 +124,6 @@ function updateTurnosPaciente() {
         selectHor.appendChild(opt);
     });
 }
-
 function executeSchedule() {
     const esp = document.getElementById('select-esp').value;
     const medSelect = document.getElementById('select-med');
@@ -138,36 +131,26 @@ function executeSchedule() {
     const hora = document.getElementById('select-hor').value;
 
     if (!esp || !medSelect.value || !fecha || !hora) {
-        Swal.fire({ icon: 'warning', title: 'Campos Incompletos', text: 'Por favor, completa todos los pasos antes de agendar.', confirmButtonColor: '#7e57c2' });
+        alert("⚠️ CAMPOS INCOMPLETOS\nPor favor, completa todos los pasos antes de agendar.");
         return;
     }
 
     let medNombre = medSelect.options[medSelect.selectedIndex].text;
-
-    Swal.fire({
-        title: '¿Confirmar Reserva?',
-        text: `Vas a agendar una cita a las ${hora} con el especialista ${medNombre}`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#7e57c2',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, agendar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            misCitas.push({ id: Date.now().toString(), especialidad: esp, medico: medNombre, fechaHora: `${hora} - ${fecha}`, estado: "Pendiente" });
-            renderSidebarAppointments();
-            Swal.fire({ icon: 'success', title: '¡Excelente!', text: '¡Cita agendada correctamente!', confirmButtonColor: '#7e57c2' });
-            
-            document.getElementById('select-esp').value = "";
-            medSelect.innerHTML = '<option value="">-- Selecciona un área primero --</option>';
-            medSelect.disabled = true;
-            document.getElementById('select-fecha').value = "";
-            document.getElementById('select-fecha').disabled = true;
-            document.getElementById('select-hor').innerHTML = '<option value="">-- Elige una fecha primero --</option>';
-            document.getElementById('select-hor').disabled = true;
-        }
-    });
+    let confirmacion = confirm(`📋 ¿CONFIRMAR RESERVA?\n\nVas a agendar una cita a las ${hora} con el especialista ${medNombre}.\n\n¿Deseas continuar?`);
+    
+    if (confirmacion) {
+        misCitas.push({ id: Date.now().toString(), especialidad: esp, medico: medNombre, fechaHora: `${hora} - ${fecha}`, estado: "Pendiente" });
+        renderSidebarAppointments();
+        alert("✅ ¡ÉXITE!\nCita médica agendada correctamente.");
+        
+        document.getElementById('select-esp').value = "";
+        medSelect.innerHTML = '<option value="">-- Selecciona un área primero --</option>';
+        medSelect.disabled = true;
+        document.getElementById('select-fecha').value = "";
+        document.getElementById('select-fecha').disabled = true;
+        document.getElementById('select-hor').innerHTML = '<option value="">-- Elige una fecha primero --</option>';
+        document.getElementById('select-hor').disabled = true;
+    }
 }
 
 function renderSidebarAppointments() {
@@ -192,27 +175,63 @@ function renderSidebarAppointments() {
 }
 
 window.cancelarCita = function(id) {
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: "Esta acción cancelará permanentemente tu cita médica programada.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#7e57c2',
-        confirmButtonText: 'Sí, cancelar cita',
-        cancelButtonText: 'Mantener cita'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            misCitas = misCitas.filter(c => c.id !== id);
-            renderSidebarAppointments();
-            Swal.fire({ icon: 'success', title: 'Cancelada', text: 'La cita ha sido cancelada correctamente.', confirmButtonColor: '#7e57c2' });
-        }
-    });
+    let seguro = confirm("❌ ¿CANCELAR CITA MÉDICA?\n\nEsta acción cancelará permanentemente tu cita programada.\n\n¿Estás seguro?");
+    if (seguro) {
+        misCitas = misCitas.filter(c => c.id !== id);
+        renderSidebarAppointments();
+        alert("✅ Cita cancelada correctamente.");
+    }
 }
 
 window.reagendarCita = function(id) {
     const cita = misCitas.find(c => c.id === id);
     if (!cita) return;
 
-    Swal.fire({
-        title: 'Reagendar Horario',
+    let nuevaFecha = prompt("🔄 REAGENDAR HORARIO\n\nIngresa la nueva fecha y hora para tu consulta:", cita.fechaHora);
+    if (nuevaFecha && nuevaFecha.trim() !== "") {
+        cita.fechaHora = nuevaFecha;
+        renderSidebarAppointments();
+        alert("✅ Horario actualizado con éxito.");
+    }
+}
+
+function guardarHorarios() {
+    const btn = document.getElementById("btnGuardar");
+    if (btn) btn.style.display = "none";
+    alert("💾 ¡CAMBIOS GUARDADOS!\nLos cambios en tus horarios se publicaron con éxito.");
+}
+
+window.togglePasswordVisibility = function() {
+    const passInput = document.getElementById('auth-password');
+    if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const authForm = document.getElementById('auth-form');
+    if (authForm) {
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.trim().toLowerCase();
+            const nombreInput = document.getElementById('auth-nombre')?.value || "Usuario Invitado";
+
+            if (selectedRole === 'Medico' && email !== 'medico@agenda.com') {
+                alert("❌ ACCESO DENEGADO\nEste correo no está registrado como Médico (Usa: medico@agenda.com).");
+                return;
+            }
+            if ((selectedRole === 'Admin' || selectedRole === 'Administrador') && email !== 'admin@agenda.com') {
+                alert("❌ ACCESO DENEGADO\nEste correo no pertenece a Administración (Usa: admin@agenda.com).");
+                return;
+            }
+
+            if (isRegisterMode) alert(`¡Registro Exitoso!\nBienvenido a MediAgenda, ${nombreInput}.`);
+            loginExitoso(isRegisterMode ? nombreInput : email);
+        });
+    }
+
+    const vistaMedico = document.getElementById("view-medico");
+    const botonGuardar = document.getElementById("btnGuardar");
+    if (vistaMedico && botonGuardar) {
+        vistaMedico.addEventListener("input", () => { botonGuardar.style.display = "inline-block"; });
+        vistaMedico.addEventListener("change", () => { botonGuardar.style.display = "inline-block"; });
+    }
+});
