@@ -19,9 +19,9 @@ let agendaHorarios = [
     { id: 6, hora: "15:00 PM", disponible: true }
 ];
 
-// Citas iniciales simuladas
+// Citas iniciales con la estructura exacta de tus 5 columnas del HTML
 let misCitas = [ 
-    { id: 101, especialidad: "Medicina General", medico: "Dr. Carlos Mendoza", fechaHora: new Date(Date.now() + 30 * 60 * 60 * 1000) }
+    { id: "1", especialidad: "Medicina General", medico: "Dr. Alejandro Martínez", fechaHora: "10:30 AM - 18/07/2026", estado: "Pendiente" }
 ];
 
 // Función principal al hacer clic en las tarjetas de tu HTML
@@ -44,16 +44,16 @@ function activarPanelRol(role) {
     if (document.getElementById('view-medico')) document.getElementById('view-medico').classList.add('d-none'); 
     if (document.getElementById('view-admin')) document.getElementById('view-admin').classList.add('d-none');
     
-    // CORRECCIÓN: Buscamos y mostramos la caja de citas agendadas removiendo d-none si existe
-    const panelCitas = document.getElementById('my-appointments-box') || document.querySelector('.panel-box table')?.parentElement;
+    // CORRECCIÓN: Vinculamos tu ID real del contenedor de la tabla
+    const panelCitas = document.getElementById('panel-citas-paciente-seccion');
     if (panelCitas) panelCitas.classList.add('d-none');
 
     if(role === 'Paciente') { 
         if (document.getElementById('view-paciente')) document.getElementById('view-paciente').classList.remove('d-none'); 
-        if (panelCitas) panelCitas.classList.remove('d-none'); 
+        if (panelCitas) panelCitas.classList.remove('d-none'); // Hacemos visible tu tabla de citas
         mostrarBarraSesion("Juan Pérez", "Paciente");
         renderCalendar(); 
-        renderSidebarAppointments();
+        renderSidebarAppointments(); // Renderiza las filas dinámicas
     } else if(role === 'Medico') { 
         if (document.getElementById('view-medico')) document.getElementById('view-medico').classList.remove('d-none'); 
         mostrarBarraSesion("Dr. Silva", "Médico");
@@ -81,7 +81,7 @@ function logOut() {
     if (document.getElementById('view-medico')) document.getElementById('view-medico').classList.add('d-none'); 
     if (document.getElementById('view-admin')) document.getElementById('view-admin').classList.add('d-none');
     
-    const panelCitas = document.getElementById('my-appointments-box') || document.querySelector('.panel-box table')?.parentElement;
+    const panelCitas = document.getElementById('panel-citas-paciente-seccion');
     if (panelCitas) panelCitas.classList.add('d-none');
 
     const barra = document.getElementById("user-tag");
@@ -109,10 +109,7 @@ function updateMedicos() {
     medicosData[claveEsp].forEach(med => { 
         let opt = document.createElement('option'); 
         opt.value = med.ci; 
-        
-        // CORRECCIÓN: Limpiamos los indicadores '(M)' y '(F)' para que el paciente vea el nombre limpio
         opt.innerText = med.name.replace(/\s*\(M\)\s*/i, "").replace(/\s*\(F\)\s*/i, ""); 
-        
         selectMed.appendChild(opt); 
     });
 }
@@ -129,37 +126,43 @@ function renderCalendar() {
     });
 }
 
-// Renderiza la lista o tabla de citas agendadas del paciente
+// CORRECCIÓN: Renderiza las filas dinámicas respetando tus 5 columnas y estilos CSS inline
 function renderSidebarAppointments() {
-    const container = document.getElementById('appointments-sidebar-list') || document.querySelector('#my-appointments-box tbody');
+    const container = document.getElementById('tabla-citas-paciente');
     if (!container) return;
     container.innerHTML = '';
     
     misCitas.forEach(cita => {
-        if(container.tagName === 'TBODY') {
-            // Estructura en caso de que uses una tabla formal
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${cita.especialidad}</strong></td>
-                <td>${cita.medico}</td>
-                <td>${cita.fechaHora.toLocaleString()}</td>
-                <td><button class="btn-danger" onclick="intentarCancelarCita(${cita.id})">Cancelar</button></td>
-            `;
-            container.appendChild(tr);
-        } else {
-            // Estructura en caso de bloques divs
-            let div = document.createElement('div');
-            div.className = "p-2 border-bottom mb-2 bg-white rounded";
-            div.innerHTML = `
-                <strong>${cita.especialidad}</strong><br>
-                <small>${cita.medico}</small><br>
-                <small>${cita.fechaHora.toLocaleString()}</small>
-            `;
-            container.appendChild(div);
-        }
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${cita.especialidad}</td>
+            <td>${cita.medico}</td>
+            <td>${cita.fechaHour || cita.fechaHora}</td>
+            <td><span style="background-color: #fef08a; color: #854d0e; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 0.85rem;">${cita.estado}</span></td>
+            <td>
+                <button onclick="reagendarCita('${cita.id}')" class="btn-reagendar" style="background-color: #facc15; color: #451a03; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-right: 8px;">Reagendar</button>
+                <button onclick="cancelarCita('${cita.id}')" class="btn-cancelar" style="background-color: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer;">Cancelar Cita</button>
+            </td>
+        `;
+        container.appendChild(tr);
     });
 }
 
+// Funciones globales mapeadas a tus clicks de los botones de la tabla
+window.cancelarCita = function(id) {
+    let seguro = confirm("¿Está seguro de cancelar esta cita médica?");
+    if (seguro) {
+        misCitas = misCitas.filter(c => c.id !== id);
+        renderSidebarAppointments();
+        alert("Cita cancelada correctamente.");
+    }
+}
+
+window.reagendarCita = function(id) {
+    alert("Función para reagendar cita activa. Selecciona un nuevo horario en el panel.");
+}
+
+// Inicialización del detector de cambios al cargar la página
 document.addEventListener("DOMContentLoaded", () => {
     const vistaMedico = document.getElementById("view-medico");
     const botonGuardar = document.getElementById("btnGuardar");
