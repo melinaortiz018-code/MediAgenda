@@ -169,6 +169,59 @@ function iniciarReagendacionGlobal(id) {
     if(document.getElementById('btn-paciente-main')) document.getElementById('btn-paciente-main').innerText = "Aplicar Cambio y Reagendar";
     if(document.getElementById('btn-cancelar-reagendar')) document.getElementById('btn-cancelar-reagendar').style.display = "block";
     document.getElementById('select-esp').value = cita.especialidad; updateMedicos();
+// --- 🩺 MOTOR INTERACTIVO: CALENDARIO SEMANAL DEL MÉDICO ---
+function renderCalendarioSemanalMedico() {
+    const container = document.getElementById('medico-slots-config-container'); 
+    if (!container) return; 
+    container.innerHTML = '';
+    
+    diasSemana.forEach(d => {
+        let col = document.createElement('div'); 
+        col.className = "day-column";
+        col.innerHTML = `<div class="day-header">${d}</div>`;
+        
+        rangoHorasBase.forEach(h => {
+            let act = agendaSemanalMedicos[d][h];
+            let btn = document.createElement('button'); 
+            btn.type = 'button';
+            btn.className = act ? 'slot-pill-btn slot-active' : 'slot-pill-btn slot-inactive';
+            btn.innerText = h;
+            
+            btn.onclick = function() { 
+                agendaSemanalMedicos[d][h] = !agendaSemanalMedicos[d][h]; 
+                renderCalendarioSemanalMedico(); 
+            };
+            col.appendChild(btn);
+        });
+        container.appendChild(col);
+    });
+}
+
+function renderTablaMedico(name) {
+    const tbody = document.getElementById('tabla-citas-medico'); 
+    if (!tbody) return; 
+    tbody.innerHTML = '';
+    
+    let fil = misCitas.filter(c => c.medico === name);
+    if(fil.length === 0) { 
+        tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#888;'>Sin citas asignadas hoy.</td></tr>"; 
+        return; 
+    }
+    fil.forEach(c => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${c.paciente}</strong></td>
+            <td>${c.especialidad}</td>
+            <td>${c.fechaHora}</td>
+            <td><span style="background:#d1ecf1; color:#0c5460; padding:3px 8px; border-radius:4px;">${c.estado}</span></td>
+            <td>
+                <button class="btn-warning" onclick="alert('Atendiendo consulta médica...')">Atender</button>
+                <button class="btn-danger" style="margin-left:5px;" onclick="cancelarCitaGlobal('${c.id}', 'Medico')">Cancelar</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
 // --- ⚙️ INTERFAZ GRÁFICA ANALÍTICA DEL ADMINISTRADOR ---
 function renderPanelAdmin() {
     try {
@@ -177,26 +230,23 @@ function renderPanelAdmin() {
         let pAg = tot > 0 ? (ag / tot) * 100 : 0; 
         let pCan = tot > 0 ? (citasCanceladasHistorial / tot) * 100 : 0;
         
-        const fillAgendadas = document.getElementById('graph-fill-agendadas');
-        const fillCanceladas = document.getElementById('graph-fill-canceladas');
-        
-        if (fillAgendadas) { 
-            fillAgendadas.style.width = `${pAg}%`; 
-            fillAgendadas.innerText = `${ag} Citas (${Math.round(pAg)}%)`; 
+        if(document.getElementById('graph-fill-agendadas')) { 
+            document.getElementById('graph-fill-agendadas').style.width = `${pAg}%`; 
+            document.getElementById('graph-fill-agendadas').innerText = `${ag} Citas (${Math.round(pAg)}%)`; 
         }
-        if (fillCanceladas) { 
-            fillCanceladas.style.width = `${pCan}%`; 
-            fillCanceladas.innerText = `${citasCanceladasHistorial} Citas (${Math.round(pCan)}%)`; 
+        if(document.getElementById('graph-fill-canceladas')) { 
+            document.getElementById('graph-fill-canceladas').style.width = `${pCan}%`; 
+            document.getElementById('graph-fill-canceladas').innerText = `${citasCanceladasHistorial} Citas (${Math.round(pCan)}%)`; 
         }
         
         const tb = document.getElementById('tabla-usuarios-admin');
-        if (tb) {
+        if(tb) {
             tb.innerHTML = `
                 <tr><td><strong>admin@mediagenda.com</strong></td><td><span style="background:#343a40; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">ADMINISTRADOR</span></td><td>9999999999</td><td><span style="color:#28a745; font-weight:bold;">🟢 En Línea</span></td></tr>
                 <tr><td><strong>medico@mediagenda.com</strong></td><td><span style="background:#007bff; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">MÉDICO</span></td><td>1712345672</td><td><span style="color:#28a745; font-weight:bold;">🟢 En Línea</span></td></tr>
             `;
         }
-
+        
         const cMed = document.getElementById('admin-lista-medicos-container');
         if (cMed) {
             cMed.innerHTML = '';
@@ -209,12 +259,12 @@ function renderPanelAdmin() {
                 });
             }
         }
-    } catch (e) {
-        console.log("Aviso controlado en el panel de administración.");
+    } catch(e) {
+        console.log("Aviso controlado en el panel analítico.");
     }
 }
 
-// --- FUNCIÓN ADICIONAL: MOSTRAR/OCULTAR CONTRASEÑA ---
+// --- UTILERÍAS DE SEGURIDAD (CONTRASEÑAS) ---
 function togglePassword(id, btn) {
     const input = document.getElementById(id);
     if (input) { 
@@ -223,7 +273,7 @@ function togglePassword(id, btn) {
     }
 }
 
-// --- CIERRE COMPLETO DE LOGOUT ---
+// --- 🚪 INTERRUPTOR GENERAL DE CIERRE DE SESIÓN ---
 function logOut() { 
     cancelarModoReagendar(); 
     document.getElementById('view-roles')?.classList.remove('d-none');
