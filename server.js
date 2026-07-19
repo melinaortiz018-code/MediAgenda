@@ -5,12 +5,15 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 
-app.use(express.static(path.join(__dirname, '/'))); 
-
+// 1. PRIMERO inicializamos la aplicación Express
 const app = express();
-// Render asigna dinámicamente un puerto mediante process.env.PORT. 
-// Dejar solo el 3000 fijo hará que tu despliegue falle en Render.
+
+// Render asigna dinámicamente un puerto mediante process.env.PORT.
 const PORT = process.env.PORT || 3000;
+
+// 2. SEGUNDO servimos los archivos estáticos de la carpeta public (HTML, JS, CSS)
+// Esto soluciona de raíz el error inesperado del token '<' en app.js
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware para entender JSON y formularios
 app.use(express.json());
@@ -26,9 +29,6 @@ app.use(session({
         maxAge: 24 * 60 * 60 * 1000 // La sesión dura 24 horas
     }
 }));
-
-// Servir los archivos estáticos de la carpeta public (HTML, JS, CSS)
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuración de almacenamiento absoluta (Crucial para Linux/Render)
 const storage = multer.diskStorage({
@@ -103,6 +103,7 @@ app.post('/api/auth/logout', (req, res) => {
     req.session.destroy();
     res.json({ success: true });
 });
+
 // ====================================================
 // RUTA COMODÍN CORREGIDA: EVITA ERRORES 'CANNOT GET'
 // ====================================================
