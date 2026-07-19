@@ -173,37 +173,40 @@ function iniciarReagendacionGlobal(id) {
     function cancelarModoReagendar() {
     idCitaReagendando = null;
     
-    // 1. Restablecer los textos originales del panel
-    if(document.getElementById('paciente-action-title')) {
-        document.getElementById('paciente-action-title').innerText = "📅 Agendar Nueva Cita Médica";
-    }
-    if(document.getElementById('btn-paciente-main')) {
-        document.getElementById('btn-paciente-main').innerText = "Confirmar y Agendar Turno";
-    }
-    if(document.getElementById('btn-cancelar-reagendar')) {
-        document.getElementById('btn-cancelar-reagendar').style.display = "none";
-    }
+    try {
+        // 1. Restablecer los textos originales del panel de forma segura
+        const actionTitle = document.getElementById('paciente-action-title');
+        if (actionTitle) actionTitle.innerText = "📅 Agendar Nueva Cita Médica";
 
-    // 2. 🧹 LIMPIEZA ABSOLUTA DE LOS CAMPOS (Para que no se queden congelados)
-    const selectEsp = document.getElementById('select-esp');
-    if (selectEsp) selectEsp.value = ""; // Vacía Especialidad
+        const mainBtn = document.getElementById('btn-paciente-main');
+        if (mainBtn) mainBtn.innerText = "Confirmar y Agendar Turno";
 
-    const selectMed = document.getElementById('select-med');
-    if (selectMed) {
-        selectMed.innerHTML = '<option value="" selected disabled>-- Elige área primero --</option>';
-        selectMed.disabled = true; // Bloquea y vacía Médico
-    }
-    
-    const selectFecha = document.getElementById('select-fecha');
-    if (selectFecha) {
-        selectFecha.value = ""; // Borra la Fecha
-        selectFecha.disabled = true; // Bloquea Fecha
-    }
-    
-    const selectHor = document.getElementById('select-hor');
-    if (selectHor) {
-        selectHor.innerHTML = '<option value="" selected disabled>-- Elige turno --</option>';
-        selectHor.disabled = true; // Bloquea Horarios
+        const cancelBtn = document.getElementById('btn-cancelar-reagendar');
+        if (cancelBtn) cancelBtn.style.display = "none";
+
+        // 2. 🧹 LIMPIEZA COMPLETAMENTE SEGURA DE LOS CAMPOS
+        const selectEsp = document.getElementById('select-esp');
+        if (selectEsp) selectEsp.value = ""; 
+
+        const selectMed = document.getElementById('select-med');
+        if (selectMed) {
+            selectMed.innerHTML = '<option value="" selected disabled>-- Elige área primero --</option>';
+            selectMed.disabled = true; 
+        }
+        
+        const selectFecha = document.getElementById('select-fecha');
+        if (selectFecha) {
+            selectFecha.value = ""; 
+            selectFecha.disabled = true; 
+        }
+        
+        const selectHor = document.getElementById('select-hor');
+        if (selectHor) {
+            selectHor.innerHTML = '<option value="" selected disabled>-- Elige turno --</option>';
+            selectHor.disabled = true; 
+        }
+    } catch (error) {
+        console.log("Aviso de diseño controlado en la limpieza del formulario.");
     }
 }
 
