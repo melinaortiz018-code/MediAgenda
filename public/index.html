@@ -267,12 +267,7 @@
                     <h5 style="margin: 0; font-size: 16px;">Citas Canceladas / Historial</h5>
                     <p style="margin: 10px 0 0 0; font-size: 36px; font-weight: bold;" id="stat-canceladas">0</p>
                 </div>
-    <!-- Botón Reagendar Amarillo brillante -->
-                                       <button onclick="window.iniciarReagendacion('1')" class="btn-reagendar" style="background-color: #facc15; color: #451a03; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-right: 8px; box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);">Reagendar</button>
-            
-                                     <!-- Botón Cancelar Rojo brillante -->
-                                    <form onsubmit="return window.confirmarCancelacion(event)" style="display: inline;">
-                          </div>
+            </div>
 
             <!-- Tabla de Gestión de Cuentas Globales y Última Conexión -->
             <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px;">
@@ -282,15 +277,14 @@
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
                             <tr>
-                                <th>Usuario</th>
-                                <th>Rol en Sistema</th>
-                                <th>Contraseña Expuesta</th>
-                                <th>Última Conexión Activa</th>
-                                <th>Acciones</th>
+                                <th style="padding: 10px;">Usuario</th>
+                                <th style="padding: 10px;">Rol en Sistema</th>
+                                <th style="padding: 10px;">Contraseña Expuesta</th>
+                                <th style="padding: 10px;">Última Conexión Activa</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-usuarios-admin">
-                            <!-- Se carga con JS automáticamente -->
+                            <!-- Se carga con JS automáticamente desde Firebase -->
                         </tbody>
                     </table>
                 </div>
@@ -304,9 +298,11 @@
                 </div>
             </div>
         </div>
-    </div> <!-- Cierre del div container principal -->
+
+    </div> <!-- Cierre correcto del div container principal -->
+
     <!-- VENTANA FLOTANTE (MODAL DE AUTENTICACIÓN) -->
-    <div class="modal-overlay" id="auth-modal">
+    <div class="modal-overlay" id="auth-modal" style="display: none;">
         <div class="modal-box">
             <span class="modal-close" onclick="closeModal()">&times;</span>
             <div class="tabs">
@@ -327,10 +323,9 @@
                         <button type="button" class="btn-morado" style="padding: 0 12px; margin-top: 0; width: auto;" onclick="togglePassword('login-pass', this)">👁️</button>
                     </div>
                 </div>
-                                <div style="text-align: center; margin-top: 15px;">
+                <div style="text-align: center; margin-top: 15px;">
                     <a href="#" style="color: #7e57c2; font-size: 13px; font-weight: bold; text-decoration: none;" onclick="executeForgotPassword()">¿Olvidaste tu contraseña?</a>
                 </div>
-
                 <button type="button" class="btn-morado" onclick="executeLogin()">Iniciar Sesión</button>
             </div>
 
@@ -338,7 +333,7 @@
             <div id="form-register-container" class="d-none">
                 <div class="form-group">
                     <label>Nombre Completo</label>
-                    <input type="text" id="reg-name" class="form-control" placeholder="Ej. Diana Ortiz">
+                    <input type="text" id="reg-name" class="form-control" placeholder="Ej: Diana Ortiz">
                 </div>
                 <div class="form-group">
                     <label>Cédula de Identidad</label>
@@ -359,449 +354,8 @@
             </div>
         </div>
     </div>
-    <!-- 🧠 LÓGICA DE PROGRAMACIÓN GENERAL AVANZADA - SECCIÓN 1 -->
-    <script>
-        let currentRole = ''; 
-        let currentTab = 'login';
-        
-        // BASE DE DATOS ESTRUCTURADA DE LOS 8 MÉDICOS OFICIALES DEL SISTEMA
-        const databaseMedicos = {
-            "Medicina General": [
-                { user: "dr_perez", name: "Dr. Juan Pérez", status: "En línea", last: "Activo ahora" },
-                { user: "dra_gomez", name: "Dra. Ana Gómez", status: "Conectado", last: "Hace 5 minutos" }
-            ],
-            "Psicología": [
-                { user: "dra_noboa", name: "Dra. Joselin Noboa", status: "En línea", last: "Activo ahora" },
-                { user: "dr_ruiz", name: "Dr. Carlos Ruíz", status: "Desconectado", last: "Hace 1 hora" }
-            ],
-            "Nutrición": [
-                { user: "dra_loor", name: "Dra. María Loor", status: "Conectado", last: "Hace 12 minutos" },
-                { user: "dr_alba", name: "Dr. Luis Alba", status: "Desconectado", last: "Hace 4 horas" }
-            ],
-            "Odontología": [
-                { user: "dr_vera", name: "Dr. Paúl Vera", status: "En línea", last: "Activo ahora" },
-                { user: "dra_silva", name: "Dra. Elena Silva", status: "Conectado", last: "Hace 23 minutos" }
-            ]
-        };
 
-        const turnosBaseHoras = [
-            "08:00 - 08:40", "08:40 - 09:20", "09:20 - 10:00", "10:00 - 10:40",
-            "11:00 - 11:40", "11:40 - 12:20", "14:00 - 14:40", "14:40 - 15:20",
-            "15:20 - 16:00", "16:00 - 16:40"
-        ];
-
-        // Inicialización de la Nube Local con Usuarios Globales Espejo
-        if (!localStorage.getItem('cloud_users')) {
-            const usuariosIniciales = {
-                "admin": { "grace1804": "11111" },
-                "paciente": { "manu": "11111", "Juan3perez": "11111", "AmigaMelina": "Clave1234" },
-                "medico": { "doctor": "11111", "dr_perez": "11111", "dra_gomez": "11111", "dra_noboa": "11111", "dr_ruiz": "11111", "dra_loor": "11111", "dr_alba": "11111", "dr_vera": "11111", "dra_silva": "11111" }
-
-            };
-            localStorage.setItem('cloud_users', JSON.stringify(usuariosIniciales));
-        }
-
-        // Historial de últimas conexiones globales sincronizadas en español ("conexiones")
-        if (!localStorage.getItem('cloud_connections')) {
-            const conexionesIniciales = {
-                "grace1804": "Activo ahora (Tu dispositivo)",
-                "manu": "Hace 3 minutos desde iPhone",
-                "Juan3perez": "Hace 15 minutos desde Android",
-                "AmigaMelina": "Hace 1 hora desde PC",
-                "dr_perez": "Activo ahora",
-                "dra_gomez": "Hace 5 minutos",
-                "doctor": "Hace 2 horas"
-            };
-            localStorage.setItem('cloud_connections', JSON.stringify(conexionesIniciales));
-        }
-
-        if (!localStorage.getItem('cloud_medical_slots')) {
-            localStorage.setItem('cloud_medical_slots', JSON.stringify({}));
-        }
-
-        function openModal(role) { 
-            currentRole = role.toLowerCase(); 
-            const modal = document.getElementById('auth-modal');
-            if (modal) modal.style.display = 'flex'; 
-            switchTab('login'); 
-        }
-        
-        function closeModal() { 
-            const modal = document.getElementById('auth-modal');
-            if (modal) modal.style.display = 'none'; 
-        }
-        function switchTab(tab) {
-            currentTab = tab;
-            if (tab === 'login') {
-                if(document.getElementById('tab-login')) document.getElementById('tab-login').classList.add('active'); 
-                if(document.getElementById('tab-register')) document.getElementById('tab-register').classList.remove('active');
-                if(document.getElementById('form-login-container')) document.getElementById('form-login-container').classList.remove('d-none'); 
-                if(document.getElementById('form-register-container')) document.getElementById('form-register-container').classList.add('d-none');
-            } else {
-                if(document.getElementById('tab-register')) document.getElementById('tab-register').classList.add('active'); 
-                if(document.getElementById('tab-login')) document.getElementById('tab-login').classList.remove('active');
-                if(document.getElementById('form-register-container')) document.getElementById('form-register-container').classList.remove('d-none'); 
-                if(document.getElementById('form-login-container')) document.getElementById('form-login-container').classList.add('d-none');
-            }
-        }
-
-        function executeRegister() {
-            const name = document.getElementById('reg-name').value.trim(); 
-            const user = document.getElementById('reg-user').value.trim();
-            const pass = document.getElementById('reg-pass').value.trim();
-            const ci = document.getElementById('reg-ci').value.trim();
-
-            if(!name || !user || !pass || !ci) { 
-                alert('Por favor, completa todos los campos de registro.'); 
-                return; 
-            }
-
-            const tieneMayuscula = /[A-Z]/.test(pass);
-            const tieneNumero = /[0-9]/.test(pass);
-
-            if (pass.length < 8 || !tieneMayuscula || !tieneNumero) {
-                alert('Seguridad insuficiente: Mínimo 8 caracteres, una mayúscula y un número.');
-                return;
-            }
-            
-            let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
-            if (!usuariosRegistrados[currentRole]) usuariosRegistrados[currentRole] = {};
-
-            usuariosRegistrados[currentRole][user] = pass;
-            localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
-
-            let conexiones = JSON.parse(localStorage.getItem('cloud_connections')) || {};
-            conexiones[user] = "Registrado recientemente";
-            localStorage.setItem('cloud_connections', JSON.stringify(conexiones));
-
-            alert('¡Cuenta creada con éxito en la Nube Global de MediAgenda!'); 
-            switchTab('login'); 
-            if(document.getElementById('login-user')) document.getElementById('login-user').value = user;
-            if(document.getElementById('login-pass')) document.getElementById('login-pass').value = '';
-        }
-
-        function executeLogin() {
-            const user = document.getElementById('login-user').value.trim(); 
-            const pass = document.getElementById('login-pass').value.trim();
-            
-            if(!user || !pass) { 
-                alert('Ingresa tu usuario y contraseña.'); 
-                return; 
-            }
-
-            const usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
-            const contraseñaCorrecta = usuariosRegistrados[currentRole] ? usuariosRegistrados[currentRole][user] : null;
-
-            if (contraseñaCorrecta && contraseñaCorrecta === pass) {
-                let conexiones = JSON.parse(localStorage.getItem('cloud_connections')) || {};
-                conexiones[user] = "Activo ahora (Tu sesión)";
-                localStorage.setItem('cloud_connections', JSON.stringify(conexiones));
-
-                grantAccess(user);
-            } else { 
-                alert('Credenciales incorrectas para el rol ' + currentRole.toUpperCase()); 
-            }
-        }
-
-        function grantAccess(user) {
-            closeModal(); 
-            if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.add('d-none'); 
-            if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'block';
-            if(document.getElementById('user-display')) document.getElementById('user-display').innerText = "Usuario: " + user; 
-            if(document.getElementById('role-display')) document.getElementById('role-display').innerText = currentRole.toUpperCase();
-            
-            const viewElement = document.getElementById('view-' + currentRole);
-            if(viewElement) viewElement.classList.remove('d-none');
-
-            if (currentRole === 'paciente') {
-                showPatientAppointments(user); 
-            } else if (currentRole === 'medico') {
-                const hoyInput = new Date().toISOString().split('T')[0];
-                document.getElementById('medico-fecha-gestion').value = hoyInput;
-                renderCalendarioMedico();
-                showDoctorAppointments(user);
-            } else if (currentRole === 'admin') {
-                showAdminUsers(); 
-            }
-        }
-
-        function logOut() { 
-            const viewElement = document.getElementById('view-' + currentRole);
-            if(viewElement) viewElement.classList.add('d-none'); 
-            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
-            if (panelSeccion) panelSeccion.classList.add('d-none');
-            if(document.getElementById('user-tag')) document.getElementById('user-tag').style.display = 'none'; 
-            if(document.getElementById('view-roles')) document.getElementById('view-roles').classList.remove('d-none'); 
-        }
-
-        function updateMedicos() {
-            const esp = document.getElementById('select-esp').value; 
-            const selectMed = document.getElementById('select-med');
-            selectMed.innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
-            if(databaseMedicos[esp]) {
-                databaseMedicos[esp].forEach(m => { selectMed.innerHTML += `<option value="${m.user}">${m.name}</option>`; }); 
-            }
-            selectMed.disabled = false;
-        }
-
-        function updateCalendarioPaciente() {
-            document.getElementById('select-fecha').value = "";
-            document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige una fecha primero --</option>';
-            document.getElementById('select-hor').disabled = true;
-        }
-
-        function updateTurnosPaciente() {
-            const medUser = document.getElementById('select-med').value;
-            const fecha = document.getElementById('select-fecha').value;
-            const selectHor = document.getElementById('select-hor');
-            
-            if(!medUser || !fecha) return;
-            selectHor.innerHTML = '<option value="" selected disabled>-- Elige un turno --</option>';
-            
-            let allSlots = JSON.parse(localStorage.getItem('cloud_medical_slots')) || {};
-            const key = medUser + '_' + fecha;
-            
-            if(allSlots[key] && allSlots[key].length > 0) {
-                allSlots[key].forEach(h => { selectHor.innerHTML += `<option value="${h}">${h}</option>`; });
-                selectHor.disabled = false;
-            } else {
-                selectHor.innerHTML = '<option value="" selected disabled>❌ No disponible (Médico no ha liberado turnos)</option>';
-                selectHor.disabled = true;
-            }
-        }
-
-                 function executeSchedule() {
-            const esp = document.getElementById('select-esp').value;
-            const medUser = document.getElementById('select-med').value;
-            const medSelect = document.getElementById('select-med');
-            const medName = medSelect.options[medSelect.selectedIndex].text;
-            const hor = document.getElementById('select-hor').value;
-            const fechaSeleccionada = document.getElementById('select-fecha').value; 
-            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-
-            if(!esp || !medUser || !hor || !fechaSeleccionada) {
-                alert('Por favor, selecciona todos los campos del formulario.');
-                return;
-            }
-
-            const partes = fechaSeleccionada.split('-');
-            const fechaFormateada = partes[2] + '/' + partes[1] + '/' + partes[0];
-            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-
-            const nuevaCita = {
-                id: Date.now(),
-                especialidad: esp,
-                medicoUser: medUser,
-                medicoName: medName,
-                horario: hor + ' (' + fechaFormateada + ')', 
-                paciente: currentUser
-            };
-
-            citasGuardadas.push(nuevaCita);
-            localStorage.setItem('cloud_appointments', JSON.stringify(citasGuardadas));
-
-            alert('¡Tu cita ha sido agendada exitosamente!\n\nRevisa la parte inferior de tu pantalla para ver el registro detallado en tu Agenda Personal de Paciente.');
-            
-            // Forzamos a encender la tabla de inmediato
-            showPatientAppointments(currentUser);
-
-            // Reseteamos los campos del formulario limpios
-            document.getElementById('select-esp').value = "";
-            document.getElementById('select-fecha').value = ""; 
-            document.getElementById('select-med').innerHTML = '<option value="" selected disabled>-- Elige especialista --</option>';
-            document.getElementById('select-med').disabled = true;
-            document.getElementById('select-hor').innerHTML = '<option value="" selected disabled>-- Elige una fecha primero --</option>';
-            document.getElementById('select-hor').disabled = true;
-        }
-
-        function showPatientAppointments(username) {
-            // Quitamos el d-none para que la sección sea 100% visible
-            const panelSeccion = document.getElementById('panel-citas-paciente-seccion');
-            if (panelSeccion) panelSeccion.classList.remove('d-none');
-
-            const contenedor = document.getElementById('tabla-citas-paciente');
-            if (!contenedor) return;
-
-            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-            const misCitas = citasGuardadas.filter(c => c.paciente === username);
-
-            if (misCitas.length === 0) {
-                contenedor.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:15px;">No tienes citas próximas agendadas.</td></tr>';
-                return;
-            }
-
-            contenedor.innerHTML = '';
-            misCitas.forEach(c => {
-                contenedor.innerHTML += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding:12px;"><strong>${c.especialidad}</strong></td>
-                        <td style="padding:12px;">${c.medicoName}</td>
-                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px; color:#8e24aa;">${c.horario}</code></td>
-                        <td style="padding:12px;"><span style="background:#e8f5e9; color:#2e7d32; padding:3px 8px; border-radius:12px; font-size:12px; font-weight:bold;">Confirmada</span></td>
-                        <td style="padding:12px; display:flex; gap:5px;">
-                            <button class="btn-warning" onclick="reagendarCita(${c.id})">Reagendar</button>
-                            <button class="btn-danger" onclick="cancelarCita(${c.id})">Cancelar Cita</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function renderCalendarioMedico() {
-            const fecha = document.getElementById('medico-fecha-gestion').value;
-            const container = document.getElementById('medico-slots-container');
-            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-            
-            if(!fecha) return;
-            document.getElementById('medico-titulo-fecha').innerText = "Gestión de Turnos Operativos para el día: " + fecha;
-            container.innerHTML = '';
-
-            let allSlots = JSON.parse(localStorage.getItem('cloud_medical_slots')) || {};
-            const key = currentUser + '_' + fecha;
-            let misSlotsLiberados = allSlots[key] || [];
-
-            turnosBaseHoras.forEach(h => {
-                const yaLiberado = misSlotsLiberados.includes(h);
-                const clasePill = yaLiberado ? 'slot-available' : 'slot-unavailable';
-                const textoPill = yaLiberado ? '🟢 Liberado: ' + h : '❌ No disponible: ' + h;
-                
-                container.innerHTML += `
-                    <div class="slot-pill ${clasePill}" style="padding: 10px; width:180px; text-align:center;" onclick="toggleTurnoMedico('${h}')">
-                        ${textoPill}
-                    </div>`;
-            });
-        }
-
-        function toggleTurnoMedico(horaTurno) {
-            const fecha = document.getElementById('medico-fecha-gestion').value;
-            const currentUser = document.getElementById('user-display').innerText.replace("Usuario: ", "");
-            
-            let allSlots = JSON.parse(localStorage.getItem('cloud_medical_slots')) || {};
-            const key = currentUser + '_' + fecha;
-            if(!allSlots[key]) allSlots[key] = [];
-
-            if(allSlots[key].includes(horaTurno)) {
-                allSlots[key] = allSlots[key].filter(h => h !== horaTurno);
-            } else {
-                allSlots[key].push(horaTurno);
-            }
-
-            localStorage.setItem('cloud_medical_slots', JSON.stringify(allSlots));
-            renderCalendarioMedico();
-        }
-
-        function showDoctorAppointments(doctorName) {
-            const contenedor = document.getElementById('tabla-citas-medico');
-            if (!contenedor) return;
-
-            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-            const misPacientes = citasGuardadas.filter(c => c.medicoUser === doctorName || doctorName === 'doctor');
-
-            if (misPacientes.length === 0) {
-                contenedor.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:15px;">No tienes consultas programadas en tu agenda.</td></tr>';
-                return;
-            }
-
-            contenedor.innerHTML = '';
-            misPacientes.forEach(c => {
-                contenedor.innerHTML += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding:12px;"><strong>${c.paciente}</strong></td>
-                        <td style="padding:12px;">${c.especialidad}</td>
-                        <td style="padding:12px;"><code style="background:#f1f1f1; padding:3px 6px; border-radius:4px; font-size:13px; color:#2575fc;">${c.horario}</code></td>
-                        <td style="padding:12px;"><button class="btn-danger" onclick="cancelarCita(${c.id})">Cancelar Cita</button></td>
-                    </tr>`;
-                });
-        }
-        function showAdminUsers() {
-            const contenedor = document.getElementById('tabla-usuarios-admin');
-            if (!contenedor) return;
-
-            let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
-            let conexionesGlobales = JSON.parse(localStorage.getItem('cloud_connections')) || {};
-            contenedor.innerHTML = '';
-
-            for (let rol in usuariosRegistrados) {
-                for (let usuario in usuariosRegistrados[rol]) {
-                    const clave = usuariosRegistrados[rol][usuario];
-                    const ultimaConexion = conexionesGlobales[usuario] || "Conectado hace minutos (Dispositivo remoto)";
-                    
-                    contenedor.innerHTML += `
-                        <tr style="border-bottom: 1px solid #dee2e6;">
-                            <td style="padding: 12px;"><strong>${usuario}</strong></td>
-                            <td style="padding: 12px;"><span style="background: #6c757d; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">${rol.toUpperCase()}</span></td>
-                            <td style="padding: 12px;"><code style="background: #f1f1f1; padding: 4px 6px; border-radius: 4px; font-size: 13px; color: #d63384;">${clave}</code></td>
-                            <td style="padding: 12px;"><span style="color:#2575fc; font-weight:600; font-size:13px;">📶 ${ultimaConexion}</span></td>
-                            <td style="padding: 12px;">
-                                <button class="btn-danger" onclick="deleteUser('${rol}', '${usuario}')">Eliminar</button>
-                            </td>
-                        </tr>`;
-                }
-            }
-
-            const listaMedicosContainer = document.getElementById('admin-lista-medicos-container');
-            if(listaMedicosContainer) {
-                listaMedicosContainer.innerHTML = '';
-                for(let esp in databaseMedicos) {
-                    databaseMedicos[esp].forEach(m => {
-                        const colorStatus = m.status === 'En línea' ? '#28a745' : '#ffc107';
-                        listaMedicosContainer.innerHTML += `
-                            <div style="display: flex; justify-content: space-between; align-items:center; background: #fdfbfe; padding: 12px; border-radius: 6px; border-left: 4px solid #7e57c2; flex-wrap:wrap; gap:10px;">
-                                <span><strong>${esp}:</strong> ${m.name} <small style="color:#666;">(@${m.user})</small></span>
-                                <div style="display:flex; align-items:center; gap:15px;">
-                                    <span style="color: ${colorStatus}; font-weight: bold;">● ${m.status} (${m.last})</span>
-                                    <button class="btn-warning" style="padding:3px 8px; font-size:12px;" onclick="alert('Módulo de Edición Operativa de Nube Cargado.')">Editar</button>
-                                    <button class="btn-danger" style="padding:3px 8px; font-size:12px;" onclick="alert('Médicos oficiales regulados no pueden ser desvinculados.')">Eliminar</button>
-                                </div>
-                            </div>`;
-                    });
-                }
-            }
-
-            let citasGuardadas = JSON.parse(localStorage.getItem('cloud_appointments')) || [];
-            if (document.getElementById('stat-agendadas')) document.getElementById('stat-agendadas').innerText = citasGuardadas.length;
-        }
-
-        function deleteUser(rol, usuario) {
-            if (usuario === 'manu' || usuario === 'grace1804' || usuario === 'doctor' || usuario.includes('dr_') || usuario.includes('dra_')) {
-                alert('No puedes eliminar perfiles base o médicos oficiales.');
-                return;
-            }
-            if (confirm(`¿Deseas eliminar permanentemente al usuario global "${usuario}"?`)) {
-                let usuariosRegistrados = JSON.parse(localStorage.getItem('cloud_users')) || {};
-                delete usuariosRegistrados[rol][usuario];
-                localStorage.setItem('cloud_users', JSON.stringify(usuariosRegistrados));
-                showAdminUsers(); 
-            }
-        }
-        function executeForgotPassword() {
-            if (confirm("🔒 MÓDULO DE RECUPERACIÓN DE CREDENCIALES 🔒\n\n¿Deseas restablecer y sincronizar la base de datos global de MediAgenda?\n\n* Esto limpiará el caché antiguo de tu navegador y activará los accesos de los 8 nuevos médicos oficiales del sistema.")) {
-                // Borramos el LocalStorage viejo para forzar al sistema a leer el código nuevo con los 8 doctores
-                localStorage.removeItem('cloud_users');
-                localStorage.removeItem('cloud_connections');
-                
-                alert("¡Base de datos global sincronizada con éxito!\n\nPor favor, presiona Ctrl + F5 en tu teclado de inmediato para aplicar los cambios e intenta iniciar sesión.");
-                location.reload();
-            }
-        }
-
-        function togglePassword(inputId, button) {
-            const input = document.getElementById(inputId);
-            if (input.type === "password") { input.type = "text"; button.innerText = "🙈"; } 
-            else { input.type = "password"; button.innerText = "👁️"; }
-        }
-    <!-- ========================================== -->
-    <!--  BLOQUE FINAL DE CONTROL DE LA INTERFAZ   -->
-    <!-- ========================================== -->
-    <script>
-        // Función interactiva para el botón del ojito de la contraseña
-        window.togglePasswordVisibility = function() {
-            const passInput = document.getElementById('auth-password');
-            if (passInput) {
-                passInput.type = passInput.type === "password" ? "text" : "password";
-            }
-        };
-    </script>
-
-    <script src="js/app.js"></script>
+    <!-- Enlace a tu script controlador -->
+    <script src="app.js"></script>
 </body>
 </html>
