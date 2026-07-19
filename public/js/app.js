@@ -1,7 +1,7 @@
 let selectedRole = '';
 let isRegisterMode = false;
 
-// Médicos pregenerados alineados con las opciones de tu menú HTML (sin tildes en las claves)
+// Médicos pregenerados alineados con las opciones de tu menú HTML
 const medicosData = { 
     "Medicina General": [{name: "Dra. Elena Espinoza", ci:"1712345671"}, {name: "Dr. Carlos Mendoza", ci:"1712345672"}], 
     "Psicologia": [{name: "Dra. Camila Restrepo", ci:"1712345675"}, {name: "Dr. Fernando Ortiz", ci:"1712345676"}],
@@ -9,18 +9,22 @@ const medicosData = {
     "Odontologia": [{name: "Dra. Valeria Benítez", ci:"1712345673"}, {name: "Dr. Ricardo Alarcón", ci:"1712345674"}]
 };
 
+// Horarios base para inyecciones del sistema
 let agendaHorarios = ["08:00 AM", "09:00 AM", "10:30 AM", "11:00 AM", "14:00 PM", "15:00 PM"];
 
-// Citas iniciales simuladas para tus doctores reales
+// Citas iniciales simuladas para tus doctores reales del hospital
 let misCitas = [
     { id: "1", paciente: "María Augusta Flores", especialidad: "Medicina General", medico: "Dr. Carlos Mendoza", fechaHora: "10:30 AM - 18/07/2026", estado: "Pendiente" },
     { id: "2", paciente: "Pedro José Andrade", especialidad: "Medicina General", medico: "Dr. Carlos Mendoza", fechaHora: "14:00 PM - 19/07/2026", estado: "Pendiente" }
 ];
 
-// Al dar clic en una tarjeta, forzamos que se guarde el rol de forma estricta
+// Contador simulado de historial para las tarjetas del administrador
+let citasCanceladasHistorial = 3;
+
 function openModal(role) { 
-    selectedRole = role; // Fijamos el rol elegido en la variable global
-    document.getElementById('view-roles').classList.add('d-none'); 
+    selectedRole = role; 
+    const panelRoles = document.getElementById('view-roles') || document.getElementById('role-selection');
+    if (panelRoles) panelRoles.classList.add('d-none'); 
     
     const authSection = document.getElementById('auth-section');
     if (authSection) {
@@ -30,13 +34,12 @@ function openModal(role) {
         activarPanelRol(role, "Usuario Invitado");
     }
 }
-
-// Compatibilidad total con tus tarjetas HTML
 function selectRole(role) { openModal(role); }
 
 function backToRoles() { 
     document.getElementById('auth-section').classList.add('d-none'); 
-    document.getElementById('view-roles').classList.remove('d-none'); 
+    const panelRoles = document.getElementById('view-roles') || document.getElementById('role-selection');
+    if (panelRoles) panelRoles.classList.remove('d-none');
     isRegisterMode = false;
     document.getElementById('auth-form').reset();
 }
@@ -52,32 +55,32 @@ function toggleAuthMode() {
 
 function loginExitoso(email) { 
     document.getElementById('auth-section').classList.add('d-none'); 
-    activarPanelRol(selectedRole, email); // Ahora selectedRole sí tiene el valor real
+    activarPanelRol(selectedRole, email);
 }
 
-// CORRECCIÓN: Activación forzada de paneles quitando el bloqueo invisible
 function activarPanelRol(role, email) {
-    // Escondemos absolutamente todo para limpiar la pantalla de mezclas
-    document.getElementById('view-roles').classList.add('d-none');
+    const rSelection = document.getElementById('view-roles') || document.getElementById('role-selection');
+    if (rSelection) rSelection.classList.add('d-none');
+    
     if(document.getElementById('view-paciente')) document.getElementById('view-paciente').classList.add('d-none');
     if(document.getElementById('view-medico')) document.getElementById('view-medico').classList.add('d-none'); 
     if(document.getElementById('view-admin')) document.getElementById('view-admin').classList.add('d-none'); 
     if(document.getElementById('panel-citas-paciente-seccion')) document.getElementById('panel-citas-paciente-seccion').classList.add('d-none');
 
-    // Evaluamos el rol guardado para encender la vista correcta
-    if (role === 'Paciente') { 
+    if(role === 'Paciente') { 
         document.getElementById('view-paciente')?.classList.remove('d-none'); 
         document.getElementById('panel-citas-paciente-seccion')?.classList.remove('d-none'); 
         mostrarBarraSesion(email, "Paciente");
         renderSidebarAppointments(); 
-    } else if (role === 'Medico' || role === 'Médico') { 
+    } else if(role === 'Medico' || role === 'Médico') { 
         document.getElementById('view-medico')?.classList.remove('d-none'); 
         mostrarBarraSesion("Dr. Carlos Mendoza", "Médico");
-        renderTablaMedico("Dr. Carlos Mendoza"); // Carga los pacientes del doctor
-    } else if (role === 'Admin' || role === 'Administrador') {
-        document.getElementById('view-admin')?.classList.remove('d-none');
+        renderTablaMedico("Dr. Carlos Mendoza"); 
+        renderCalendarioMedico(); 
+    } else if(role === 'Admin' || role === 'Administrador') { 
+        document.getElementById('view-admin')?.classList.remove('d-none'); 
         mostrarBarraSesion("Administrador General", "Admin");
-        renderPanelAdmin(); // Carga las estadísticas coloridas
+        renderPanelAdmin(); 
     }
 }
 
@@ -89,7 +92,9 @@ function mostrarBarraSesion(nombre, rol) {
 }
 
 function logOut() { 
-    document.getElementById('view-roles').classList.remove('d-none'); 
+    const rSelection = document.getElementById('view-roles') || document.getElementById('role-selection');
+    if (rSelection) rSelection.classList.remove('d-none');
+    
     if(document.getElementById('view-paciente')) document.getElementById('view-paciente').classList.add('d-none'); 
     if(document.getElementById('view-medico')) document.getElementById('view-medico').classList.add('d-none'); 
     if(document.getElementById('view-admin')) document.getElementById('view-admin').classList.add('d-none'); 
@@ -97,7 +102,7 @@ function logOut() {
     document.getElementById("user-tag").style.display = "none";
     document.getElementById('auth-form').reset();
 }
-// 1. Control de Selección de Especialidades y Médicos del Paciente
+// 1. Carga de Especialidades y Desbloqueo del Flujo del Paciente
 function updateMedicos() { 
     const esp = document.getElementById('select-esp').value; 
     const selectMed = document.getElementById('select-med'); 
@@ -143,7 +148,7 @@ function updateTurnosPaciente() {
     });
 }
 
-// 2. Reserva de Consulta Médica desde el Formulario
+// 2. Reserva de Turnos desde la Interfaz del Usuario
 function executeSchedule() {
     const esp = document.getElementById('select-esp').value;
     const medSelect = document.getElementById('select-med');
@@ -173,7 +178,7 @@ function executeSchedule() {
     }
 }
 
-// 3. Renderizado de las Tablas de Gestión Operativa
+// 3. Renderizado de Tablas Operativas del Paciente y Médico
 function renderSidebarAppointments() {
     const container = document.getElementById('tabla-citas-paciente');
     if (!container) return;
@@ -200,14 +205,14 @@ function renderTablaMedico(nombreMedico) {
     if (!container) return;
     container.innerHTML = '';
 
-    const citasDelDia = misCitas.filter(c => c.medico === nombreMedico);
+    const appointments = misCitas.filter(c => c.medico === nombreMedico);
 
-    if (citasDelDia.length === 0) {
-        container.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #777; padding: 15px;">No tienes pacientes programados para este periodo.</td></tr>`;
+    if (appointments.length === 0) {
+        container.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #777; padding: 15px;">No registras consultas para este periodo.</td></tr>`;
         return;
     }
 
-    citasDelDia.forEach(cita => {
+    appointments.forEach(cita => {
         let tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>${cita.paciente}</strong></td>
@@ -221,18 +226,53 @@ function renderTablaMedico(nombreMedico) {
     });
 }
 
+function renderCalendarioMedico() {
+    const container = document.getElementById('medico-slots-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const fechaSelec = document.getElementById('medico-fecha-gestion')?.value || "Hoy";
+    const titulo = document.getElementById('medico-titulo-fecha');
+    if (titulo) titulo.textContent = `Gestión de Turnos: ${fechaSelec}`;
+
+    agendaHorarios.forEach((hora, index) => {
+        let btn = document.createElement('button');
+        btn.type = "button";
+        btn.style.padding = "8px 15px";
+        btn.style.border = "none";
+        btn.style.borderRadius = "6px";
+        btn.style.cursor = "pointer";
+        btn.style.fontWeight = "bold";
+        btn.style.backgroundColor = index % 2 === 0 ? "#d4edda" : "#f8d7da";
+        btn.style.color = index % 2 === 0 ? "#155724" : "#721c24";
+        btn.innerText = `${hora}\n${index % 2 === 0 ? 'Liberado' : 'Asignado'}`;
+        
+        btn.onclick = () => {
+            alert(`Turno de las ${hora} gestionado con éxito.`);
+            const bGuardar = document.getElementById("btnGuardar");
+            if (bGuardar) bGuardar.style.display = "inline-block";
+        };
+        container.appendChild(btn);
+    });
+}
+
+// 4. CORRECCIÓN SUPREMA: Vinculación con los IDs reales de tu index.html (Líneas 264 y 268)
 function renderPanelAdmin() {
-    // Sincroniza dinámicamente el contador total de la tabla en el HTML
-    const totalCitasContador = document.getElementById('admin-citas-totales');
+    const totalCitasContador = document.getElementById('stat-agendadas');
+    const canceladasContador = document.getElementById('stat-canceladas');
+    
     if (totalCitasContador) {
         totalCitasContador.textContent = misCitas.length;
     }
+    if (canceladasContador) {
+        canceladasContador.textContent = citasCanceladasHistorial;
+    }
 }
 
-// 4. Acciones de Control de Citas y Consultas del Personal
 window.cancelarCita = function(id) {
     if (confirm("❌ ¿CANCELAR CITA MÉDICA?\n\nEsta acción cancelará permanentemente tu cita programada.\n\n¿Estás seguro?")) {
         misCitas = misCitas.filter(c => c.id !== id);
+        citasCanceladasHistorial++; // Incrementa el contador para refrescar las estadísticas del Admin
         renderSidebarAppointments();
     }
 }
@@ -249,15 +289,16 @@ window.reagendarCita = function(id) {
 }
 
 window.atenderPaciente = function(id) {
-    alert("🩺 Iniciando consulta médica...\nAbriendo Historial Clínico del Paciente.");
+    alert("🩺 Consultando historial clínico del paciente...");
     misCitas = misCitas.filter(c => c.id !== id);
     renderTablaMedico("Dr. Carlos Mendoza");
+    renderPanelAdmin();
 }
 
 function guardarHorarios() {
     const btn = document.getElementById("btnGuardar");
     if (btn) btn.style.display = "none";
-    alert("💾 ¡CAMBIOS GUARDADOS!\nLos cambios en tus horarios se publicaron con éxito.");
+    alert("💾 Cambios guardados con éxito en la base de datos.");
 }
 
 window.togglePasswordVisibility = function() {
@@ -265,7 +306,6 @@ window.togglePasswordVisibility = function() {
     if (passInput) passInput.type = passInput.type === "password" ? "text" : "password";
 }
 
-// 5. Escuchador de Inicialización y Control de Envío de Autenticación
 document.addEventListener("DOMContentLoaded", () => {
     const authForm = document.getElementById('auth-form');
     if (authForm) {
@@ -275,15 +315,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const nombreInput = document.getElementById('auth-nombre')?.value || "Usuario Invitado";
 
             if (selectedRole === 'Medico' && email !== 'medico@agenda.com') {
-                alert("❌ ACCESO DENEGADO\nEste correo no está registrado como Médico (Usa: medico@agenda.com).");
+                alert("❌ Correo institucional incorrecto para el rol Médico.");
                 return;
             }
             if ((selectedRole === 'Admin' || selectedRole === 'Administrador') && email !== 'admin@agenda.com') {
-                alert("❌ ACCESO DENEGADO\nEste correo no pertenece a Administración (Usa: admin@agenda.com).");
+                alert("❌ Correo institucional incorrecto para el rol Administrador.");
                 return;
             }
 
-            if (isRegisterMode) alert(`¡Registro Exitoso!\nBienvenido a MediAgenda, ${nombreInput}.`);
+            if (isRegisterMode) alert(`¡Registro completado, bienvenido ${nombreInput}!`);
             loginExitoso(isRegisterMode ? nombreInput : email);
         });
     }
@@ -292,6 +332,3 @@ document.addEventListener("DOMContentLoaded", () => {
     const botonGuardar = document.getElementById("btnGuardar");
     if (vistaMedico && botonGuardar) {
         vistaMedico.addEventListener("input", () => { botonGuardar.style.display = "inline-block"; });
-        vistaMedico.addEventListener("change", () => { botonGuardar.style.display = "inline-block"; });
-    }
-});
