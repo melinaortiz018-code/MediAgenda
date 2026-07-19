@@ -5,6 +5,8 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 
+app.use(express.static(path.join(__dirname, '/'))); 
+
 const app = express();
 // Render asigna dinámicamente un puerto mediante process.env.PORT. 
 // Dejar solo el 3000 fijo hará que tu despliegue falle en Render.
