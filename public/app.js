@@ -130,6 +130,7 @@ function updateMedicos() {
     medicosData[esp].forEach(m => { let o = document.createElement('option'); o.value = m.name; o.innerText = m.name; selectMed.appendChild(o); });
 }
 function updateCalendarioPaciente() { document.getElementById('select-fecha').disabled = false; }
+
 function updateTurnosPaciente() {
     const selectFecha = document.getElementById('select-fecha').value; const selectHor = document.getElementById('select-hor');
     if(!selectHor || !selectFecha) return; selectHor.disabled = false; selectHor.innerHTML = '';
@@ -138,10 +139,14 @@ function updateTurnosPaciente() {
     const dia = nombresDias[fObj.getDay()];
     if (!agendaSemanalMedicos[dia]) { selectHor.innerHTML = '<option disabled selected>-- No hay atención --</option>'; return; }
     for (let h in agendaSemanalMedicos[dia]) {
-        if (agendaSemanalMedicos[dia][h]) { let o = document.createElement('option'); o.value = `${h} - ${dia}`; o.innerText = `${h} (${dia})`; selectHor.appendChild(o); }
+        if (agendaSemanalMedicos[dia][h]) { 
+            let o = document.createElement('option'); 
+            o.value = `${h} - ${dia}`; 
+            o.innerText = `${h} (${dia})`; 
+            selectHor.appendChild(o); 
+        }
     }
 }
-
 function executeSchedule() {
     const esp = document.getElementById('select-esp').value; const med = document.getElementById('select-med').value;
     const fecha = document.getElementById('select-fecha').value; const hora = document.getElementById('select-hor').value;
@@ -169,6 +174,10 @@ function iniciarReagendacionGlobal(id) {
     if(document.getElementById('btn-paciente-main')) document.getElementById('btn-paciente-main').innerText = "Aplicar Cambio y Reagendar";
     if(document.getElementById('btn-cancelar-reagendar')) document.getElementById('btn-cancelar-reagendar').style.display = "block";
     document.getElementById('select-esp').value = cita.especialidad; updateMedicos();
+    alert(`🔄 Modo Reagendar Activado.\n\nPor favor elija el nuevo especialista, la fecha y el turno deseado arriba.`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function cancelarModoReagendar() {
     idCitaReagendando = null;
     try {
