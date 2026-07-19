@@ -106,10 +106,9 @@ app.post('/api/auth/logout', (req, res) => {
 // ====================================================
 
 // Redirige cualquier ruta desconocida al index principal usando 'path' de forma segura
-app.get('*', (req, res) => {
+app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
 
 // Iniciar el servidor vinculando el puerto dinámico de la nube
 app.listen(PORT, () => {
