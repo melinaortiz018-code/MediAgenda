@@ -46,26 +46,6 @@ function toggleAuthMode() {
     document.getElementById('toggle-auth-mode').innerText = isRegisterMode ? "¿Ya tienes cuenta? Inicia Sesión" : "¿No tienes cuenta? Regístrate aquí";
 }
 
-// Escucha el envío del Login/Registro
-document.addEventListener("DOMContentLoaded", () => {
-    const authForm = document.getElementById('auth-form');
-    if (authForm) {
-        authForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            loginExitoso(email);
-        });
-    }
-
-    // Detector automático del botón guardar de la vista médico
-    const vistaMedico = document.getElementById("view-medico");
-    const botonGuardar = document.getElementById("btnGuardar");
-    if (vistaMedico && botonGuardar) {
-        vistaMedico.addEventListener("input", () => { botonGuardar.style.display = "inline-block"; });
-        vistaMedico.addEventListener("change", () => { botonGuardar.style.display = "inline-block"; });
-    }
-});
-
 function loginExitoso(email) { 
     document.getElementById('auth-section').classList.add('d-none'); 
     activarPanelRol(selectedRole, email);
@@ -103,7 +83,6 @@ function logOut() {
     document.getElementById("user-tag").style.display = "none";
     document.getElementById('auth-form').reset();
 }
-
 // 1. Carga los médicos correspondientes según tu HTML
 function updateMedicos() { 
     const esp = document.getElementById('select-esp').value; 
@@ -226,3 +205,47 @@ window.cancelarCita = function(id) {
     if (confirm("¿Está seguro de cancelar esta cita médica?")) {
         misCitas = misCitas.filter(c => c.id !== id);
         renderSidebarAppointments();
+        alert("Cita cancelada correctamente.");
+    }
+}
+
+window.reagendarCita = function(id) {
+    const cita = misCitas.find(c => c.id === id);
+    if (cita) {
+        const nuevaFecha = prompt("Escribe la nueva fecha y hora para reagendar (Ej: 10:30 AM - 20/07/2026):", cita.fechaHora);
+        if (nuevaFecha) {
+            cita.fechaHora = nuevaFecha;
+            renderSidebarAppointments();
+            alert("¡La cita fue reagendada con éxito!");
+        }
+    }
+}
+
+function guardarHorarios() {
+    const btn = document.getElementById("btnGuardar");
+    if (btn) {
+        btn.style.display = "none";
+    }
+    alert("¡Los cambios se guardaron de manera exitosa!");
+}
+
+// Escucha el envío del Login/Registro y los cambios del médico
+document.addEventListener("DOMContentLoaded", () => {
+    const authForm = document.getElementById('auth-form');
+    if (authForm) {
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            loginExitoso(email);
+        });
+    }
+
+    // Detector automático del botón guardar de la vista médico
+    const vistaMedico = document.getElementById("view-medico");
+    const botonGuardar = document.getElementById("btnGuardar");
+    if (vistaMedico && botonGuardar) {
+        vistaMedico.addEventListener("input", () => { botonGuardar.style.display = "inline-block"; });
+        vistaMedico.addEventListener("change", () => { botonGuardar.style.display = "inline-block"; });
+    }
+});
+
