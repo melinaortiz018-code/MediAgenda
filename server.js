@@ -12,7 +12,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 2. SEGUNDO servimos los archivos estáticos de la carpeta public (HTML, JS, CSS)
-// Esto soluciona de raíz el error inesperado del token '<' en app.js
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware para entender JSON y formularios
@@ -102,6 +101,13 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/logout', (req, res) => {
     req.session.destroy();
     res.json({ success: true });
+});
+
+// ====================================================
+// 🛠️ RUTA DE EMERGENCIA: REDIRECCIÓN DEL SCRIPT (NUEVA)
+// ====================================================
+app.get('/app.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'js', 'app.js'));
 });
 
 // ====================================================
