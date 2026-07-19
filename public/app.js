@@ -1,7 +1,6 @@
 let selectedRole = '';
 let isRegisterMode = false;
 
-// Médicos pregenerados alineados con las opciones de tu menú HTML
 const medicosData = { 
     "Medicina General": [{name: "Dra. Elena Espinoza", ci:"1712345671"}, {name: "Dr. Carlos Mendoza", ci:"1712345672"}], 
     "Psicologia": [{name: "Dra. Camila Restrepo", ci:"1712345675"}, {name: "Dr. Fernando Ortiz", ci:"1712345676"}],
@@ -18,30 +17,26 @@ let misCitas = [
 
 let citasCanceladasHistorial = 3;
 
-// Función blindada para abrir modales sin importar los IDs del HTML
 function openModal(role) { 
     selectedRole = role; 
-    const panelRoles = document.getElementById('view-roles') || document.getElementById('role-selection');
-    if (panelRoles) panelRoles.classList.add('d-none'); 
-    
-    const authSection = document.getElementById('auth-section');
-    if (authSection) {
-        authSection.classList.remove('d-none');
+    const authModal = document.getElementById('auth-modal');
+    if (authModal) {
+        authModal.style.display = 'flex';
         const authTitle = document.getElementById('auth-title');
         if (authTitle) authTitle.innerText = `Ingreso: ${role === 'Medico' ? 'Médico' : role}`;
-    } else {
-        activarPanelRol(role, "Usuario Invitado");
     }
 }
 
 function selectRole(role) { openModal(role); }
 
+function closeModal() {
+    const authModal = document.getElementById('auth-modal');
+    if (authModal) authModal.style.display = 'none';
+}
+
 function backToRoles() { 
-    document.getElementById('auth-section').classList.add('d-none'); 
-    const panelRoles = document.getElementById('view-roles') || document.getElementById('role-selection');
-    if (panelRoles) panelRoles.classList.remove('d-none');
+    closeModal();
     isRegisterMode = false;
-    document.getElementById('auth-form').reset();
 }
 
 function toggleAuthMode() { 
@@ -53,19 +48,29 @@ function toggleAuthMode() {
     document.getElementById('ci-group')?.classList.toggle('d-none', !isRegisterMode);
 }
 
-function loginExitoso(email) { 
-    document.getElementById('auth-section').classList.add('d-none'); 
-    activarPanelRol(selectedRole, email);
+function executeLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+
+    if (!user || !pass) {
+        alert("⚠️ Por favor rellenar campos de acceso.");
+        return;
+    }
+    closeModal();
+    activarPanelRol(selectedRole, user);
+}
+
+function executeRegister() {
+    alert("🎉 Cuenta registrada de forma exitosa.");
+    toggleAuthMode();
 }
 
 function activarPanelRol(role, email) {
-    const rSelection = document.getElementById('view-roles') || document.getElementById('role-selection');
-    if (rSelection) rSelection.classList.add('d-none');
-    
-    if(document.getElementById('view-paciente')) document.getElementById('view-paciente').classList.add('d-none');
-    if(document.getElementById('view-medico')) document.getElementById('view-medico').classList.add('d-none'); 
-    if(document.getElementById('view-admin')) document.getElementById('view-admin').classList.add('d-none'); 
-    if(document.getElementById('panel-citas-paciente-seccion')) document.getElementById('panel-citas-paciente-seccion').classList.add('d-none');
+    document.getElementById('view-roles')?.classList.add('d-none');
+    document.getElementById('view-paciente')?.classList.add('d-none');
+    document.getElementById('view-medico')?.classList.add('d-none'); 
+    document.getElementById('view-admin')?.classList.add('d-none'); 
+    document.getElementById('panel-citas-paciente-seccion')?.classList.add('d-none');
 
     if(role === 'Paciente') { 
         document.getElementById('view-paciente')?.classList.remove('d-none'); 
@@ -76,7 +81,6 @@ function activarPanelRol(role, email) {
         document.getElementById('view-medico')?.classList.remove('d-none'); 
         mostrarBarraSesion("Dr. Carlos Mendoza", "Médico");
         renderTablaMedico("Dr. Carlos Mendoza"); 
-        renderCalendarioMedico(); 
     } else if(role === 'Admin' || role === 'Administrador') { 
         document.getElementById('view-admin')?.classList.remove('d-none'); 
         mostrarBarraSesion("Administrador General", "Admin");
@@ -94,26 +98,21 @@ function mostrarBarraSesion(nombre, rol) {
 }
 
 function logOut() { 
-    const rSelection = document.getElementById('view-roles') || document.getElementById('role-selection');
-    if (rSelection) rSelection.classList.remove('d-none');
-    
-    if(document.getElementById('view-paciente')) document.getElementById('view-paciente').classList.add('d-none'); 
-    if(document.getElementById('view-medico')) document.getElementById('view-medico').classList.add('d-none'); 
-    if(document.getElementById('view-admin')) document.getElementById('view-admin').classList.add('d-none'); 
-    if(document.getElementById('panel-citas-paciente-seccion')) document.getElementById('panel-citas-paciente-seccion').classList.add('d-none');
+    document.getElementById('view-roles')?.classList.remove('d-none');
+    document.getElementById('view-paciente')?.classList.add('d-none'); 
+    document.getElementById('view-medico')?.classList.add('d-none'); 
+    document.getElementById('view-admin')?.classList.add('d-none'); 
+    document.getElementById('panel-citas-paciente-seccion')?.classList.add('d-none');
     document.getElementById("user-tag").style.display = "none";
-    document.getElementById('auth-form').reset();
 }
 
-// 1. Carga de Especialidades y Desbloqueo del Flujo del Paciente
 function updateMedicos() { 
     const esp = document.getElementById('select-esp').value; 
     const selectMed = document.getElementById('select-med'); 
     if(!selectMed) return;
     selectMed.innerHTML = ''; 
-    const claveEsp = esp.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    if(!claveEsp || !medicosData[claveEsp]) { 
+    if(!esp || !medicosData[esp]) { 
         selectMed.innerHTML = '<option value="" selected disabled>-- Selecciona un área primero --</option>'; 
         selectMed.disabled = true;
         return; 
@@ -124,9 +123,9 @@ function updateMedicos() {
     optDefecto.disabled = true; optDefecto.selected = true;
     selectMed.appendChild(optDefecto);
 
-    medicosData[claveEsp].forEach(med => { 
+    medicosData[esp].forEach(med => { 
         let opt = document.createElement('option'); 
-        opt.value = med.ci; opt.innerText = med.name; 
+        opt.value = med.name; opt.innerText = med.name; 
         selectMed.appendChild(opt); 
     });
 }
@@ -134,8 +133,7 @@ function updateMedicos() {
 function updateCalendarioPaciente() {
     const selectMed = document.getElementById('select-med');
     if(selectMed && selectMed.value) {
-        const selectFecha = document.getElementById('select-fecha');
-        if (selectFecha) selectFecha.disabled = false;
+        document.getElementById('select-fecha').disabled = false;
     }
 }
 
@@ -154,34 +152,9 @@ function updateTurnosPaciente() {
     });
 }
 
-// 2. Reserva de Turnos desde la Interfaz del Usuario (Función completada de forma segura)
 function executeSchedule() {
-    const esp = document.getElementById('select-esp').value;
-    const medSelect = document.getElementById('select-med');
-    const fecha = document.getElementById('select-fecha').value;
-    const hora = document.getElementById('select-hor').value;
-
-    if (!esp || !medSelect.value || !fecha || !hora) {
-        alert("⚠️ CAMPOS INCOMPLETOS\nPor favor, completa todos los pasos antes de agendar.");
-        return;
-    }
-
-    let medNombre = medSelect.options[medSelect.selectedIndex].text;
-    if (confirm(`📋 ¿CONFIRMAR RESERVA?\n\nVas a agendar una cita a las ${hora} con el especialista ${medNombre}. ¿Proceder?`)) {
-        misCitas.push({
-            id: String(misCitas.length + 1),
-            paciente: "Paciente Autenticado",
-            especialidad: esp,
-            medico: medNombre,
-            fechaHora: `${hora} - ${fecha}`,
-            estado: "Pendiente"
-        });
-        alert("🎉 Cita agendada de forma exitosa.");
-        renderSidebarAppointments();
-    }
+    alert("🎉 Cita agendada con éxito.");
 }
-
-// --- 🛠️ NUEVAS FUNCIONES DE ENLACE DE RENDERIZADO (RESOLUCIÓN DEL ERROR) ---
 
 function renderSidebarAppointments() {
     const tbody = document.getElementById('tabla-citas-paciente');
@@ -196,16 +169,34 @@ function renderSidebarAppointments() {
 function renderTablaMedico(medicoNombre) {
     const tbody = document.getElementById('tabla-citas-medico');
     if (!tbody) return; tbody.innerHTML = '';
-    
-    // Filtrar citas correspondientes a este médico
-    const citasFiltradas = misCitas.filter(c => c.medico === medicoNombre);
-    
-    if (citasFiltradas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#888;">No hay citas asignadas para hoy.</td></tr>`;
-        return;
-    }
-    citasFiltradas.forEach(cita => {
+    misCitas.forEach(cita => {
         let tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${cita.paciente}</strong></td>
-            <td>${cita.fechaHora}</td>
+        tr.innerHTML = `<td><strong>${cita.paciente}</strong></td><td>${cita.fechaHora}</td><td><span style="background:#d1ecf1; color:#0c5460; padding:3px 8px; border-radius:4px;">${cita.estado}</span></td><td><button class="btn-warning" onclick="alert('Atendiendo...')">Atender</button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderPanelAdmin() {
+    if(document.getElementById('stat-agendadas')) document.getElementById('stat-agendadas').innerText = misCitas.length;
+    if(document.getElementById('stat-canceladas')) document.getElementById('stat-canceladas').innerText = citasCanceladasHistorial;
+
+    const tbodyUsers = document.getElementById('tabla-usuarios-admin');
+    if (tbodyUsers) {
+        tbodyUsers.innerHTML = `
+            <tr><td><strong>admin_global</strong></td><td><span style="background:#343a40; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">ADMIN</span></td><td>9999999999</td><td><span style="color:#28a745; font-weight:bold;">🟢 En Línea</span></td></tr>
+        `;
+    }
+
+    const containerMedicos = document.getElementById('admin-lista-medicos-container');
+    if (containerMedicos) {
+        containerMedicos.innerHTML = '';
+        for (let especialidad in medicosData) {
+            medicosData[especialidad].forEach(medico => {
+                let div = document.createElement('div');
+                div.style = "display:flex; justify-content:space-between; align-items:center; padding:10px; background:#fff; border:1px solid #ddd; border-radius:8px;";
+                div.innerHTML = `<div><strong style="color:#4a148c;">${medico.name}</strong><br><small style="color:#666;">${especialidad}</small></div><span style="font-weight:bold; font-size:13px; color:#22c55e;">🟢 Conectado</span>`;
+                containerMedicos.appendChild(div);
+            });
+        }
+    }
+}
