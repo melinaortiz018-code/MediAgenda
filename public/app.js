@@ -49,78 +49,52 @@ function seleccionarRol(rol, elemento) {
   elemento.style.transform = 'translateY(-3px)';
   elemento.style.boxShadow = '0 6px 18px rgba(147, 51, 234, 0.25)';
   
-  // Guardar rol en el input oculto
+  // Guardar rol
   document.getElementById('loginRol').value = rol;
   
-  // Mostrar/ocultar campos según el rol
-  ajustarCamposLogin();
-}
-
-// Ajustar campos visibles según el rol
-function ajustarCamposLogin() {
-  const rol = document.getElementById('loginRol').value;
+  // Mostrar/ocultar campos según el rol (FORZADO para que siempre funcione)
   const campoCi = document.getElementById('campoCi');
   const campoCorreo = document.getElementById('campoCorreo');
   const ciInput = document.getElementById('loginCi');
   const correoInput = document.getElementById('loginCorreo');
   const hint = document.getElementById('loginHint');
   
+  // Limpiar siempre
   ciInput.required = false;
   correoInput.required = false;
   ciInput.value = '';
   correoInput.value = '';
   
+  // ================== CORRECCIÓN CLAVE ==================
   if (rol === 'paciente') {
-    campoCi.style.display = 'block';
-    campoCorreo.style.display = 'block';
+    // PACIENTE: Mostrar AMBOS campos
+    campoCi.style.setProperty('display', 'block', 'important');
+    campoCorreo.style.setProperty('display', 'block', 'important');
     ciInput.required = true;
     correoInput.required = true;
     hint.textContent = '👤 Pacientes: Ingrese su CI y Correo';
-  } else if (rol === 'medico') {
-    campoCi.style.display = 'block';
-    campoCorreo.style.display = 'none';
+  } 
+  else if (rol === 'medico') {
+    // MÉDICO: Solo CI
+    campoCi.style.setProperty('display', 'block', 'important');
+    campoCorreo.style.setProperty('display', 'none', 'important');
     ciInput.required = true;
     correoInput.required = false;
     hint.textContent = '🩺 Médicos: Ingrese su CI (ej: MED001)';
-  } else if (rol === 'admin') {
-    campoCi.style.display = 'none';
-    campoCorreo.style.display = 'block';
+  } 
+  else if (rol === 'admin') {
+    // ADMIN: Solo Correo
+    campoCi.style.setProperty('display', 'none', 'important');
+    campoCorreo.style.setProperty('display', 'block', 'important');
     ciInput.required = false;
     correoInput.required = true;
     hint.textContent = '🛡️ Administrador: Ingrese su correo';
-  } else {
-    campoCi.style.display = 'none';
-    campoCorreo.style.display = 'none';
-    hint.textContent = '';
   }
 }
-// ==================== LOGIN POR ROLES ====================
+
+// Eliminamos la función antigua ajustarCamposLogin, ya que todo se hace en seleccionarRol
 function ajustarCamposLogin() {
-  const rol = document.getElementById('loginRol').value;
-  const ciInput = document.getElementById('loginCi');
-  const correoInput = document.getElementById('loginCorreo');
-  const hint = document.getElementById('loginHint');
-  
-  ciInput.required = false;
-  correoInput.required = false;
-  ciInput.value = '';
-  correoInput.value = '';
-  
-  if (rol === 'paciente') {
-    ciInput.required = true;
-    correoInput.required = true;
-    hint.textContent = 'Pacientes: Ingrese CI y Correo';
-  } else if (rol === 'medico') {
-    ciInput.required = true;
-    correoInput.required = false;
-    hint.textContent = 'Médicos: Ingrese su CI (ej: MED001)';
-  } else if (rol === 'admin') {
-    ciInput.required = false;
-    correoInput.required = true;
-    hint.textContent = 'Administrador: Ingrese su correo (admin@mediagenda.com)';
-  } else {
-    hint.textContent = '';
-  }
+  // Función vacía por compatibilidad, no la usamos más
 }
 
 // ==================== PETICIONES API ====================
@@ -713,8 +687,8 @@ window.onload = async () => {
     }
   }
   document.getElementById('vistaInicio').style.display = 'flex';
-  // Ocultar campos hasta que se elija un rol
-  document.getElementById('campoCi').style.display = 'none';
-  document.getElementById('campoCorreo').style.display = 'none';
-  ajustarCamposLogin();
+  
+  // Al inicio: ocultar ambos campos hasta que se elija rol
+  document.getElementById('campoCi').style.setProperty('display', 'none', 'important');
+  document.getElementById('campoCorreo').style.setProperty('display', 'none', 'important');
 };
