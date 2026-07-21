@@ -257,33 +257,35 @@ async function cargarMedicos() {
   selectMedicos.innerHTML = '<option value="">Seleccione primero una especialidad</option>';
 }
 
-async function cargarMedicosPorEspecialidad() {
-  const especialidad = document.getElementById('citaEspecialidad').value;
-  const selectMedicos = document.getElementById('citaMedico');
-  
-  if (!especialidad) {
-    selectMedicos.innerHTML = '<option value="">Seleccione una especialidad primero</option>';
-    return;
-  }
+document.addEventListener("DOMContentLoaded", () => {
+    cargarMedicosEnSelect();
+});
 
-  selectMedicos.innerHTML = '<option value="">Cargando médicos...</option>';
-  try {
-    // Probamos la ruta correcta que usa tu backend
-    const medicos = await apiRequest(`/api/medicos?especialidad=${encodeURIComponent(especialidad)}`);
-    selectMedicos.innerHTML = '<option value="">Seleccione un médico</option>';
-    if (medicos.length === 0) {
-      selectMedicos.innerHTML = '<option value="">No hay médicos en esta especialidad</option>';
-      return;
+async function cargarMedicosEnSelect() {
+    try {
+        // Asegúrate de que esta ruta coincida con la de tu backend
+        const respuesta = await fetch('/api/medicos'); 
+        const medicos = await respuesta.json();
+
+        const selectMedico = document.getElementById('citaMedico');
+        
+        // Limpiar opciones anteriores manteniendo la opción por defecto
+        selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
+
+        // Rellenar con los médicos obtenidos
+        medicos.forEach(medico => {
+            const option = document.createElement('option');
+            // Usamos el _id de MongoDB como value y el nombre/especialidad como texto visible
+            option.value = medico._id; 
+            option.textContent = `Dr. ${medico.nombre} - ${medico.especialidad || 'General'}`;
+            selectMedico.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Error al cargar los médicos:", error);
+        const selectMedico = document.getElementById('citaMedico');
+        selectMedico.innerHTML = '<option value="">Error al cargar especialistas</option>';
     }
-    medicos.forEach(medico => {
-      const opcion = document.createElement('option');
-      opcion.value = medico._id;
-      opcion.textContent = medico.nombres;
-      selectMedicos.appendChild(opcion);
-    });
-  } catch (error) {
-    selectMedicos.innerHTML = '<option value="">Error al cargar</option>';
-  }
 }
 async function agendarCita(e) {
   e.preventDefault();
