@@ -54,14 +54,14 @@ class MediAgendaApp {
         this.cambiarVista('view-home');
     }
 
-    switchTab(tab) {
+    switchTab(tab, e) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         if (tab === 'login') {
-            event.target.classList.add('active');
+            e.target.classList.add('active');
             document.getElementById('form-login-paciente').style.display = 'flex';
             document.getElementById('form-reg-paciente').style.display = 'none';
         } else {
-            event.target.classList.add('active');
+            e.target.classList.add('active');
             document.getElementById('form-login-paciente').style.display = 'none';
             document.getElementById('form-reg-paciente').style.display = 'flex';
         }
