@@ -12,7 +12,9 @@
 </head>
 <body>
 
-    <!-- PANTALLA INICIO: SELECCIÓN DE ROLES -->
+    <!-- ========================================== -->
+    <!-- PANTALLA 1: INICIO Y SELECCIÓN DE ROLES    -->
+    <!-- ========================================== -->
     <section id="view-roles" class="view active">
         <div class="container text-center">
             <h1 class="logo-title">MediAgenda</h1>
@@ -34,14 +36,14 @@
         </div>
     </section>
 
-    <!-- PANTALLA PACIENTE: LOGIN / REGISTRO -->
+    <!-- ========================================== -->
+    <!-- SECCIÓN PACIENTE                           -->
+    <!-- ========================================== -->
     <section id="view-patient-auth" class="view">
         <div class="container auth-container">
             <button class="back-btn" onclick="app.showView('view-roles')"><i class="fa-solid fa-arrow-left"></i> Volver</button>
             <div class="auth-box">
                 <h2>Portal Paciente</h2>
-                
-                <!-- Login -->
                 <form id="form-patient-login" class="active">
                     <div class="input-group">
                         <label>Correo Electrónico</label>
@@ -57,8 +59,6 @@
                     <button type="submit" class="btn-main glossy">Iniciar Sesión</button>
                     <p class="switch-form" onclick="app.toggleAuthForm('patient')">¿No tienes cuenta? Regístrate aquí</p>
                 </form>
-
-                <!-- Registro -->
                 <form id="form-patient-register" style="display:none;">
                     <div class="input-group">
                         <label>Cédula de Identidad (CI)</label>
@@ -94,10 +94,9 @@
         </div>
     </section>
 
-    <!-- DASHBOARD PACIENTE -->
     <section id="view-patient-dashboard" class="view">
         <div class="dashboard-header">
-            <h2>Bienvenido, <span id="patient-name-display">Paciente</span></h2>
+            <h2>Bienvenido, <span>Paciente</span></h2>
             <button class="btn-danger glossy" onclick="app.showView('view-roles')">Cerrar Sesión</button>
         </div>
         <div class="container dashboard-grid">
@@ -131,7 +130,7 @@
             </div>
             <div class="panel">
                 <h3>Mis Citas</h3>
-                <div id="patient-appointments-list" class="appointment-list">
+                <div class="appointment-list">
                     <div class="appt-card pending">
                         <h4>Dr. Ficticio (Odontología)</h4>
                         <p><strong>Fecha:</strong> 25/10/2026 - 10:00 AM</p>
@@ -146,11 +145,105 @@
         </div>
     </section>
 
-    <!-- Firebase App -->
+    <!-- ========================================== -->
+    <!-- SECCIÓN MÉDICO                             -->
+    <!-- ========================================== -->
+    <section id="view-doctor-auth" class="view">
+        <div class="container auth-container">
+            <button class="back-btn" onclick="app.showView('view-roles')"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+            <div class="auth-box">
+                <h2>Portal Médico</h2>
+                <form id="form-doctor-login">
+                    <div class="input-group">
+                        <label>Usuario / Correo Institucional</label>
+                        <input type="text" id="doc-login-email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Contraseña</label>
+                        <div class="pwd-wrapper">
+                            <input type="password" id="doc-login-pwd" required>
+                            <i class="fa-solid fa-eye toggle-pwd" onclick="app.togglePassword('doc-login-pwd', this)"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-main glossy">Ingresar al Consultorio</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-doctor-dashboard" class="view">
+        <div class="dashboard-header">
+            <h2>Panel Médico: <span>Dr. Especialista</span></h2>
+            <button class="btn-danger glossy" onclick="app.showView('view-roles')">Cerrar Sesión</button>
+        </div>
+        <div class="container">
+            <div class="panel" style="margin-top: 20px;">
+                <h3>Citas del Día</h3>
+                <div class="appointment-list">
+                    <div class="appt-card pending">
+                        <h4>Paciente: Juan Pérez</h4>
+                        <p><strong>Horario:</strong> 10:00 AM - 10:30 AM</p>
+                        <p><strong>Motivo:</strong> Revisión general y limpieza.</p>
+                        <div class="actions">
+                            <button class="btn-small glossy" onclick="Swal.fire('En curso', 'Cita iniciada', 'info')">Iniciar Atención</button>
+                            <button class="btn-small btn-danger glossy" onclick="app.promptReason('cancelar')">Cancelar Cita</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECCIÓN ADMINISTRADOR                      -->
+    <!-- ========================================== -->
+    <section id="view-admin-auth" class="view">
+        <div class="container auth-container">
+            <button class="back-btn" onclick="app.showView('view-roles')"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+            <div class="auth-box">
+                <h2>Administración del Sistema</h2>
+                <form id="form-admin-login">
+                    <div class="input-group">
+                        <label>Credencial de Admin</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Clave de Seguridad</label>
+                        <div class="pwd-wrapper">
+                            <input type="password" id="admin-login-pwd" required>
+                            <i class="fa-solid fa-eye toggle-pwd" onclick="app.togglePassword('admin-login-pwd', this)"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-main glossy" style="background: linear-gradient(145deg, #d8bfd8, #cda4cd);">Acceso Administrador</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-admin-dashboard" class="view">
+        <div class="dashboard-header">
+            <h2>Panel de Control General</h2>
+            <button class="btn-danger glossy" onclick="app.showView('view-roles')">Cerrar Sesión</button>
+        </div>
+        <div class="container dashboard-grid">
+            <div class="panel">
+                <h3>Estadísticas Rápidas</h3>
+                <p><strong>Total Usuarios:</strong> 150</p>
+                <p><strong>Citas Pendientes:</strong> 12</p>
+                <p><strong>Citas Atendidas:</strong> 340</p>
+            </div>
+            <div class="panel">
+                <h3>Gestión Rápida</h3>
+                <button class="btn-main glossy">Registrar Nuevo Médico</button>
+                <button class="btn-main glossy" style="background: #a18cd1;">Ver Lista de Usuarios</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts de Firebase y Lógica -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    
     <script src="app.js"></script>
 </body>
 </html>
