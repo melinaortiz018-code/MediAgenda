@@ -3,41 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediAgenda - Sistema de Gestión de Citas Médicas</title>
+    <title>MediAgenda - Sistema de Citas Médicas</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
-    <!-- VISTA INICIO / SELECCIÓN DE ROL -->
+    <!-- VISTA INICIO -->
     <div id="vistaInicio" class="vista pantalla-inicio">
         <div class="contenedor-inicio">
-            <div class="logo-inicio">
-                <h1>🏥 MediAgenda</h1>
-                <p>Sistema de Gestión de Citas Médicas</p>
-            </div>
+            <h1 class="titulo-principal">🏥 MediAgenda</h1>
+            <p class="subtitulo">Sistema de Gestión de Citas Médicas</p>
+            <h2 class="seleccion-rol">Selecciona tu tipo de cuenta</h2>
 
-            <h2 class="subtitulo-inicio">Selecciona tu tipo de cuenta</h2>
-
-            <!-- TARJETAS DE SELECCIÓN DE ROL -->
+            <!-- TARJETAS DE ROLES -->
             <div class="roles-grid">
                 <div class="rol-card" onclick="seleccionarRol('paciente', this)">
-                    <div class="icono">👤</div>
+                    <div class="icono-rol">👤</div>
                     <h3>Paciente</h3>
                 </div>
-
                 <div class="rol-card" onclick="seleccionarRol('medico', this)">
-                    <div class="icono">🩺</div>
+                    <div class="icono-rol">🩺</div>
                     <h3>Médico</h3>
                 </div>
-
                 <div class="rol-card" onclick="seleccionarRol('admin', this)">
-                    <div class="icono">🛡️</div>
+                    <div class="icono-rol">🛡️</div>
                     <h3>Administrador</h3>
                 </div>
             </div>
 
-            <!-- FORMULARIO DE AUTENTICACIÓN -->
+            <!-- FORMULARIO -->
             <input type="hidden" id="loginRol">
 
             <div id="tabsAuth" class="tabs-auth">
@@ -48,12 +43,12 @@
             <div id="camposLogin" class="campos-login">
                 <div id="grupoLoginCI" class="grupo-campo">
                     <label for="loginCI">Cédula de Identidad (CI)</label>
-                    <input type="text" id="loginCI" placeholder="Ingresa tu número de cédula">
+                    <input type="text" id="loginCI" placeholder="Ingresa tu cédula">
                 </div>
 
                 <div id="grupoLoginCorreo" class="grupo-campo">
                     <label for="loginCorreo">Correo Electrónico</label>
-                    <input type="email" id="loginCorreo" placeholder="tu.correo@ejemplo.com">
+                    <input type="email" id="loginCorreo" placeholder="tu@correo.com">
                 </div>
 
                 <div class="grupo-campo">
@@ -68,40 +63,37 @@
                 <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
             </div>
 
-            <!-- FORMULARIO DE REGISTRO -->
+            <!-- FORMULARIO REGISTRO -->
             <div id="formRegistro" class="formulario" style="display: none;">
                 <h3>Crear Cuenta de Paciente</h3>
                 <form onsubmit="registrarUsuario(event)">
                     <div class="grupo-campo">
-                        <label for="regCi">Cédula de Identidad *</label>
-                        <input type="text" id="regCi" required placeholder="Ej: 0987654321">
+                        <label for="regCi">Cédula *</label>
+                        <input type="text" id="regCi" required>
                     </div>
                     <div class="grupo-campo">
                         <label for="regNombres">Nombres Completos *</label>
-                        <input type="text" id="regNombres" required placeholder="Tu nombre completo">
+                        <input type="text" id="regNombres" required>
                     </div>
                     <div class="grupo-campo">
-                        <label for="regCorreo">Correo Electrónico *</label>
-                        <input type="email" id="regCorreo" required placeholder="tu.correo@ejemplo.com">
+                        <label for="regCorreo">Correo *</label>
+                        <input type="email" id="regCorreo" required>
                     </div>
                     <div class="grupo-campo">
-                        <label for="regCelular">Número de Celular *</label>
-                        <input type="tel" id="regCelular" required placeholder="Ej: 0991234567">
+                        <label for="regCelular">Celular *</label>
+                        <input type="tel" id="regCelular" required>
                     </div>
                     <div class="grupo-campo">
                         <label for="regDireccion">Dirección</label>
-                        <input type="text" id="regDireccion" placeholder="Tu dirección de domicilio">
+                        <input type="text" id="regDireccion">
                     </div>
                     <div class="grupo-campo">
                         <label for="regPassword">Contraseña *</label>
-                        <div class="input-con-boton">
-                            <input type="password" id="regPassword" required placeholder="Crea una contraseña segura">
-                            <button type="button" onclick="togglePassword('regPassword', this)">👁️</button>
-                        </div>
+                        <input type="password" id="regPassword" required>
                     </div>
                     <div class="grupo-campo">
                         <label for="regConfirmPassword">Confirmar Contraseña *</label>
-                        <input type="password" id="regConfirmPassword" required placeholder="Repite tu contraseña">
+                        <input type="password" id="regConfirmPassword" required>
                     </div>
                     <button type="submit" class="btn-principal">Registrarme</button>
                 </form>
@@ -109,7 +101,7 @@
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN (OCULTA AL INICIO) -->
+    <!-- BARRA DE NAVEGACIÓN -->
     <nav id="navbar" style="display: none;">
         <div class="nav-contenedor">
             <div class="nav-logo">🏥 MediAgenda</div>
@@ -121,50 +113,60 @@
         </div>
     </nav>
 
-    <!-- VISTAS PRINCIPALES -->
+    <!-- VISTAS -->
     <div id="vistaAgendar" class="vista contenedor-principal" style="display: none;">
         <h2>Agendar Nueva Cita</h2>
         <form onsubmit="agendarCita(event)">
             <div class="grupo-campo">
-                <label for="citaMedico">Médico y Especialidad *</label>
+                <label for="citaEspecialidad">Especialidad *</label>
+                <select id="citaEspecialidad" required onchange="cargarMedicosPorEspecialidad()">
+                    <option value="">Seleccione especialidad</option>
+                    <option value="Psicología">Psicología</option>
+                    <option value="Odontología">Odontología</option>
+                    <option value="Medicina General">Medicina General</option>
+                    <option value="Pediatría">Pediatría</option>
+                </select>
+            </div>
+            <div class="grupo-campo">
+                <label for="citaMedico">Médico *</label>
                 <select id="citaMedico" required>
                     <option value="">Seleccione un médico</option>
                 </select>
             </div>
             <div class="grupo-campo">
-                <label for="citaFecha">Fecha de la Cita *</label>
+                <label for="citaFecha">Fecha *</label>
                 <input type="date" id="citaFecha" required>
             </div>
             <div class="grupo-campo">
-                <label for="citaHora">Hora de la Cita *</label>
+                <label for="citaHora">Hora *</label>
                 <input type="time" id="citaHora" required>
             </div>
             <div class="grupo-campo">
-                <label for="citaMotivo">Motivo de la Consulta *</label>
-                <textarea id="citaMotivo" rows="3" required placeholder="Describe brevemente el motivo de tu visita"></textarea>
+                <label for="citaMotivo">Motivo *</label>
+                <textarea id="citaMotivo" rows="3" required></textarea>
             </div>
             <button type="submit" class="btn-principal">Agendar Cita</button>
         </form>
     </div>
 
     <div id="vistaMisCitas" class="vista contenedor-principal" style="display: none;">
-        <h2>Mis Citas Programadas</h2>
-        <div id="listaCitasPaciente" class="lista-citas"></div>
+        <h2>Mis Citas</h2>
+        <div id="listaMisCitas"></div>
     </div>
 
     <div id="vistaPerfil" class="vista contenedor-principal" style="display: none;">
         <h2>Mi Perfil</h2>
         <form onsubmit="actualizarPerfil(event)">
             <div class="grupo-campo">
-                <label>Nombres Completos</label>
+                <label>Nombres</label>
                 <input type="text" id="perfilNombres" readonly>
             </div>
             <div class="grupo-campo">
-                <label>Cédula de Identidad</label>
+                <label>Cédula</label>
                 <input type="text" id="perfilCi" readonly>
             </div>
             <div class="grupo-campo">
-                <label>Correo Electrónico</label>
+                <label>Correo</label>
                 <input type="email" id="perfilCorreo" required>
             </div>
             <div class="grupo-campo">
@@ -180,103 +182,64 @@
     </div>
 
     <div id="vistaMedicoCalendario" class="vista contenedor-principal" style="display: none;">
-        <h2>Mi Calendario de Disponibilidad</h2>
-        <div class="calendario-header">
-            <button onclick="cambiarMes(-1)">&lt;</button>
-            <h3 id="mesActual"></h3>
-            <button onclick="cambiarMes(1)">&gt;</button>
-        </div>
-        <div id="calendario" class="calendario"></div>
-        <div id="horariosDia" class="horarios-dia"></div>
-        <button class="btn-principal" onclick="guardarDisponibilidad()">Guardar Disponibilidad</button>
+        <h2>Mi Calendario</h2>
     </div>
 
     <div id="vistaMedicoCitas" class="vista contenedor-principal" style="display: none;">
         <h2>Gestión de Citas</h2>
-        <div class="filtros-medico">
-            <button class="filtro-btn active" onclick="cargarCitasMedico('todas', this)">Todas</button>
-            <button class="filtro-btn" onclick="cargarCitasMedico('hoy', this)">Hoy</button>
-            <button class="filtro-btn" onclick="cargarCitasMedico('pendientes', this)">Pendientes</button>
-            <button class="filtro-btn" onclick="cargarCitasMedico('finalizadas', this)">Finalizadas</button>
-        </div>
-        <div id="listaCitasMedico" class="lista-citas"></div>
+        <div id="listaCitasMedico"></div>
     </div>
 
     <div id="vistaAdminUsuarios" class="vista contenedor-principal" style="display: none;">
         <h2>Gestión de Usuarios</h2>
-        <button class="btn-principal" onclick="mostrarModalAgregarMedico()">Agregar Nuevo Médico</button>
-        <div id="listaUsuarios" class="lista-citas"></div>
+        <button class="btn-principal" onclick="mostrarModalAgregarMedico()">Agregar Médico</button>
+        <table id="tablaUsuarios" style="width:100%;margin-top:1rem;"></table>
     </div>
 
     <div id="vistaAdminEstadisticas" class="vista contenedor-principal" style="display: none;">
-        <h2>Estadísticas del Sistema</h2>
-        <div class="tarjetas-estadisticas">
-            <div class="tarjeta">
-                <h4>Total Pacientes</h4>
-                <p id="estPacientes">0</p>
-            </div>
-            <div class="tarjeta">
-                <h4>Total Médicos</h4>
-                <p id="estMedicos">0</p>
-            </div>
-            <div class="tarjeta">
-                <h4>Citas este Mes</h4>
-                <p id="estCitasMes">0</p>
-            </div>
-            <div class="tarjeta">
-                <h4>Citas Pendientes</h4>
-                <p id="estPendientes">0</p>
-            </div>
-        </div>
+        <h2>Estadísticas</h2>
+        <div id="estadisticasGrid"></div>
     </div>
 
     <!-- MODALES -->
-    <div id="modalEditarCita" class="modal">
-        <div class="modal-contenido">
-            <span class="cerrar" onclick="cerrarModal('modalEditarCita')">&times;</span>
-            <h3>Editar Estado de Cita</h3>
-            <form onsubmit="guardarEdicionCita(event)">
-                <input type="hidden" id="editCitaId">
-                <div class="grupo-campo">
-                    <label>Estado</label>
-                    <select id="editEstado" required>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="confirmada">Confirmada</option>
-                        <option value="atendida">Atendida</option>
-                        <option value="cancelada">Cancelada</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-principal">Guardar Cambios</button>
-            </form>
-        </div>
-    </div>
-
     <div id="modalAgregarMedico" class="modal">
         <div class="modal-contenido">
             <span class="cerrar" onclick="cerrarModal('modalAgregarMedico')">&times;</span>
             <h3>Agregar Nuevo Médico</h3>
             <form onsubmit="agregarMedico(event)">
                 <div class="grupo-campo">
-                    <label>Cédula (Ej: MED001) *</label>
-                    <input type="text" id="medCi" required>
+                    <label>Cédula (MED001...) *</label>
+                    <input type="text" id="medicoCi" required>
                 </div>
                 <div class="grupo-campo">
-                    <label>Nombres Completos *</label>
-                    <input type="text" id="medNombres" required>
+                    <label>Nombres *</label>
+                    <input type="text" id="medicoNombres" required>
+                </div>
+                <div class="grupo-campo">
+                    <label>Correo *</label>
+                    <input type="email" id="medicoCorreo" required>
                 </div>
                 <div class="grupo-campo">
                     <label>Especialidad *</label>
-                    <input type="text" id="medEspecialidad" required>
+                    <select id="medicoEspecialidad" required>
+                        <option value="Psicología">Psicología</option>
+                        <option value="Odontología">Odontología</option>
+                        <option value="Medicina General">Medicina General</option>
+                        <option value="Pediatría">Pediatría</option>
+                    </select>
                 </div>
                 <div class="grupo-campo">
-                    <label>Correo Electrónico *</label>
-                    <input type="email" id="medCorreo" required>
+                    <label>Género *</label>
+                    <select id="medicoGenero" required>
+                        <option value="M">Masculino</option>
+                        <option value="F">Femenino</option>
+                    </select>
                 </div>
                 <div class="grupo-campo">
-                    <label>Contraseña Temporal *</label>
-                    <input type="password" id="medPassword" required>
+                    <label>Contraseña *</label>
+                    <input type="password" id="medicoPassword" required>
                 </div>
-                <button type="submit" class="btn-principal">Registrar Médico</button>
+                <button type="submit" class="btn-principal">Registrar</button>
             </form>
         </div>
     </div>
