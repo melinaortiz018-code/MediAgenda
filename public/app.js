@@ -198,14 +198,18 @@ class MediAgendaApp {
         });
     }
 
-    autofillMedico(select) {
-        const ci = select.value;
-        const med = this.usuarios.find(u => u.ci === ci);
-        if (med) {
-            document.getElementById('medico-ci-login').value = med.ci;
-            document.getElementById('medico-pass-login').value = med.password || 'medico123';
-        }
-    }
+    autofillMedico(selectElement) {
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const ci = selectedOption.value;
+    const password = selectedOption.dataset.password; // O un diccionario con las contraseñas predefinidas
+
+    // Rellenar los campos del formulario de login de médico
+    const inputCi = document.querySelector('#view-auth-medico input[name="ci"]') || document.getElementById('medico-ci');
+    const inputPass = document.querySelector('#view-auth-medico input[type="password"]') || document.getElementById('medico-password');
+
+    if (inputCi && ci) inputCi.value = ci;
+    if (inputPass && password) inputPass.value = password;
+}
 
     loginMedico(e) {
         e.preventDefault();
