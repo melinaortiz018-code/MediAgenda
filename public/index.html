@@ -1,453 +1,286 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediAgenda - Sistema de Citas Médicas</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>MediAgenda - Sistema de Gestión de Citas Médicas</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-
 <body>
-    <div id="app">
-        <!-- BARRA DE NAVEGACIÓN -->
-        <nav id="navbar" class="navbar" style="display:none;">
-            <div class="nav-logo">
-                <span class="logo-icon">🏥</span>
-                <span class="logo-text">MediAgenda</span>
-            </div>
-            <div class="nav-menu" id="navMenu"></div>
-            <div class="nav-user">
-                <span id="userName"></span>
-                <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
-            </div>
-        </nav>
 
-        <!-- VISTA: INICIO / LOGIN / REGISTRO -->
-        <div id="vistaInicio" class="vista">
-            <div class="auth-container">
-                <div class="auth-header">
-                    <div class="logo-grande">🏥</div>
-                    <h1>MediAgenda</h1>
-                    <p class="subtitle">Sistema de Gestión de Citas Médicas</p>
+    <!-- VISTA INICIO / SELECCIÓN DE ROL -->
+    <div id="vistaInicio" class="vista pantalla-inicio">
+        <div class="contenedor-inicio">
+            <div class="logo-inicio">
+                <h1>🏥 MediAgenda</h1>
+                <p>Sistema de Gestión de Citas Médicas</p>
+            </div>
+
+            <h2 class="subtitulo-inicio">Selecciona tu tipo de cuenta</h2>
+
+            <!-- TARJETAS DE SELECCIÓN DE ROL -->
+            <div class="roles-grid">
+                <div class="rol-card" onclick="seleccionarRol('paciente', this)">
+                    <div class="icono">👤</div>
+                    <h3>Paciente</h3>
                 </div>
 
-                <!-- PESTAÑAS: SOLO APARECEN PARA PACIENTE -->
-                <div class="tabs-auth" id="tabsAuth" style="display:none;">
-                    <button class="tab-btn active" onclick="cambiarTab('login')">Iniciar Sesión</button>
-                    <button class="tab-btn" onclick="cambiarTab('registro')">Registrarse</button>
+                <div class="rol-card" onclick="seleccionarRol('medico', this)">
+                    <div class="icono">🩺</div>
+                    <h3>Médico</h3>
                 </div>
 
-                <!-- FORMULARIO LOGIN CON TARJETAS DE ROLES MÁS GRANDES -->
-                <form id="formLogin" class="form-auth" onsubmit="iniciarSesion(event)">
-                    <label
-                        style="display:block;margin-bottom:0.8rem;font-weight:600;color:var(--texto);font-size:1rem;">Seleccione
-                        su tipo de cuenta:</label>
+                <div class="rol-card" onclick="seleccionarRol('admin', this)">
+                    <div class="icono">🛡️</div>
+                    <h3>Administrador</h3>
+                </div>
+            </div>
 
-                    <!-- TARJETAS CLICABLES DE ROLES -->
-                    <div class="roles-grid"
-                        style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
-                        <div class="rol-card" onclick="seleccionarRol('paciente', this)"
-                            style="padding:1.5rem;border:2px solid var(--borde);border-radius:12px;cursor:pointer;text-align:center;transition:all 0.2s;">
-                            <div style="font-size:3rem;margin-bottom:0.5rem;">👤</div>
-                            <div style="font-weight:700;color:var(--principal);font-size:1.1rem;">Paciente</div>
-                        </div>
+            <!-- FORMULARIO DE AUTENTICACIÓN -->
+            <input type="hidden" id="loginRol">
 
-                        <div class="rol-card" onclick="seleccionarRol('medico', this)"
-                            style="padding:1.5rem;border:2px solid var(--borde);border-radius:12px;cursor:pointer;text-align:center;transition:all 0.2s;">
-                            <div style="font-size:3rem;margin-bottom:0.5rem;">🩺</div>
-                            <div style="font-weight:700;color:var(--principal);font-size:1.1rem;">Médico</div>
-                        </div>
+            <div id="tabsAuth" class="tabs-auth">
+                <button class="tab-btn active" onclick="cambiarTab('login')">Iniciar Sesión</button>
+                <button class="tab-btn" onclick="cambiarTab('registro')">Registrarse</button>
+            </div>
 
-                        <div class="rol-card" onclick="seleccionarRol('admin', this)"
-                            style="padding:1.5rem;border:2px solid var(--borde);border-radius:12px;cursor:pointer;text-align:center;transition:all 0.2s;">
-                            <div style="font-size:3rem;margin-bottom:0.5rem;">🛡️</div>
-                            <div style="font-weight:700;color:var(--principal);font-size:1.1rem;">Admin</div>
+            <div id="camposLogin" class="campos-login">
+                <div id="grupoLoginCI" class="grupo-campo">
+                    <label for="loginCI">Cédula de Identidad (CI)</label>
+                    <input type="text" id="loginCI" placeholder="Ingresa tu número de cédula">
+                </div>
+
+                <div id="grupoLoginCorreo" class="grupo-campo">
+                    <label for="loginCorreo">Correo Electrónico</label>
+                    <input type="email" id="loginCorreo" placeholder="tu.correo@ejemplo.com">
+                </div>
+
+                <div class="grupo-campo">
+                    <label for="loginPassword">Contraseña</label>
+                    <div class="input-con-boton">
+                        <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña">
+                        <button type="button" onclick="togglePassword('loginPassword', this)">👁️</button>
+                    </div>
+                </div>
+
+                <p id="loginHint" class="hint"></p>
+                <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
+            </div>
+
+            <!-- FORMULARIO DE REGISTRO -->
+            <div id="formRegistro" class="formulario" style="display: none;">
+                <h3>Crear Cuenta de Paciente</h3>
+                <form onsubmit="registrarUsuario(event)">
+                    <div class="grupo-campo">
+                        <label for="regCi">Cédula de Identidad *</label>
+                        <input type="text" id="regCi" required placeholder="Ej: 0987654321">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regNombres">Nombres Completos *</label>
+                        <input type="text" id="regNombres" required placeholder="Tu nombre completo">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regCorreo">Correo Electrónico *</label>
+                        <input type="email" id="regCorreo" required placeholder="tu.correo@ejemplo.com">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regCelular">Número de Celular *</label>
+                        <input type="tel" id="regCelular" required placeholder="Ej: 0991234567">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regDireccion">Dirección</label>
+                        <input type="text" id="regDireccion" placeholder="Tu dirección de domicilio">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regPassword">Contraseña *</label>
+                        <div class="input-con-boton">
+                            <input type="password" id="regPassword" required placeholder="Crea una contraseña segura">
+                            <button type="button" onclick="togglePassword('regPassword', this)">👁️</button>
                         </div>
                     </div>
-
-                    <!-- CAMPOS QUE SE MUESTRAN SEGÚN EL ROL (INICIALMENTE OCULTOS) -->
-                    <div id="camposLogin" style="display:none;">
-                        <div class="form-group" id="campoCi">
-                            <label>Cédula de Identidad (CI)</label>
-                            <input type="text" id="loginCi" placeholder="Ingrese su CI">
-                        </div>
-                        <div class="form-group" id="campoCorreo">
-                            <label>Correo Electrónico</label>
-                            <input type="email" id="loginCorreo" placeholder="correo@ejemplo.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Contraseña *</label>
-                            <div class="input-password">
-                                <input type="password" id="loginPassword" required placeholder="Ingrese su contraseña">
-                                <button type="button" class="btn-ojo"
-                                    onclick="togglePassword('loginPassword', this)">👁️</button>
-                            </div>
-                        </div>
-                        <p id="loginHint"
-                            style="font-size:0.9rem;color:var(--texto-claro);margin-bottom:1rem;text-align:center;"></p>
-                        <button type="submit" class="btn-principal btn-block">Ingresar</button>
+                    <div class="grupo-campo">
+                        <label for="regConfirmPassword">Confirmar Contraseña *</label>
+                        <input type="password" id="regConfirmPassword" required placeholder="Repite tu contraseña">
                     </div>
+                    <button type="submit" class="btn-principal">Registrarme</button>
                 </form>
-
-                <!-- FORMULARIO REGISTRO (SOLO PARA PACIENTES) -->
-                <form id="formRegistro" class="form-auth" style="display:none;" onsubmit="registrarUsuario(event)">
-                    <div class="form-group">
-                        <label>Cédula de Identidad (CI) *</label>
-                        <input type="text" id="regCi" required placeholder="Ingrese su CI">
-                    </div>
-                    <div class="form-group">
-                        <label>Nombres Completos *</label>
-                        <input type="text" id="regNombres" required placeholder="Apellidos y Nombres">
-                    </div>
-                    <div class="form-group">
-                        <label>Correo Electrónico *</label>
-                        <input type="email" id="regCorreo" required placeholder="correo@ejemplo.com">
-                    </div>
-                    <div class="form-group">
-                        <label>Número de Celular</label>
-                        <input type="tel" id="regCelular" placeholder="09XXXXXXXXX">
-                    </div>
-                    <div class="form-group">
-                        <label>Dirección</label>
-                        <input type="text" id="regDireccion" placeholder="Su dirección">
-                    </div>
-                    <div class="form-group">
-                        <label>Contraseña *</label>
-                        <div class="input-password">
-                            <input type="password" id="regPassword" required placeholder="Mínimo 6 caracteres">
-                            <button type="button" class="btn-ojo"
-                                onclick="togglePassword('regPassword', this)">👁️</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Confirmar Contraseña *</label>
-                        <div class="input-password">
-                            <input type="password" id="regConfirmPassword" required placeholder="Repita su contraseña">
-                            <button type="button" class="btn-ojo"
-                                onclick="togglePassword('regConfirmPassword', this)">👁️</button>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-principal btn-block">Crear Cuenta</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- VISTA: PACIENTE - AGENDAR CITA -->
-        <div id="vistaAgendar" class="vista" style="display:none;">
-            <div class="container">
-                <h2 class="vista-titulo">📅 Agendar Nueva Cita</h2>
-                <form class="form-cita" onsubmit="agendarCita(event)">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Especialidad *</label>
-                            <select id="citaEspecialidad" required onchange="cargarMedicosPorEspecialidad()">
-                                <option value="">Seleccione una especialidad</option>
-                                <option value="Psicología">Psicología</option>
-                                <option value="Odontología">Odontología</option>
-                                <option value="Medicina General">Medicina General</option>
-                                <option value="Pediatría">Pediatría</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Médico *</label>
-                            <select id="citaMedico" required>
-                                <option value="">Primero seleccione especialidad</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Fecha de la Cita *</label>
-                            <input type="date" id="citaFecha" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Hora *</label>
-                            <select id="citaHora" required>
-                                <option value="">Seleccione horario</option>
-                                <option value="08:00">08:00</option>
-                                <option value="08:30">08:30</option>
-                                <option value="09:00">09:00</option>
-                                <option value="09:30">09:30</option>
-                                <option value="10:00">10:00</option>
-                                <option value="10:30">10:30</option>
-                                <option value="11:00">11:00</option>
-                                <option value="11:30">11:30</option>
-                                <option value="14:00">14:00</option>
-                                <option value="14:30">14:30</option>
-                                <option value="15:00">15:00</option>
-                                <option value="15:30">15:30</option>
-                                <option value="16:00">16:00</option>
-                                <option value="16:30">16:30</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Motivo de Consulta *</label>
-                        <textarea id="citaMotivo" rows="4" required
-                            placeholder="Describa brevemente el motivo de su consulta..."></textarea>
-                    </div>
-                    <button type="submit" class="btn-principal btn-agendar">Agendar</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- VISTA: PACIENTE - MIS CITAS -->
-        <div id="vistaMisCitas" class="vista" style="display:none;">
-            <div class="container">
-                <h2 class="vista-titulo">📋 Mis Citas</h2>
-                <div id="listaMisCitas" class="citas-grid"></div>
-            </div>
-        </div>
-
-        <!-- VISTA: PACIENTE - PERFIL -->
-        <div id="vistaPerfil" class="vista" style="display:none;">
-            <div class="container">
-                <h2 class="vista-titulo">👤 Mi Perfil</h2>
-                <form class="form-perfil" onsubmit="actualizarPerfil(event)">
-                    <div class="form-group">
-                        <label>Cédula de Identidad</label>
-                        <input type="text" id="perfilCi" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label>Nombres Completos</label>
-                        <input type="text" id="perfilNombres" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label>Correo Electrónico</label>
-                        <input type="email" id="perfilCorreo" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Número de Celular</label>
-                        <input type="tel" id="perfilCelular">
-                    </div>
-                    <div class="form-group">
-                        <label>Dirección</label>
-                        <input type="text" id="perfilDireccion">
-                    </div>
-                    <button type="submit" class="btn-principal">Guardar Cambios</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- VISTA: MÉDICO - CALENDARIO Y GESTIÓN DE DISPONIBILIDAD -->
-        <div id="vistaMedicoCalendario" class="vista" style="display:none;">
-            <div class="container">
-                <h2 class="vista-titulo">📅 Mi Calendario y Disponibilidad</h2>
-
-                <!-- CALENDARIO INTERACTIVO -->
-                <div class="calendario-medico"
-                    style="background:var(--blanco);padding:2rem;border-radius:16px;box-shadow:var(--sombra);margin-bottom:2rem;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-                        <button class="btn-editar" onclick="cambiarMes(-1)">◀ Anterior</button>
-                        <h3 id="mesActual" style="color:var(--principal);font-size:1.3rem;"></h3>
-                        <button class="btn-editar" onclick="cambiarMes(1)">Siguiente ▶</button>
-                    </div>
-                    <div id="diasSemana"
-                        style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem;text-align:center;font-weight:700;color:var(--principal);margin-bottom:0.5rem;">
-                    </div>
-                    <div id="calendarioDias" style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem;"></div>
-                </div>
-
-                <!-- GESTIÓN DE HORARIOS DEL DÍA SELECCIONADO -->
-                <div class="horarios-medico"
-                    style="background:var(--blanco);padding:2rem;border-radius:16px;box-shadow:var(--sombra);">
-                    <h3 style="color:var(--principal);margin-bottom:1rem;">⏰ Horarios del día seleccionado: <span
-                            id="diaSeleccionado">Hoy</span></h3>
-                    <p style="color:var(--texto-claro);margin-bottom:1rem;">Haz clic en cada horario para marcarlo como
-                        <strong>Disponible</strong> o <strong>No Disponible</strong></p>
-                    <div id="listaHorarios"
-                        style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.8rem;">
-                    </div>
-                    <button class="btn-principal" style="margin-top:1.5rem;" onclick="guardarDisponibilidad()">💾
-                        Guardar Disponibilidad</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- VISTA: MÉDICO - PANEL DE CITAS -->
-        <div id="vistaMedicoCitas" class="vista" style="display:none;">
-            <div class="container">
-                <h2 class="vista-titulo">🩺 Gestión de Citas Médicas</h2>
-
-                <!-- FILTROS DE ESTADO NUEVOS -->
-                <div class="filtros-medico" style="margin-bottom:1.5rem;">
-                    <button class="filtro-btn active" onclick="filtrarCitasMedico('todas', this)">Todas</button>
-                    <button class="filtro-btn" onclick="filtrarCitasMedico('Pendiente', this)">Pendiente</button>
-                    <button class="filtro-btn" onclick="filtrarCitasMedico('En Consulta', this)">En Consulta</button>
-                    <button class="filtro-btn" onclick="filtrarCitasMedico('Cancelada', this)">Cancelada</button>
-                    <button class="filtro-btn" onclick="filtrarCitasMedico('Reagendada', this)">Reagendada</button>
-                    <button class="filtro-btn" onclick="filtrarCitasMedico('Exitosa', this)">Exitosa</button>
-                </div>
-
-                <div class="filtros-medico" style="margin-bottom:1.5rem;">
-                    <button class="filtro-btn active" onclick="cargarCitasMedico('hoy', this)">Hoy</button>
-                    <button class="filtro-btn" onclick="cargarCitasMedico('semana', this)">Esta Semana</button>
-                    <button class="filtro-btn" onclick="cargarCitasMedico('meses', this)">Próximos 2 Meses</button>
-                </div>
-
-                <div id="listaCitasMedico" class="citas-grid"></div>
-            </div>
-        </div>
-
-        <!-- VISTA: ADMIN - GESTIÓN USUARIOS -->
-        <div id="vistaAdminUsuarios" class="vista" style="display:none;">
-            <div class="container">
-                <h2 class="vista-titulo">👥 Gestión de Usuarios</h2>
-                <button class="btn-principal" onclick="mostrarModalAgregarMedico()">+ Agregar Nuevo Médico</button>
-                <div class="table-container">
-                    <table class="tabla-admin">
-                        <thead>
-                            <tr>
-                                <th>CI</th>
-                                <th>Nombres</th>
-                                <th>Correo</th>
-                                <th>Rol</th>
-                                <th>Especialidad</th>
-                                <th>Contraseña</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaUsuarios"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- VISTA: ADMIN - ESTADÍSTICAS -->
-        <div id="vistaAdminEstadisticas" class="vista" style="display:none;">
-            <div class="container">
-                <h2 class="vista-titulo">📊 Estadísticas del Sistema</h2>
-                <div class="estadisticas-grid" id="estadisticasGrid"></div>
-                <div class="chart-container">
-                    <h3>Citas por Especialidad</h3>
-                    <div id="graficoEspecialidades"></div>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL REAGENDAR -->
-    <div id="modalReagendar" class="modal" style="display:none;">
-        <div class="modal-content">
-            <h3>🔄 Reagendar Cita</h3>
-            <input type="hidden" id="reagendarCitaId">
-            <div class="form-group">
-                <label>Nueva Fecha</label>
-                <input type="date" id="nuevaFecha" required>
+    <!-- BARRA DE NAVEGACIÓN (OCULTA AL INICIO) -->
+    <nav id="navbar" style="display: none;">
+        <div class="nav-contenedor">
+            <div class="nav-logo">🏥 MediAgenda</div>
+            <div id="navMenu" class="nav-menu"></div>
+            <div class="nav-usuario">
+                <span id="userName"></span>
+                <button class="btn-cerrar" onclick="cerrarSesion()">Cerrar Sesión</button>
             </div>
-            <div class="form-group">
-                <label>Nueva Hora</label>
-                <select id="nuevaHora" required>
-                    <option value="08:00">08:00</option>
-                    <option value="08:30">08:30</option>
-                    <option value="09:00">09:00</option>
-                    <option value="09:30">09:30</option>
-                    <option value="10:00">10:00</option>
-                    <option value="10:30">10:30</option>
-                    <option value="11:00">11:00</option>
-                    <option value="11:30">11:30</option>
-                    <option value="14:00">14:00</option>
-                    <option value="14:30">14:30</option>
-                    <option value="15:00">15:00</option>
-                    <option value="15:30">15:30</option>
-                    <option value="16:00">16:00</option>
-                    <option value="16:30">16:30</option>
+        </div>
+    </nav>
+
+    <!-- VISTAS PRINCIPALES -->
+    <div id="vistaAgendar" class="vista contenedor-principal" style="display: none;">
+        <h2>Agendar Nueva Cita</h2>
+        <form onsubmit="agendarCita(event)">
+            <div class="grupo-campo">
+                <label for="citaMedico">Médico y Especialidad *</label>
+                <select id="citaMedico" required>
+                    <option value="">Seleccione un médico</option>
                 </select>
             </div>
-            <div class="modal-btns">
-                <button class="btn-cancelar" onclick="cerrarModal('modalReagendar')">Cancelar</button>
-                <button class="btn-reagendar" onclick="confirmarReagendar()">Confirmar Reagendamiento</button>
+            <div class="grupo-campo">
+                <label for="citaFecha">Fecha de la Cita *</label>
+                <input type="date" id="citaFecha" required>
+            </div>
+            <div class="grupo-campo">
+                <label for="citaHora">Hora de la Cita *</label>
+                <input type="time" id="citaHora" required>
+            </div>
+            <div class="grupo-campo">
+                <label for="citaMotivo">Motivo de la Consulta *</label>
+                <textarea id="citaMotivo" rows="3" required placeholder="Describe brevemente el motivo de tu visita"></textarea>
+            </div>
+            <button type="submit" class="btn-principal">Agendar Cita</button>
+        </form>
+    </div>
+
+    <div id="vistaMisCitas" class="vista contenedor-principal" style="display: none;">
+        <h2>Mis Citas Programadas</h2>
+        <div id="listaCitasPaciente" class="lista-citas"></div>
+    </div>
+
+    <div id="vistaPerfil" class="vista contenedor-principal" style="display: none;">
+        <h2>Mi Perfil</h2>
+        <form onsubmit="actualizarPerfil(event)">
+            <div class="grupo-campo">
+                <label>Nombres Completos</label>
+                <input type="text" id="perfilNombres" readonly>
+            </div>
+            <div class="grupo-campo">
+                <label>Cédula de Identidad</label>
+                <input type="text" id="perfilCi" readonly>
+            </div>
+            <div class="grupo-campo">
+                <label>Correo Electrónico</label>
+                <input type="email" id="perfilCorreo" required>
+            </div>
+            <div class="grupo-campo">
+                <label>Celular</label>
+                <input type="tel" id="perfilCelular" required>
+            </div>
+            <div class="grupo-campo">
+                <label>Dirección</label>
+                <input type="text" id="perfilDireccion" required>
+            </div>
+            <button type="submit" class="btn-principal">Guardar Cambios</button>
+        </form>
+    </div>
+
+    <div id="vistaMedicoCalendario" class="vista contenedor-principal" style="display: none;">
+        <h2>Mi Calendario de Disponibilidad</h2>
+        <div class="calendario-header">
+            <button onclick="cambiarMes(-1)">&lt;</button>
+            <h3 id="mesActual"></h3>
+            <button onclick="cambiarMes(1)">&gt;</button>
+        </div>
+        <div id="calendario" class="calendario"></div>
+        <div id="horariosDia" class="horarios-dia"></div>
+        <button class="btn-principal" onclick="guardarDisponibilidad()">Guardar Disponibilidad</button>
+    </div>
+
+    <div id="vistaMedicoCitas" class="vista contenedor-principal" style="display: none;">
+        <h2>Gestión de Citas</h2>
+        <div class="filtros-medico">
+            <button class="filtro-btn active" onclick="cargarCitasMedico('todas', this)">Todas</button>
+            <button class="filtro-btn" onclick="cargarCitasMedico('hoy', this)">Hoy</button>
+            <button class="filtro-btn" onclick="cargarCitasMedico('pendientes', this)">Pendientes</button>
+            <button class="filtro-btn" onclick="cargarCitasMedico('finalizadas', this)">Finalizadas</button>
+        </div>
+        <div id="listaCitasMedico" class="lista-citas"></div>
+    </div>
+
+    <div id="vistaAdminUsuarios" class="vista contenedor-principal" style="display: none;">
+        <h2>Gestión de Usuarios</h2>
+        <button class="btn-principal" onclick="mostrarModalAgregarMedico()">Agregar Nuevo Médico</button>
+        <div id="listaUsuarios" class="lista-citas"></div>
+    </div>
+
+    <div id="vistaAdminEstadisticas" class="vista contenedor-principal" style="display: none;">
+        <h2>Estadísticas del Sistema</h2>
+        <div class="tarjetas-estadisticas">
+            <div class="tarjeta">
+                <h4>Total Pacientes</h4>
+                <p id="estPacientes">0</p>
+            </div>
+            <div class="tarjeta">
+                <h4>Total Médicos</h4>
+                <p id="estMedicos">0</p>
+            </div>
+            <div class="tarjeta">
+                <h4>Citas este Mes</h4>
+                <p id="estCitasMes">0</p>
+            </div>
+            <div class="tarjeta">
+                <h4>Citas Pendientes</h4>
+                <p id="estPendientes">0</p>
             </div>
         </div>
     </div>
 
-    <!-- MODAL EDITAR CITA MÉDICO (CON NUEVOS ESTADOS) -->
-    <div id="modalEditarCita" class="modal" style="display:none;">
-        <div class="modal-content modal-grande">
-            <h3>✏️ Editar Cita</h3>
-            <input type="hidden" id="editarCitaId">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Estado de la Cita</label>
-                    <select id="editarEstado">
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="En Consulta">En Consulta</option>
-                        <option value="Confirmada">Confirmada</option>
-                        <option value="Exitosa">Exitosa</option>
-                        <option value="Cancelada">Cancelada</option>
-                        <option value="Reagendada">Reagendada</option>
+    <!-- MODALES -->
+    <div id="modalEditarCita" class="modal">
+        <div class="modal-contenido">
+            <span class="cerrar" onclick="cerrarModal('modalEditarCita')">&times;</span>
+            <h3>Editar Estado de Cita</h3>
+            <form onsubmit="guardarEdicionCita(event)">
+                <input type="hidden" id="editCitaId">
+                <div class="grupo-campo">
+                    <label>Estado</label>
+                    <select id="editEstado" required>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="atendida">Atendida</option>
+                        <option value="cancelada">Cancelada</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Hora</label>
-                    <select id="editarHora">
-                        <option value="08:00">08:00</option>
-                        <option value="08:30">08:30</option>
-                        <option value="09:00">09:00</option>
-                        <option value="09:30">09:30</option>
-                        <option value="10:00">10:00</option>
-                        <option value="10:30">10:30</option>
-                        <option value="11:00">11:00</option>
-                        <option value="11:30">11:30</option>
-                        <option value="14:00">14:00</option>
-                        <option value="14:30">14:30</option>
-                        <option value="15:00">15:00</option>
-                        <option value="15:30">15:30</option>
-                        <option value="16:00">16:00</option>
-                        <option value="16:30">16:30</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Receta / Observaciones</label>
-                <textarea id="editarReceta" rows="5"
-                    placeholder="Escriba aquí la receta médica, indicaciones u observaciones sobre el paciente..."></textarea>
-            </div>
-            <div class="modal-btns">
-                <button class="btn-cancelar" onclick="cerrarModal('modalEditarCita')">Cancelar</button>
-                <button class="btn-principal" onclick="guardarEdicionCita()">Guardar Cambios</button>
-            </div>
+                <button type="submit" class="btn-principal">Guardar Cambios</button>
+            </form>
         </div>
     </div>
 
-    <!-- MODAL AGREGAR MÉDICO -->
-    <div id="modalAgregarMedico" class="modal" style="display:none;">
-        <div class="modal-content">
-            <h3>➕ Agregar Nuevo Médico</h3>
+    <div id="modalAgregarMedico" class="modal">
+        <div class="modal-contenido">
+            <span class="cerrar" onclick="cerrarModal('modalAgregarMedico')">&times;</span>
+            <h3>Agregar Nuevo Médico</h3>
             <form onsubmit="agregarMedico(event)">
-                <div class="form-group"><label>CI *</label><input type="text" id="medicoCi" required></div>
-                <div class="form-group"><label>Nombres Completos *</label><input type="text" id="medicoNombres"
-                        required></div>
-                <div class="form-group"><label>Correo *</label><input type="email" id="medicoCorreo" required></div>
-                <div class="form-group"><label>Celular</label><input type="tel" id="medicoCelular"></div>
-                <div class="form-group">
+                <div class="grupo-campo">
+                    <label>Cédula (Ej: MED001) *</label>
+                    <input type="text" id="medCi" required>
+                </div>
+                <div class="grupo-campo">
+                    <label>Nombres Completos *</label>
+                    <input type="text" id="medNombres" required>
+                </div>
+                <div class="grupo-campo">
                     <label>Especialidad *</label>
-                    <select id="medicoEspecialidad" required>
-                        <option value="Psicología">Psicología</option>
-                        <option value="Odontología">Odontología</option>
-                        <option value="Medicina General">Medicina General</option>
-                        <option value="Pediatría">Pediatría</option>
-                    </select>
+                    <input type="text" id="medEspecialidad" required>
                 </div>
-                <div class="form-group">
-                    <label>Género *</label>
-                    <select id="medicoGenero" required>
-                        <option value="M">Masculino</option>
-                        <option value="F">Femenino</option>
-                    </select>
+                <div class="grupo-campo">
+                    <label>Correo Electrónico *</label>
+                    <input type="email" id="medCorreo" required>
                 </div>
-                <div class="form-group"><label>Contraseña Temporal *</label><input type="text" id="medicoPassword"
-                        required></div>
-                <div class="modal-btns">
-                    <button type="button" class="btn-cancelar"
-                        onclick="cerrarModal('modalAgregarMedico')">Cancelar</button>
-                    <button type="submit" class="btn-principal">Agregar Médico</button>
+                <div class="grupo-campo">
+                    <label>Contraseña Temporal *</label>
+                    <input type="password" id="medPassword" required>
                 </div>
+                <button type="submit" class="btn-principal">Registrar Médico</button>
             </form>
         </div>
     </div>
 
     <script src="app.js"></script>
 </body>
-
 </html>
