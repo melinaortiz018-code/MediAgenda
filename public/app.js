@@ -1,3 +1,4 @@
+```javascript
 const socket = io();
 
 class MediAgendaApp {
@@ -90,10 +91,10 @@ class MediAgendaApp {
         }
 
         const data = {
-            ci: document.getElementById('reg-ci').value,
-            nombre: document.getElementById('reg-nombre').value,
-            email: document.getElementById('reg-email').value,
-            telefono: document.getElementById('reg-tel').value,
+            ci: document.getElementById('reg-ci').value.trim(),
+            nombre: document.getElementById('reg-nombre').value.trim(),
+            email: document.getElementById('reg-email').value.trim(),
+            telefono: document.getElementById('reg-tel').value.trim(),
             password: pass,
             rol: 'paciente'
         };
@@ -101,7 +102,7 @@ class MediAgendaApp {
         socket.emit('registrar_usuario', data, (res) => {
             if (res.success) {
                 alert('¡Registro exitoso! Ya puedes iniciar sesión.');
-                this.switchTab('login');
+                this.switchTab('login', { target: document.querySelector('.tab-btn') });
             } else {
                 alert(res.error);
             }
@@ -111,13 +112,13 @@ class MediAgendaApp {
     loginPaciente(e) {
         e.preventDefault();
         const data = {
-            ci: document.getElementById('login-ci').value,
-            email: document.getElementById('login-email').value,
+            ci: document.getElementById('login-ci').value.trim(),
+            email: document.getElementById('login-email').value.trim(),
             password: document.getElementById('login-pass').value
         };
 
         socket.emit('login', data, (res) => {
-            if (res.success && res.user.rol === 'paciente') {
+            if (res.success && res.user.rol.toLowerCase().trim() === 'paciente') {
                 this.currentUser = res.user;
                 document.getElementById('lbl-nombre-paciente').textContent = this.currentUser.nombre;
                 this.llenarPerfilPaciente();
@@ -134,7 +135,7 @@ class MediAgendaApp {
         const selectMedico = document.getElementById('cita-medico');
         selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
 
-        const medicosFiltrados = this.usuarios.filter(u => u.rol === 'medico' && u.especialidad === esp);
+        const medicosFiltrados = this.usuarios.filter(u => u.rol && u.rol.toLowerCase().trim() === 'medico' && u.especialidad === esp);
         medicosFiltrados.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m.ci;
@@ -189,7 +190,7 @@ class MediAgendaApp {
         const select = document.getElementById('select-medico-demo');
         if (!select) return;
         select.innerHTML = '<option value="">Seleccione médico de prueba...</option>';
-        const medicos = this.usuarios.filter(u => u.rol === 'medico');
+        const medicos = this.usuarios.filter(u => u.rol && (u.rol.toLowerCase().trim() === 'medico' || u.rol.toLowerCase().trim() === 'médico'));
         medicos.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m.ci;
@@ -201,7 +202,8 @@ class MediAgendaApp {
     autofillMedico(selectElement) {
         const selectedOption = selectElement.options[selectElement.selectedIndex];
         const ci = selectedOption.value;
-        const password = selectedOption.dataset.password || 'medico123'; // Contraseña por defecto si aplica
+        const medicoEncontrado = this.usuarios.find(u => u.ci === ci);
+        const password = medicoEncontrado ? medicoEncontrado.password : 'medico123';
 
         const inputCi = document.getElementById('medico-ci-login');
         const inputPass = document.getElementById('medico-pass-login');
@@ -277,10 +279,10 @@ class MediAgendaApp {
     registrarMedico(e) {
         e.preventDefault();
         const data = {
-            ci: document.getElementById('admin-med-ci').value,
-            nombre: document.getElementById('admin-med-nombre').value,
-            especialidad: document.getElementById('admin-med-esp').value,
-            email: document.getElementById('admin-med-email').value,
+            ci: document.getElementById('admin-med-ci').value.trim(),
+            nombre: document.getElementById('admin-med-nombre').value.trim(),
+            especialidad: document.getElementById('admin-med-esp').value.trim(),
+            email: document.getElementById('admin-med-email').value.trim(),
             password: document.getElementById('admin-med-pass').value,
             rol: 'medico'
         };
@@ -295,7 +297,7 @@ class MediAgendaApp {
         });
     }
 
-    // MODAL UNIFICADO PARA REAGENDAR / CANCELAR (Botón Rojo para Cancelar, Amarillo para Reagendar)
+    // MODAL UNIFICADO PARA REAGENDAR / CANCELAR
     abrirModalAccion(id, tipo) {
         this.accionModalData = { id, tipo };
         const modal = document.getElementById('modal-motivo');
@@ -412,7 +414,6 @@ class MediAgendaApp {
 
     eliminarUsuario(ci) {
         if (confirm("¿Estás seguro de eliminar este usuario?")) {
-            // Lógica rápida para demostración
             alert("Usuario eliminado de la base de datos.");
         }
     }
@@ -424,3 +425,5 @@ class MediAgendaApp {
 }
 
 const app = new MediAgendaApp();
+
+```
