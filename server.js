@@ -72,11 +72,21 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('login', async (data, callback) => {
+  
+
+      console.log("Resultado de la búsqueda en MongoDB:", user);
+      
+      if (user) {
+        callback({ success: true, user });
+      } else {
+        callback({ success: false, error: "Credenciales incorrectas o usuario no encontrado." });
+      }
+    } catch (e) {
+      console.error("Error en login:", e);
+      callsocket.on('login', async (data, callback) => {
     try {
       console.log("Intentando iniciar sesión con identificador:", data.ci, "y Password:", data.password);
       
-      // Busca si coincide con la cédula O con el correo electrónico
       const user = await User.findOne({
         $or: [
           { ci: data.ci },
@@ -95,6 +105,8 @@ io.on('connection', (socket) => {
     } catch (e) {
       console.error("Error en login:", e);
       callback({ success: false, error: "Error en el servidor." });
+    }
+  });back({ success: false, error: "Error en el servidor." });
     }
   });
 
