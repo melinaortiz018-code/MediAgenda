@@ -31,52 +31,56 @@
           <p class="subtitle">Sistema de Gestión de Citas Médicas</p>
         </div>
         
-        <div class="tabs-auth">
+        <!-- PESTAÑAS: SOLO APARECEN PARA PACIENTE -->
+        <div class="tabs-auth" id="tabsAuth" style="display:none;">
           <button class="tab-btn active" onclick="cambiarTab('login')">Iniciar Sesión</button>
           <button class="tab-btn" onclick="cambiarTab('registro')">Registrarse</button>
         </div>
 
-        <!-- FORMULARIO LOGIN CON TARJETAS DE ROLES -->
+        <!-- FORMULARIO LOGIN CON TARJETAS DE ROLES MÁS GRANDES -->
         <form id="formLogin" class="form-auth" onsubmit="iniciarSesion(event)">
-          <label style="display:block;margin-bottom:0.8rem;font-weight:600;color:var(--texto);">Seleccione su tipo de cuenta:</label>
+          <label style="display:block;margin-bottom:0.8rem;font-weight:600;color:var(--texto);font-size:1rem;">Seleccione su tipo de cuenta:</label>
           
-          <!-- TARJETAS CLICABLES DE ROLES -->
-          <div class="roles-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-bottom:1.5rem;">
-            <div class="rol-card" onclick="seleccionarRol('paciente', this)" style="padding:1rem;border:2px solid var(--borde);border-radius:12px;text-align:center;cursor:pointer;transition:all 0.3s ease;background:var(--blanco);">
-              <div style="font-size:2rem;margin-bottom:0.3rem;">👤</div>
-              <div style="font-weight:700;color:var(--principal);font-size:0.9rem;">Paciente</div>
+          <!-- TARJETAS CLICABLES DE ROLES (MÁS GRANDES) -->
+          <div class="roles-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+            <div class="rol-card" onclick="seleccionarRol('paciente', this)" style="padding:1.5rem;border:2px solid var(--borde);border-radius:16px;text-align:center;cursor:pointer;transition:all 0.3s ease;background:var(--blanco);">
+              <div style="font-size:3rem;margin-bottom:0.5rem;">👤</div>
+              <div style="font-weight:700;color:var(--principal);font-size:1.1rem;">Paciente</div>
             </div>
-            <div class="rol-card" onclick="seleccionarRol('medico', this)" style="padding:1rem;border:2px solid var(--borde);border-radius:12px;text-align:center;cursor:pointer;transition:all 0.3s ease;background:var(--blanco);">
-              <div style="font-size:2rem;margin-bottom:0.3rem;">🩺</div>
-              <div style="font-weight:700;color:var(--principal);font-size:0.9rem;">Médico</div>
+            <div class="rol-card" onclick="seleccionarRol('medico', this)" style="padding:1.5rem;border:2px solid var(--borde);border-radius:16px;text-align:center;cursor:pointer;transition:all 0.3s ease;background:var(--blanco);">
+              <div style="font-size:3rem;margin-bottom:0.5rem;">🩺</div>
+              <div style="font-weight:700;color:var(--principal);font-size:1.1rem;">Médico</div>
             </div>
-            <div class="rol-card" onclick="seleccionarRol('admin', this)" style="padding:1rem;border:2px solid var(--borde);border-radius:12px;text-align:center;cursor:pointer;transition:all 0.3s ease;background:var(--blanco);">
-              <div style="font-size:2rem;margin-bottom:0.3rem;">🛡️</div>
-              <div style="font-weight:700;color:var(--principal);font-size:0.9rem;">Admin</div>
+            <div class="rol-card" onclick="seleccionarRol('admin', this)" style="padding:1.5rem;border:2px solid var(--borde);border-radius:16px;text-align:center;cursor:pointer;transition:all 0.3s ease;background:var(--blanco);">
+              <div style="font-size:3rem;margin-bottom:0.5rem;">🛡️</div>
+              <div style="font-weight:700;color:var(--principal);font-size:1.1rem;">Admin</div>
             </div>
           </div>
           <input type="hidden" id="loginRol" required>
 
-          <div class="form-group" id="campoCi">
-            <label>Cédula de Identidad (CI)</label>
-            <input type="text" id="loginCi" placeholder="Ingrese su CI">
-          </div>
-          <div class="form-group" id="campoCorreo">
-            <label>Correo Electrónico</label>
-            <input type="email" id="loginCorreo" placeholder="correo@ejemplo.com">
-          </div>
-          <div class="form-group">
-            <label>Contraseña *</label>
-            <div class="input-password">
-              <input type="password" id="loginPassword" required placeholder="Ingrese su contraseña">
-              <button type="button" class="btn-ojo" onclick="togglePassword('loginPassword', this)">👁️</button>
+          <!-- CAMPOS QUE SE MUESTRAN SEGÚN EL ROL (INICIALMENTE OCULTOS) -->
+          <div id="camposLogin" style="display:none;">
+            <div class="form-group" id="campoCi">
+              <label>Cédula de Identidad (CI)</label>
+              <input type="text" id="loginCi" placeholder="Ingrese su CI">
             </div>
+            <div class="form-group" id="campoCorreo">
+              <label>Correo Electrónico</label>
+              <input type="email" id="loginCorreo" placeholder="correo@ejemplo.com">
+            </div>
+            <div class="form-group">
+              <label>Contraseña *</label>
+              <div class="input-password">
+                <input type="password" id="loginPassword" required placeholder="Ingrese su contraseña">
+                <button type="button" class="btn-ojo" onclick="togglePassword('loginPassword', this)">👁️</button>
+              </div>
+            </div>
+            <p id="loginHint" style="font-size:0.9rem;color:var(--texto-claro);margin-bottom:1rem;text-align:center;"></p>
+            <button type="submit" class="btn-principal btn-block">Ingresar</button>
           </div>
-          <p id="loginHint" style="font-size:0.85rem;color:var(--texto-claro);margin-bottom:1rem;text-align:center;"></p>
-          <button type="submit" class="btn-principal btn-block">Ingresar</button>
         </form>
 
-        <!-- FORMULARIO REGISTRO -->
+        <!-- FORMULARIO REGISTRO (SOLO PARA PACIENTES) -->
         <form id="formRegistro" class="form-auth" style="display:none;" onsubmit="registrarUsuario(event)">
           <div class="form-group">
             <label>Cédula de Identidad (CI) *</label>
@@ -204,15 +208,53 @@
       </div>
     </div>
 
+    <!-- VISTA: MÉDICO - CALENDARIO Y GESTIÓN DE DISPONIBILIDAD -->
+    <div id="vistaMedicoCalendario" class="vista" style="display:none;">
+      <div class="container">
+        <h2 class="vista-titulo">📅 Mi Calendario y Disponibilidad</h2>
+        
+        <!-- CALENDARIO INTERACTIVO -->
+        <div class="calendario-medico" style="background:var(--blanco);padding:2rem;border-radius:16px;box-shadow:var(--sombra);margin-bottom:2rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <button class="btn-editar" onclick="cambiarMes(-1)">◀ Anterior</button>
+            <h3 id="mesActual" style="color:var(--principal);font-size:1.3rem;"></h3>
+            <button class="btn-editar" onclick="cambiarMes(1)">Siguiente ▶</button>
+          </div>
+          <div id="diasSemana" style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem;text-align:center;font-weight:700;color:var(--principal);margin-bottom:0.5rem;"></div>
+          <div id="calendarioDias" style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem;"></div>
+        </div>
+
+        <!-- GESTIÓN DE HORARIOS DEL DÍA SELECCIONADO -->
+        <div class="horarios-medico" style="background:var(--blanco);padding:2rem;border-radius:16px;box-shadow:var(--sombra);">
+          <h3 style="color:var(--principal);margin-bottom:1rem;">⏰ Horarios del día seleccionado: <span id="diaSeleccionado">Hoy</span></h3>
+          <p style="color:var(--texto-claro);margin-bottom:1rem;">Haz clic en cada horario para marcarlo como <strong>Disponible</strong> o <strong>No Disponible</strong></p>
+          <div id="listaHorarios" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.8rem;"></div>
+          <button class="btn-principal" style="margin-top:1.5rem;" onclick="guardarDisponibilidad()">💾 Guardar Disponibilidad</button>
+        </div>
+      </div>
+    </div>
+
     <!-- VISTA: MÉDICO - PANEL DE CITAS -->
     <div id="vistaMedicoCitas" class="vista" style="display:none;">
       <div class="container">
-        <h2 class="vista-titulo">🩺 Panel de Citas Médicas</h2>
-        <div class="filtros-medico">
+        <h2 class="vista-titulo">🩺 Gestión de Citas Médicas</h2>
+        
+        <!-- FILTROS DE ESTADO NUEVOS -->
+        <div class="filtros-medico" style="margin-bottom:1.5rem;">
+          <button class="filtro-btn active" onclick="filtrarCitasMedico('todas', this)">Todas</button>
+          <button class="filtro-btn" onclick="filtrarCitasMedico('Pendiente', this)">Pendiente</button>
+          <button class="filtro-btn" onclick="filtrarCitasMedico('En Consulta', this)">En Consulta</button>
+          <button class="filtro-btn" onclick="filtrarCitasMedico('Cancelada', this)">Cancelada</button>
+          <button class="filtro-btn" onclick="filtrarCitasMedico('Reagendada', this)">Reagendada</button>
+          <button class="filtro-btn" onclick="filtrarCitasMedico('Exitosa', this)">Exitosa</button>
+        </div>
+
+        <div class="filtros-medico" style="margin-bottom:1.5rem;">
           <button class="filtro-btn active" onclick="cargarCitasMedico('hoy', this)">Hoy</button>
           <button class="filtro-btn" onclick="cargarCitasMedico('semana', this)">Esta Semana</button>
           <button class="filtro-btn" onclick="cargarCitasMedico('meses', this)">Próximos 2 Meses</button>
         </div>
+
         <div id="listaCitasMedico" class="citas-grid"></div>
       </div>
     </div>
@@ -282,7 +324,7 @@
     </div>
   </div>
 
-  <!-- MODAL EDITAR CITA MÉDICO -->
+  <!-- MODAL EDITAR CITA MÉDICO (CON NUEVOS ESTADOS) -->
   <div id="modalEditarCita" class="modal" style="display:none;">
     <div class="modal-content modal-grande">
       <h3>✏️ Editar Cita</h3>
@@ -292,9 +334,11 @@
           <label>Estado de la Cita</label>
           <select id="editarEstado">
             <option value="Pendiente">Pendiente</option>
+            <option value="En Consulta">En Consulta</option>
             <option value="Confirmada">Confirmada</option>
-            <option value="Realizada">Realizada</option>
+            <option value="Exitosa">Exitosa</option>
             <option value="Cancelada">Cancelada</option>
+            <option value="Reagendada">Reagendada</option>
           </select>
         </div>
         <div class="form-group">

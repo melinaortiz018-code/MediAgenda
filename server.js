@@ -31,6 +31,7 @@ const usuarioSchema = new mongoose.Schema({
   activo: { type: Boolean, default: true }
 }, { timestamps: true });
 
+// MODELO DE CITA ACTUALIZADO CON NUEVOS ESTADOS
 const citaSchema = new mongoose.Schema({
   paciente: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
   medico: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
@@ -38,7 +39,11 @@ const citaSchema = new mongoose.Schema({
   fecha: { type: Date, required: true },
   hora: { type: String, required: true },
   motivo: { type: String, required: true },
-  estado: { type: String, enum: ['Pendiente', 'Confirmada', 'Realizada', 'Cancelada', 'Reagendada'], default: 'Pendiente' },
+  estado: { 
+    type: String, 
+    enum: ['Pendiente', 'En Consulta', 'Confirmada', 'Exitosa', 'Cancelada', 'Reagendada'], 
+    default: 'Pendiente' 
+  },
   recetaObservaciones: { type: String, default: '' },
   fechaOriginal: { type: Date }
 }, { timestamps: true });
@@ -68,71 +73,9 @@ const auth = (rolesPermitidos = []) => {
   };
 };
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { ci, correo, password } = req.body;
-    
-    // 🔍 LOG PARA VER QUÉ RECIBE EL SERVIDOR (mira los logs de Render)
-    console.log('🔐 Intento de login recibido:');
-    console.log('   CI recibido:', `[${ci}]`);
-    console.log('   Correo recibido:', `[${correo}]`);
-    console.log('   Password recibido:', `[${password}]`);
-    
-    if (!password)
-      return res.status(400).json({ mensaje: 'La contraseña es obligatoria' });
-    
-    let usuario;
-    
-    if (ci && correo) {
-      usuario = await Usuario.findOne({ ci, correo });
-      console.log('   📋 Buscando paciente por CI + Correo -> Encontrado:', !!usuario);
-    } 
-    else if (ci && !correo) {
-      usuario = await Usuario.findOne({ ci });
-      console.log('   🩺 Buscando médico por CI -> Encontrado:', !!usuario);
-    } 
-    else if (!ci && correo) {
-      usuario = await Usuario.findOne({ correo });
-      console.log('   🛡️ Buscando admin por correo -> Encontrado:', !!usuario);
-    } 
-    else {
-      console.log('   ❌ Faltan datos');
-      return res.status(400).json({ mensaje: 'Faltan datos de acceso' });
-    }
-    
-    if (!usuario) {
-      console.log('   ❌ USUARIO NO ENCONTRADO');
-      return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
-    }
-    
-    console.log('   ✅ Usuario encontrado:', usuario.nombres, '| Rol:', usuario.rol);
-    
-    const passwordValido = await bcrypt.compare(password, usuario.password);
-    console.log('   🔑 Contraseña válida:', passwordValido);
-    
-    if (!passwordValido) {
-      console.log('   ❌ CONTRASEÑA INCORRECTA');
-      return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
-    }
-    
-    if (!usuario.activo) return res.status(400).json({ mensaje: 'Cuenta desactivada' });
-    
-    const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, JWT_SECRET, { expiresIn: '7d' });
-    
-    res.json({
-      token,
-      usuario: {
-        id: usuario._id, ci: usuario.ci, nombres: usuario.nombres, correo: usuario.correo,
-        rol: usuario.rol, celular: usuario.celular, direccion: usuario.direccion,
-        especialidad: usuario.especialidad
-      }
-    });
-  } catch (error) {
-    console.error('❌ Error en login:', error);
-    res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
-  }
-});
-// RUTA DE LOGIN CORREGIDA: FLEXIBLE POR ROLES
+// ==================== RUTAS AUTENTICACIÓN ====================
+
+// RUTA DE LOGIN POR ROLES (LA ÚNICA, ELIMINADA LA DUPLICADA)
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { rol, ci, correo, password } = req.body;
@@ -144,7 +87,7 @@ app.post('/api/auth/login', async (req, res) => {
     
     let usuario;
     
-    // BUSCAR SEGÚN EL ROL EXPLÍCITO (sin adivinar)
+    // BUSCAR SEGÚN EL ROL EXPLÍCITO
     if (rol === 'paciente') {
       if (!ci || !correo) return res.status(400).json({ mensaje: 'Paciente requiere CI y Correo' });
       usuario = await Usuario.findOne({ ci, correo, rol: 'paciente' });
@@ -182,7 +125,8 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ mensaje: 'Error en el servidor' });
   }
 });
-// NUEVA RUTA: VERIFICAR TOKEN (MANTENER SESIÓN)
+
+// RUTA: VERIFICAR TOKEN
 app.get('/api/auth/verify', auth(), async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuario._id).select('-password');
@@ -213,11 +157,12 @@ app.post('/api/citas', auth(['paciente']), async (req, res) => {
     const [h, m] = hora.split(':');
     fechaCita.setHours(parseInt(h), parseInt(m), 0, 0);
     
+    // VALIDACIÓN ACTUALIZADA: incluye En Consulta como estado ocupado
     const citaDuplicada = await Cita.findOne({
       medico: medicoId,
       fecha: new Date(fecha),
       hora,
-      estado: { $in: ['Pendiente', 'Confirmada'] }
+      estado: { $in: ['Pendiente', 'Confirmada', 'En Consulta'] }
     });
     
     if (citaDuplicada)
@@ -302,12 +247,13 @@ app.put('/api/citas/:id/reagendar', auth(['paciente', 'medico']), async (req, re
     if (req.usuario.rol === 'paciente' && diferenciaHoras <= 24)
       return res.status(400).json({ mensaje: 'Solo puedes reagendar con más de 24 horas de antelación' });
     
+    // VALIDACIÓN ACTUALIZADA: incluye En Consulta
     const citaDuplicada = await Cita.findOne({
       medico: cita.medico._id,
       fecha: new Date(nuevaFecha),
       hora: nuevaHora,
       _id: { $ne: cita._id },
-      estado: { $in: ['Pendiente', 'Confirmada'] }
+      estado: { $in: ['Pendiente', 'Confirmada', 'En Consulta'] }
     });
     
     if (citaDuplicada)
@@ -468,13 +414,14 @@ app.delete('/api/admin/usuarios/:id', auth(['admin']), async (req, res) => {
   }
 });
 
+// ESTADÍSTICAS ACTUALIZADAS: cuenta Exitosa en vez de Realizada
 app.get('/api/admin/estadisticas', auth(['admin']), async (req, res) => {
   try {
     const totalCitas = await Cita.countDocuments();
-    const exitosas = await Cita.countDocuments({ estado: 'Realizada' });
+    const exitosas = await Cita.countDocuments({ estado: 'Exitosa' });
     const canceladas = await Cita.countDocuments({ estado: 'Cancelada' });
     const reagendadas = await Cita.countDocuments({ estado: 'Reagendada' });
-    const pendientes = await Cita.countDocuments({ estado: { $in: ['Pendiente', 'Confirmada'] } });
+    const pendientes = await Cita.countDocuments({ estado: { $in: ['Pendiente', 'Confirmada', 'En Consulta'] } });
     
     const porEspecialidad = await Cita.aggregate([
       { $group: { _id: '$especialidad', total: { $sum: 1 } } }
@@ -516,11 +463,9 @@ const inicializarDatos = async () => {
     console.log('🔄 INICIANDO REINICIO DE CREDENCIALES...');
     console.log('========================================');
     
-    // Contar usuarios existentes
     const totalAntes = await Usuario.countDocuments();
     console.log(`📊 Total de usuarios ANTES del reinicio: ${totalAntes}`);
     
-    // BORRAR admin y médicos antiguos
     const borrados = await Usuario.deleteMany({ 
       $or: [
         { rol: 'admin' }, 
@@ -529,47 +474,43 @@ const inicializarDatos = async () => {
     });
     console.log(`🗑️ Usuarios por defecto borrados: ${borrados.deletedCount}`);
 
-    // CREAR ADMINISTRADOR
     const saltAdmin = await bcrypt.genSalt(10);
     const passwordHashAdmin = await bcrypt.hash(ADMIN_PREDEFINIDO.password, saltAdmin);
     const adminCreado = await Usuario.create({ ...ADMIN_PREDEFINIDO, password: passwordHashAdmin });
     console.log('✅ ADMIN CREADO:');
     console.log('   📧 Correo:', adminCreado.correo);
     console.log('   🔑 Contraseña:', ADMIN_PREDEFINIDO.password);
-    console.log('   🆔 CI:', adminCreado.ci);
     
-    // CREAR 8 MÉDICOS
     for (const medico of MEDICOS_PREDEFINIDOS) {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(medico.password, salt);
-      const medicoCreado = await Usuario.create({ ...medico, password: passwordHash });
-      console.log(`✅ MÉDICO CREADO: CI=${medicoCreado.ci} | ${medicoCreado.nombres}`);
+      await Usuario.create({ ...medico, password: passwordHash });
     }
+    console.log('✅ 8 MÉDICOS CREADOS correctamente');
     
     const totalDespues = await Usuario.countDocuments();
-    console.log(`📊 Total de usuarios DESPUÉS del reinicio: ${totalDespues}`);
+    console.log(`📊 Total de usuarios DESPUÉS: ${totalDespues}`);
     console.log('========================================');
-    console.log('✅ CREDENCIALES LISTAS - PRUEBA AHORA:');
+    console.log('✅ CREDENCIALES LISTAS:');
     console.log('   ADMIN: admin@mediagenda.com / Admin123*');
     console.log('   MEDICOS: CI MED001-MED008 / Medico123*');
     console.log('========================================');
   } catch (error) {
     console.error('❌ ERROR GRAVE AL INICIALIZAR DATOS:', error);
-    throw error; // Para que el servidor falle y se vea el error
+    throw error;
   }
 };
+
 const conectarDB = async () => {
   try {
-    // Forzamos el nombre EXACTO de la base de datos para evitar error de mayúsculas/minúsculas
     const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/';
     const opcionesConexion = {
-      dbName: 'MediAgenda' // NOMBRE EXACTO IGUAL AL QUE YA EXISTE
+      dbName: 'MediAgenda'
     };
     
     await mongoose.connect(mongoURI, opcionesConexion);
     console.log('🔌 Conectado a MongoDB exitosamente en BD: MediAgenda');
     
-    // Ejecutar seed y esperar a que TERMINE antes de levantar el servidor
     await inicializarDatos();
   } catch (error) {
     console.error('❌ Error FATAL de conexión MongoDB:', error);
@@ -585,8 +526,5 @@ app.get('/', (req, res) => {
 conectarDB().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor MediAgenda corriendo en puerto ${PORT}`);
-    console.log(`📌 Credenciales por defecto:`);
-    console.log(`   Admin: admin@mediagenda.com / Admin123*`);
-    console.log(`   Médicos: CI MED001-MED008 / Password: Medico123*`);
   });
 });

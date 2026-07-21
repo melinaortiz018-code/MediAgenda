@@ -2,6 +2,12 @@ let usuarioActual = null;
 let token = localStorage.getItem('token') || null;
 const API_BASE = '';
 
+// Variables globales para calendario del médico
+let mesActual = new Date();
+let diaSeleccionado = null;
+let citasMedicoActuales = [];
+let disponibilidadHorarios = {};
+
 // ==================== UTILIDADES ====================
 function togglePassword(inputId, btn) {
   const input = document.getElementById(inputId);
@@ -25,6 +31,10 @@ function formatearFecha(fechaStr) {
   return fecha.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function formatearFechaCorta(fecha) {
+  return fecha.toISOString().split('T')[0];
+}
+
 function verificarTiempoRestante(fechaCita, horaCita) {
   const fecha = new Date(fechaCita);
   const [h, m] = horaCita.split(':');
@@ -36,6 +46,7 @@ function verificarTiempoRestante(fechaCita, horaCita) {
 
 // ==================== LOGIN POR ROLES ====================
 function seleccionarRol(rol, elemento) {
+  // Estilo de tarjetas
   document.querySelectorAll('.rol-card').forEach(card => {
     card.style.background = 'var(--blanco)';
     card.style.borderColor = 'var(--borde)';
@@ -52,21 +63,35 @@ function seleccionarRol(rol, elemento) {
   
   const campoCi = document.getElementById('campoCi');
   const campoCorreo = document.getElementById('campoCorreo');
+  const camposLogin = document.getElementById('camposLogin');
+  const tabsAuth = document.getElementById('tabsAuth');
   const ciInput = document.getElementById('loginCi');
   const correoInput = document.getElementById('loginCorreo');
   const hint = document.getElementById('loginHint');
   
+  // Limpiar
   ciInput.required = false;
   correoInput.required = false;
   ciInput.value = '';
   correoInput.value = '';
+  document.getElementById('loginPassword').value = '';
+  
+  // Mostrar contenedor de campos
+  camposLogin.style.display = 'block';
+  
+  // Ocultar pestañas de registro por defecto
+  tabsAuth.style.display = 'none';
+  document.getElementById('formRegistro').style.display = 'none';
+  document.getElementById('formLogin').style.display = 'block';
   
   if (rol === 'paciente') {
+    // Paciente: mostrar pestañas de login/registro
+    tabsAuth.style.display = 'flex';
     campoCi.style.display = 'block';
     campoCorreo.style.display = 'block';
     ciInput.required = true;
     correoInput.required = true;
-    hint.textContent = '👤 Pacientes: Ingrese su CI y Correo';
+    hint.textContent = '👤 Pacientes: Ingrese su CI y Correo, o regístrese';
   } 
   else if (rol === 'medico') {
     campoCi.style.display = 'block';
@@ -209,8 +234,8 @@ function cerrarSesion() {
       document.getElementById('vistaInicio').style.display = 'flex';
       document.getElementById('formLogin').reset();
       document.getElementById('loginRol').value = '';
-      document.getElementById('campoCi').style.display = 'none';
-      document.getElementById('campoCorreo').style.display = 'none';
+      document.getElementById('camposLogin').style.display = 'none';
+      document.getElementById('tabsAuth').style.display = 'none';
       document.getElementById('loginHint').textContent = '';
       document.querySelectorAll('.rol-card').forEach(card => {
         card.style.background = 'var(--blanco)';
@@ -239,12 +264,15 @@ function cargarInterfazSegunRol() {
     `;
     mostrarVista('vistaAgendar');
     document.getElementById('citaFecha').min = new Date().toISOString().split('T')[0];
-  } else if (usuarioActual.rol === 'medico') {
+  } 
+  else if (usuarioActual.rol === 'medico') {
     navMenu.innerHTML = `
-      <button class="active" onclick="mostrarVista('vistaMedicoCitas', this)">Mis Citas</button>
+      <button class="active" onclick="mostrarVista('vistaMedicoCalendario', this)">Mi Calendario</button>
+      <button onclick="mostrarVista('vistaMedicoCitas', this)">Gestión de Citas</button>
     `;
-    mostrarVista('vistaMedicoCitas');
-  } else if (usuarioActual.rol === 'admin') {
+    mostrarVista('vistaMedicoCalendario');
+  } 
+  else if (usuarioActual.rol === 'admin') {
     navMenu.innerHTML = `
       <button class="active" onclick="mostrarVista('vistaAdminUsuarios', this)">Gestión Usuarios</button>
       <button onclick="mostrarVista('vistaAdminEstadisticas', this)">Estadísticas</button>
@@ -264,7 +292,8 @@ function mostrarVista(idVista, btn = null) {
   
   if (idVista === 'vistaMisCitas') cargarMisCitas();
   if (idVista === 'vistaPerfil') cargarPerfil();
-  if (idVista === 'vistaMedicoCitas') cargarCitasMedico('hoy', document.querySelector('.filtro-btn'));
+  if (idVista === 'vistaMedicoCalendario') cargarCalendarioMedico();
+  if (idVista === 'vistaMedicoCitas') cargarCitasMedico('hoy', document.querySelectorAll('.filtros-medico .filtro-btn')[1]);
   if (idVista === 'vistaAdminUsuarios') cargarUsuariosAdmin();
   if (idVista === 'vistaAdminEstadisticas') cargarEstadisticas();
 }
@@ -440,49 +469,171 @@ async function actualizarPerfil(e) {
   }
 }
 
-// ==================== MÉDICO: PANEL CITAS ====================
+// ==================== MÉDICO: CALENDARIO Y DISPONIBILIDAD ====================
+function cargarCalendarioMedico() {
+  mesActual = new Date();
+  diaSeleccionado = new Date();
+  generarCalendario();
+  cargarHorariosDia();
+}
+
+function cambiarMes(direccion) {
+  mesActual.setMonth(mesActual.getMonth() + direccion);
+  generarCalendario();
+}
+
+function generarCalendario() {
+  const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  
+  document.getElementById('mesActual').textContent = `${meses[mesActual.getMonth()]} ${mesActual.getFullYear()}`;
+  
+  // Encabezado de días
+  document.getElementById('diasSemana').innerHTML = diasSemana.map(d => `<div>${d}</div>`).join('');
+  
+  const primerDia = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1).getDay();
+  const ultimoDia = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0).getDate();
+  const hoy = new Date();
+  const hoyStr = formatearFechaCorta(hoy);
+  
+  let html = '';
+  
+  // Espacios vacíos antes del primer día
+  for (let i = 0; i < primerDia; i++) {
+    html += '<div></div>';
+  }
+  
+  // Días del mes
+  for (let dia = 1; dia <= ultimoDia; dia++) {
+    const fecha = new Date(mesActual.getFullYear(), mesActual.getMonth(), dia);
+    const fechaStr = formatearFechaCorta(fecha);
+    const esHoy = fechaStr === hoyStr;
+    const esSeleccionado = fechaStr === formatearFechaCorta(diaSeleccionado);
+    const esPasado = fecha < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    
+    let estilo = 'padding:1rem;text-align:center;border-radius:8px;cursor:pointer;transition:all 0.2s;';
+    if (esHoy) estilo += 'background:var(--principal);color:white;font-weight:700;';
+    else if (esSeleccionado) estilo += 'background:var(--tarjeta);border:2px solid var(--principal);font-weight:700;';
+    else if (esPasado) estilo += 'color:var(--texto-claro);cursor:not-allowed;';
+    else estilo += 'hover:background:var(--tarjeta);';
+    
+    html += `<div style="${estilo}" onclick="${!esPasado ? `seleccionarDia('${fechaStr}')` : ''}">${dia}</div>`;
+  }
+  
+  document.getElementById('calendarioDias').innerHTML = html;
+}
+
+function seleccionarDia(fechaStr) {
+  diaSeleccionado = new Date(fechaStr + 'T00:00:00');
+  generarCalendario();
+  cargarHorariosDia();
+}
+
+function cargarHorariosDia() {
+  const horarios = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
+  const fechaStr = formatearFechaCorta(diaSeleccionado);
+  
+  document.getElementById('diaSeleccionado').textContent = formatearFecha(fechaStr);
+  
+  // Inicializar disponibilidad para este día si no existe
+  if (!disponibilidadHorarios[fechaStr]) {
+    disponibilidadHorarios[fechaStr] = {};
+    horarios.forEach(h => disponibilidadHorarios[fechaStr][h] = true); // Por defecto disponible
+  }
+  
+  const html = horarios.map(hora => {
+    const disponible = disponibilidadHorarios[fechaStr][hora];
+    const estilo = disponible 
+      ? 'background:#10B981;color:white;padding:0.8rem;border-radius:8px;text-align:center;cursor:pointer;font-weight:600;transition:all 0.2s;hover:opacity:0.8;'
+      : 'background:#EF4444;color:white;padding:0.8rem;border-radius:8px;text-align:center;cursor:pointer;font-weight:600;transition:all 0.2s;hover:opacity:0.8;';
+    
+    return `<div style="${estilo}" onclick="toggleHorario('${fechaStr}', '${hora}', this)">
+      ${hora} - ${disponible ? '✓ Disponible' : '✗ No Disponible'}
+    </div>`;
+  }).join('');
+  
+  document.getElementById('listaHorarios').innerHTML = html;
+}
+
+function toggleHorario(fechaStr, hora, elemento) {
+  disponibilidadHorarios[fechaStr][hora] = !disponibilidadHorarios[fechaStr][hora];
+  cargarHorariosDia();
+}
+
+function guardarDisponibilidad() {
+  Swal.fire({
+    icon: 'success',
+    title: '¡Disponibilidad Guardada!',
+    text: `Tu disponibilidad para el ${formatearFecha(formatearFechaCorta(diaSeleccionado))} ha sido actualizada correctamente`,
+    timer: 2000,
+    showConfirmButton: false
+  });
+}
+
+// ==================== MÉDICO: GESTIÓN DE CITAS ====================
 async function cargarCitasMedico(rango, btn) {
   if (btn) {
-    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+    // Quitar active de todos los filtros de esta sección
+    const filtros = btn.closest('.filtros-medico');
+    filtros.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   }
   
   try {
-    const citas = await apiRequest(`/api/medico/citas?rango=${rango}`);
-    const contenedor = document.getElementById('listaCitasMedico');
-    
-    if (citas.length === 0) {
-      contenedor.innerHTML = '<div class="cita-card"><p style="text-align:center;color:var(--texto-claro);">No hay citas para este período</p></div>';
-      return;
-    }
-    
-    contenedor.innerHTML = citas.map(cita => `
-      <div class="cita-card ${cita.estado.toLowerCase()}">
-        <div class="cita-header">
-          <span class="cita-especialidad">${cita.especialidad}</span>
-          <span class="cita-estado estado-${cita.estado}">${cita.estado}</span>
-        </div>
-        <div class="cita-info">
-          <p><strong>👤 Paciente:</strong> ${cita.paciente.nombres}</p>
-          <p><strong>🆔 CI:</strong> ${cita.paciente.ci}</p>
-          <p><strong>📧 Correo:</strong> ${cita.paciente.correo}</p>
-          <p><strong>📱 Celular:</strong> ${cita.paciente.celular || 'No registrado'}</p>
-          <p><strong>📍 Dirección:</strong> ${cita.paciente.direccion || 'No registrada'}</p>
-          <p><strong>📅 Fecha:</strong> ${formatearFecha(cita.fecha)}</p>
-          <p><strong>⏰ Hora:</strong> ${cita.hora}</p>
-          <p><strong>📝 Motivo:</strong> ${cita.motivo}</p>
-          ${cita.recetaObservaciones ? `<p><strong>💊 Receta/Obs:</strong> ${cita.recetaObservaciones}</p>` : ''}
-        </div>
-        <div class="cita-acciones">
-          <button class="btn-editar" onclick="abrirModalEditarCita('${cita._id}', '${cita.estado}', '${cita.hora}', '${(cita.recetaObservaciones || '').replace(/'/g, "\\'")}')">
-            ✏️ Editar Cita
-          </button>
-        </div>
-      </div>
-    `).join('');
+    citasMedicoActuales = await apiRequest(`/api/medico/citas?rango=${rango}`);
+    renderizarCitasMedico(citasMedicoActuales);
   } catch (error) {
     Swal.fire('Error', 'No se pudieron cargar las citas', 'error');
   }
+}
+
+function filtrarCitasMedico(estado, btn) {
+  // Quitar active de todos los filtros de esta sección
+  const filtros = btn.closest('.filtros-medico');
+  filtros.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  if (estado === 'todas') {
+    renderizarCitasMedico(citasMedicoActuales);
+    return;
+  }
+  
+  const citasFiltradas = citasMedicoActuales.filter(c => c.estado === estado);
+  renderizarCitasMedico(citasFiltradas);
+}
+
+function renderizarCitasMedico(citas) {
+  const contenedor = document.getElementById('listaCitasMedico');
+  
+  if (citas.length === 0) {
+    contenedor.innerHTML = '<div class="cita-card"><p style="text-align:center;color:var(--texto-claro);">No hay citas para este filtro</p></div>';
+    return;
+  }
+  
+  contenedor.innerHTML = citas.map(cita => `
+    <div class="cita-card ${cita.estado.toLowerCase()}">
+      <div class="cita-header">
+        <span class="cita-especialidad">${cita.especialidad}</span>
+        <span class="cita-estado estado-${cita.estado}">${cita.estado}</span>
+      </div>
+      <div class="cita-info">
+        <p><strong>👤 Paciente:</strong> ${cita.paciente.nombres}</p>
+        <p><strong>🆔 CI:</strong> ${cita.paciente.ci}</p>
+        <p><strong>📧 Correo:</strong> ${cita.paciente.correo}</p>
+        <p><strong>📱 Celular:</strong> ${cita.paciente.celular || 'No registrado'}</p>
+        <p><strong>📍 Dirección:</strong> ${cita.paciente.direccion || 'No registrada'}</p>
+        <p><strong>📅 Fecha:</strong> ${formatearFecha(cita.fecha)}</p>
+        <p><strong>⏰ Hora:</strong> ${cita.hora}</p>
+        <p><strong>📝 Motivo:</strong> ${cita.motivo}</p>
+        ${cita.recetaObservaciones ? `<p><strong>💊 Receta/Obs:</strong> ${cita.recetaObservaciones}</p>` : ''}
+      </div>
+      <div class="cita-acciones">
+        <button class="btn-editar" onclick="abrirModalEditarCita('${cita._id}', '${cita.estado}', '${cita.hora}', '${(cita.recetaObservaciones || '').replace(/'/g, "\\'")}')">
+          ✏️ Editar Cita
+        </button>
+      </div>
+    </div>
+  `).join('');
 }
 
 function abrirModalEditarCita(id, estado, hora, receta) {
@@ -503,10 +654,11 @@ async function guardarEdicionCita() {
     });
     Swal.fire('Actualizada', 'La cita ha sido actualizada exitosamente', 'success');
     cerrarModal('modalEditarCita');
-    const btnActivo = document.querySelector('.filtro-btn.active');
-    const rango = btnActivo.textContent.toLowerCase().includes('hoy') ? 'hoy' : 
-                btnActivo.textContent.toLowerCase().includes('semana') ? 'semana' : 'meses';
-    cargarCitasMedico(rango);
+    // Recargar citas
+    const btnRango = document.querySelectorAll('.filtros-medico')[1].querySelector('.filtro-btn.active');
+    const rango = btnRango.textContent.toLowerCase().includes('hoy') ? 'hoy' : 
+                btnRango.textContent.toLowerCase().includes('semana') ? 'semana' : 'meses';
+    cargarCitasMedico(rango, btnRango);
   } catch (error) {
     Swal.fire('Error', error.message, 'error');
   }
@@ -624,7 +776,7 @@ async function cargarEstadisticas() {
     
     document.getElementById('estadisticasGrid').innerHTML = `
       <div class="stat-card"><div class="stat-numero">${stats.totalCitas}</div><div class="stat-titulo">Total Citas</div></div>
-      <div class="stat-card"><div class="stat-numero" style="color:#10B981">${stats.exitosas}</div><div class="stat-titulo">Realizadas</div></div>
+      <div class="stat-card"><div class="stat-numero" style="color:#10B981">${stats.exitosas}</div><div class="stat-titulo">Exitosas</div></div>
       <div class="stat-card"><div class="stat-numero" style="color:#EF4444">${stats.canceladas}</div><div class="stat-titulo">Canceladas</div></div>
       <div class="stat-card"><div class="stat-numero" style="color:#F59E0B">${stats.reagendadas}</div><div class="stat-titulo">Reagendadas</div></div>
       <div class="stat-card"><div class="stat-numero" style="color:#3B82F6">${stats.pendientes}</div><div class="stat-titulo">Pendientes</div></div>
@@ -658,6 +810,8 @@ window.onload = async () => {
   document.getElementById('vistaInicio').style.display = 'flex';
   document.getElementById('campoCi').style.display = 'none';
   document.getElementById('campoCorreo').style.display = 'none';
+  document.getElementById('camposLogin').style.display = 'none';
+  document.getElementById('tabsAuth').style.display = 'none';
 };
 
 // Cerrar modales al hacer clic fuera
