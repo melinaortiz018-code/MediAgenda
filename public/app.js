@@ -59,15 +59,26 @@ function seleccionarRol(rol, elemento) {
   elemento.style.transform = 'translateY(-3px)';
   elemento.style.boxShadow = '0 6px 18px rgba(147, 51, 234, 0.25)';
   
-  document.getElementById('loginRol').value = rol;
-  
-  const campoCi = document.getElementById('campoCi');
-  const campoCorreo = document.getElementById('campoCorreo');
+  // Cambiar campos al seleccionar rol en login
+document.getElementById('loginRol').addEventListener('change', () => {
+  const rol = document.getElementById('loginRol').value;
+  const grupoCI = document.getElementById('grupoLoginCI');
+  const grupoCorreo = document.getElementById('grupoLoginCorreo');
   const camposLogin = document.getElementById('camposLogin');
-  const tabsAuth = document.getElementById('tabsAuth');
-  const ciInput = document.getElementById('loginCi');
-  const correoInput = document.getElementById('loginCorreo');
-  const hint = document.getElementById('loginHint');
+
+  camposLogin.style.display = 'block';
+
+  if (rol === 'paciente') {
+    grupoCI.style.display = 'block';
+    grupoCorreo.style.display = 'block';
+  } else if (rol === 'medico') {
+    grupoCI.style.display = 'block';
+    grupoCorreo.style.display = 'none'; // ✅ OCULTA correo para médico
+  } else if (rol === 'admin') {
+    grupoCI.style.display = 'none'; // ✅ OCULTA CI para admin
+    grupoCorreo.style.display = 'block';
+  }
+});
   
   // Limpiar
   ciInput.required = false;
@@ -132,61 +143,55 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 }
 
 // ==================== AUTENTICACIÓN ====================
-async function iniciarSesion(e) {
-  e.preventDefault();
+async function iniciarSesion() {
+  const rol = document.getElementById('loginRol').value;
+  const ci = document.getElementById('loginCI').value.trim(); // ✅ Quita espacios sobrantes
+  const correo = document.getElementById('loginCorreo').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  // Validar que se eligió rol
+  if (!rol) {
+    Swal.fire('Error', 'Selecciona un tipo de cuenta', 'warning');
+    return;
+  }
+
+  // Preparar datos EXACTOS que pide el backend
+  const datos = { rol, password };
+  if (rol === 'paciente') {
+    if (!ci || !correo) return Swal.fire('Error', 'Paciente necesita CI y Correo', 'warning');
+    datos.ci = ci;
+    datos.correo = correo;
+  } else if (rol === 'medico') {
+    if (!ci) return Swal.fire('Error', 'Médico necesita solo el CI', 'warning');
+    datos.ci = ci; // ✅ SOLO envía CI, NO correo
+  } else if (rol === 'admin') {
+    if (!correo) return Swal.fire('Error', 'Administrador necesita el Correo', 'warning');
+    datos.correo = correo; // ✅ SOLO envía correo, NO CI
+  }
+
   try {
-    const rol = document.getElementById('loginRol').value;
-    const ci = document.getElementById('loginCi').value.trim();
-    const correo = document.getElementById('loginCorreo').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    
-    if (!rol) {
-      Swal.fire('Aviso', 'Primero seleccione un tipo de cuenta', 'warning');
-      return;
-    }
-    
-    const bodySolicitud = { rol, password };
-    
-    if (rol === 'paciente') {
-      if (!ci || !correo) {
-        Swal.fire('Aviso', 'Pacientes deben ingresar CI y Correo', 'warning');
-        return;
-      }
-      bodySolicitud.ci = ci;
-      bodySolicitud.correo = correo;
-    } 
-    else if (rol === 'medico') {
-      if (!ci) {
-        Swal.fire('Aviso', 'Médicos deben ingresar su CI', 'warning');
-        return;
-      }
-      bodySolicitud.ci = ci;
-    } 
-    else if (rol === 'admin') {
-      if (!correo) {
-        Swal.fire('Aviso', 'Administrador debe ingresar su correo', 'warning');
-        return;
-      }
-      bodySolicitud.correo = correo;
-    }
-    
-    const datos = await apiRequest('/api/auth/login', 'POST', bodySolicitud);
-    
-    token = datos.token;
-    usuarioActual = datos.usuario;
-    localStorage.setItem('token', token);
-    
-    Swal.fire({ 
-      icon: 'success', 
-      title: '¡Bienvenido!', 
-      text: datos.usuario.nombres, 
-      timer: 1500, 
-      showConfirmButton: false 
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos)
     });
-    
-    cargarInterfazSegunRol();
-  } catch (error) {
-    Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.mensaje);
+
+    // Guardar sesión
+    token = data.token;
+    usuarioActual = data.usuario;
+    localStorage.setItem('token', token);
+    localStorage.setItem('usuario', JSON.stringify(usuarioActual));
+
+    Swal.fire('✅ Bienvenido', `Hola ${usuarioActual.nombres}`, 'success').then(() => {
+      mostrarVistaPrincipal();
+    });
+
+  } catch (err) {
+    console.error('Error login:', err);
+    Swal.fire('❌ Error', err.message, 'error');
   }
 }
 
