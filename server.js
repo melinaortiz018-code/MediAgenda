@@ -97,6 +97,19 @@ io.on('connection', (socket) => {
       callback({ success: false, error: "Error en el servidor." });
     }
   });
+
+      console.log("Resultado de la búsqueda en MongoDB:", user);
+      
+      if (user) {
+        callback({ success: true, user });
+      } else {
+        callback({ success: false, error: "Credenciales incorrectas o usuario no encontrado." });
+      }
+    } catch (e) {
+      console.error("Error en login:", e);
+      callback({ success: false, error: "Error en el servidor." });
+    }
+  });
   // Citas Médicas
   socket.on('crear_cita', async (data, callback) => {
     try {

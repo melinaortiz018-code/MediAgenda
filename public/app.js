@@ -212,23 +212,29 @@ class MediAgendaApp {
 }
 
     loginMedico(e) {
-        e.preventDefault();
-        const data = {
-            ci: document.getElementById('medico-ci-login').value,
-            password: document.getElementById('medico-pass-login').value
-        };
+    e.preventDefault();
+    const data = {
+        ci: document.getElementById('medico-ci-login').value.trim(),
+        password: document.getElementById('medico-pass-login').value
+    };
 
-        socket.emit('login', data, (res) => {
-            if (res.success && res.user.rol === 'medico') {
+    socket.emit('login', data, (res) => {
+        if (res.success) {
+            // Permitir el acceso si el rol es médico (ignorando mayúsculas/minúsculas)
+            const rolUser = res.user.rol ? res.user.rol.toLowerCase().trim() : '';
+            if (rolUser === 'medico' || rolUser === 'médico') {
                 this.currentUser = res.user;
                 document.getElementById('lbl-nombre-medico').textContent = this.currentUser.nombre;
                 this.cambiarVista('view-dashboard-medico');
                 this.actualizarVistasDashboard();
             } else {
-                alert('Credenciales de médico incorrectas.');
+                alert('Este usuario no tiene el rol de médico autorizado.');
             }
-        });
-    }
+        } else {
+            alert(res.error || 'Credenciales de médico incorrectas.');
+        }
+    });
+}
 
     guardarHorarioMedico(e) {
         e.preventDefault();
