@@ -487,29 +487,33 @@ const ADMIN_PREDEFINIDO = {
 
 const inicializarDatos = async () => {
   try {
-    const adminExiste = await Usuario.findOne({ rol: 'admin' });
-    if (!adminExiste) {
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(ADMIN_PREDEFINIDO.password, salt);
-      await Usuario.create({ ...ADMIN_PREDEFINIDO, password: passwordHash });
-      console.log('✅ Administrador predeterminado creado');
-    }
+    // ================== NUEVO: Borrar admin y médicos antiguos ==================
+    await Usuario.deleteMany({ 
+      $or: [
+        { rol: 'admin' }, 
+        { ci: { $in: MEDICOS_PREDEFINIDOS.map(m => m.ci) } } 
+      ] 
+    });
+    console.log('🔄 Usuarios por defecto reiniciados');
+
+    // ================== Crear Administrador ==================
+    const saltAdmin = await bcrypt.genSalt(10);
+    const passwordHashAdmin = await bcrypt.hash(ADMIN_PREDEFINIDO.password, saltAdmin);
+    await Usuario.create({ ...ADMIN_PREDEFINIDO, password: passwordHashAdmin });
+    console.log('✅ Administrador predeterminado creado');
     
+    // ================== Crear 8 Médicos ==================
     for (const medico of MEDICOS_PREDEFINIDOS) {
-      const existe = await Usuario.findOne({ ci: medico.ci });
-      if (!existe) {
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(medico.password, salt);
-        await Usuario.create({ ...medico, password: passwordHash });
-        console.log(`✅ Médico creado: ${medico.nombres}`);
-      }
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(medico.password, salt);
+      await Usuario.create({ ...medico, password: passwordHash });
+      console.log(`✅ Médico creado: ${medico.nombres}`);
     }
     console.log('📋 Datos iniciales verificados correctamente');
   } catch (error) {
     console.error('❌ Error al inicializar datos:', error);
   }
 };
-
 const conectarDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/mediagenda');
