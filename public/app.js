@@ -265,11 +265,11 @@ async function cargarMedicosPorEspecialidad() {
 
   selectMedicos.innerHTML = '<option value="">Cargando médicos...</option>';
   try {
-    // ✅ Carga médicos filtrados correctamente
+    // Probamos la ruta correcta que usa tu backend
     const medicos = await apiRequest(`/api/medicos?especialidad=${encodeURIComponent(especialidad)}`);
     selectMedicos.innerHTML = '<option value="">Seleccione un médico</option>';
     if (medicos.length === 0) {
-      selectMedicos.innerHTML = '<option value="">No hay médicos disponibles en esta especialidad</option>';
+      selectMedicos.innerHTML = '<option value="">No hay médicos en esta especialidad</option>';
       return;
     }
     medicos.forEach(medico => {
@@ -279,7 +279,7 @@ async function cargarMedicosPorEspecialidad() {
       selectMedicos.appendChild(opcion);
     });
   } catch (error) {
-    selectMedicos.innerHTML = '<option value="">Error al cargar médicos</option>';
+    selectMedicos.innerHTML = '<option value="">Error al cargar</option>';
   }
 }
 async function agendarCita(e) {
@@ -304,9 +304,10 @@ async function cargarMisCitas() {
   contenedor.innerHTML = '<p>Cargando tus citas...</p>';
 
   try {
-    const citas = await apiRequest('/api/citas/mis-citas');
+    // Probamos la ruta que usa tu backend
+    const citas = await apiRequest('/api/citas/mis'); // Cambiado de /mis-citas a /mis
     if (citas.length === 0) {
-      contenedor.innerHTML = '<p style="text-align:center;color:var(--texto-claro);">No tienes citas programadas</p>';
+      contenedor.innerHTML = '<p style="text-align:center;color:var(--texto-claro);">No tienes citas programadas todavía</p>';
       return;
     }
 
@@ -322,7 +323,7 @@ async function cargarMisCitas() {
       const tarjeta = document.createElement('div');
       tarjeta.className = 'tarjeta-cita';
       tarjeta.innerHTML = `
-        <h4>${cita.especialidad} - ${cita.medico?.nombres || 'Médico no asignado'}</h4>
+        <h4>${cita.especialidad} - ${cita.medico?.nombres || 'Médico'}</h4>
         <p><strong>Fecha:</strong> ${new Date(cita.fecha).toLocaleDateString('es-EC')}</p>
         <p><strong>Hora:</strong> ${cita.hora}</p>
         <p><strong>Motivo:</strong> ${cita.motivo}</p>
@@ -331,7 +332,30 @@ async function cargarMisCitas() {
       contenedor.appendChild(tarjeta);
     });
   } catch (error) {
-    contenedor.innerHTML = '<p style="text-align:center;color:var(--rojo);">Error al cargar tus citas</p>';
+    // Si falla la primera, probamos la otra ruta común
+    try {
+      const citas = await apiRequest('/api/citas/usuario/mis');
+      if (citas.length === 0) {
+        contenedor.innerHTML = '<p style="text-align:center;color:var(--texto-claro);">No tienes citas programadas todavía</p>';
+        return;
+      }
+      contenedor.innerHTML = '';
+      citas.forEach(cita => {
+        const estado = { pendiente:'Pendiente', confirmada:'Confirmada', atendida:'Atendida', cancelada:'Cancelada' }[cita.estado] || cita.estado;
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'tarjeta-cita';
+        tarjeta.innerHTML = `
+          <h4>${cita.especialidad} - ${cita.medico?.nombres || 'Médico'}</h4>
+          <p><strong>Fecha:</strong> ${new Date(cita.fecha).toLocaleDateString('es-EC')}</p>
+          <p><strong>Hora:</strong> ${cita.hora}</p>
+          <p><strong>Motivo:</strong> ${cita.motivo}</p>
+          <p><strong>Estado:</strong> <span class="estado-${cita.estado}">${estado}</span></p>
+        `;
+        contenedor.appendChild(tarjeta);
+      });
+    } catch {
+      contenedor.innerHTML = '<p style="text-align:center;color:var(--rojo);">No se pudieron cargar tus citas</p>';
+    }
   }
 }
 async function cargarPerfil() {
@@ -475,22 +499,38 @@ async function cargarEstadisticas() {
 // INICIO DEL SISTEMA
 // ==============================================
 window.onload = async () => {
-  // Ocultar modales al inicio
+  // 1. OCULTAR TODO AL INICIO ANTES DE CARGAR NADA — sin parpadeos
+  document.querySelectorAll('.vista').forEach(vista => vista.style.display = 'none');
   document.querySelectorAll('.modal').forEach(modal => modal.style.display = 'none');
+  document.getElementById('navbar').style.display = 'none';
+  document.getElementById('camposLogin').style.display = 'none';
+  document.getElementById('tabsAuth').style.display = 'none';
+  document.getElementById('formRegistro').style.display = 'none';
 
-  // Verificar sesión existente
+  // 2. LIMPIAR ESTILOS DE TARJETAS DE ROL
+  document.querySelectorAll('.rol-card').forEach(tarjeta => {
+    tarjeta.style.background = '#ffffff';
+    tarjeta.style.borderColor = '#9333EA';
+    tarjeta.style.boxShadow = 'none';
+  });
+  document.getElementById('loginRol').value = '';
+
+  // 3. MOSTRAR SIEMPRE LA PANTALLA DE INICIO PRIMERO
+  document.getElementById('vistaInicio').style.display = 'flex';
+
+  // 4. Revisar sesión solo si el usuario lo pide, no automáticamente
   if (token) {
     try {
       const respuesta = await apiRequest('/api/auth/verify');
       usuarioActual = respuesta.usuario;
-      cargarInterfazSegunRol();
-      return;
+      // ✅ Ya no entra directo: solo dejamos la opción de iniciar sesión
+      // cargarInterfazSegunRol(); // Comentado para que no entre solo
     } catch {
       localStorage.clear();
       token = null;
+      usuarioActual = null;
     }
   }
-
+};
   // Mostrar pantalla de inicio
   document.getElementById('vistaInicio').style.display = 'flex';
-};
