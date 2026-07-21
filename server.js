@@ -108,14 +108,33 @@ app.post('/api/auth/registro', async (req, res) => {
   }
 });
 
+// RUTA DE LOGIN CORREGIDA: FLEXIBLE POR ROLES
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { ci, correo, password } = req.body;
     
-    if (!ci || !correo || !password)
-      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
+    if (!password)
+      return res.status(400).json({ mensaje: 'La contraseña es obligatoria' });
     
-    const usuario = await Usuario.findOne({ ci, correo });
+    let usuario;
+    
+    // Caso 1: Paciente (CI + Correo)
+    if (ci && correo) {
+      usuario = await Usuario.findOne({ ci, correo });
+    }
+    // Caso 2: Médico (solo CI)
+    else if (ci && !correo) {
+      usuario = await Usuario.findOne({ ci });
+    }
+    // Caso 3: Administrador (solo Correo)
+    else if (!ci && correo) {
+      usuario = await Usuario.findOne({ correo });
+    }
+    // Caso 4: Faltan datos
+    else {
+      return res.status(400).json({ mensaje: 'Ingrese sus credenciales correctamente' });
+    }
+    
     if (!usuario) return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
     
     const passwordValido = await bcrypt.compare(password, usuario.password);
@@ -135,6 +154,16 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+  }
+});
+
+// NUEVA RUTA: VERIFICAR TOKEN (MANTENER SESIÓN)
+app.get('/api/auth/verify', auth(), async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.usuario._id).select('-password');
+    res.json({ usuario });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al verificar token' });
   }
 });
 

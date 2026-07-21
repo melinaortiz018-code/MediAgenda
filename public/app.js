@@ -34,6 +34,35 @@ function verificarTiempoRestante(fechaCita, horaCita) {
   return diferencia > 24;
 }
 
+// ==================== LOGIN POR ROLES ====================
+function ajustarCamposLogin() {
+  const rol = document.getElementById('loginRol').value;
+  const ciInput = document.getElementById('loginCi');
+  const correoInput = document.getElementById('loginCorreo');
+  const hint = document.getElementById('loginHint');
+  
+  ciInput.required = false;
+  correoInput.required = false;
+  ciInput.value = '';
+  correoInput.value = '';
+  
+  if (rol === 'paciente') {
+    ciInput.required = true;
+    correoInput.required = true;
+    hint.textContent = 'Pacientes: Ingrese CI y Correo';
+  } else if (rol === 'medico') {
+    ciInput.required = true;
+    correoInput.required = false;
+    hint.textContent = 'Médicos: Ingrese su CI (ej: MED001)';
+  } else if (rol === 'admin') {
+    ciInput.required = false;
+    correoInput.required = true;
+    hint.textContent = 'Administrador: Ingrese su correo (admin@mediagenda.com)';
+  } else {
+    hint.textContent = '';
+  }
+}
+
 // ==================== PETICIONES API ====================
 async function apiRequest(endpoint, method = 'GET', body = null) {
   const opciones = {
@@ -56,17 +85,61 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 async function iniciarSesion(e) {
   e.preventDefault();
   try {
-    const datos = await apiRequest('/api/auth/login', 'POST', {
-      ci: document.getElementById('loginCi').value,
-      correo: document.getElementById('loginCorreo').value,
-      password: document.getElementById('loginPassword').value
-    });
+    const rol = document.getElementById('loginRol').value;
+    const ci = document.getElementById('loginCi').value;
+    const correo = document.getElementById('loginCorreo').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    let bodySolicitud = { password };
+    
+    if (rol === 'paciente') {
+      if (!ci || !correo) {
+        Swal.fire('Aviso', 'Pacientes deben ingresar CI y Correo', 'warning');
+        return;
+      }
+      bodySolicitud.ci = ci;
+      bodySolicitud.correo = correo;
+    } else if (rol === 'medico') {
+      if (!ci) {
+        Swal.fire('Aviso', 'Médicos deben ingresar su CI', 'warning');
+        return;
+      }
+      bodySolicitud.ci = ci;
+      bodySolicitud.correo = '';
+    } else if (rol === 'admin') {
+      if (!correo) {
+        Swal.fire('Aviso', 'Administrador debe ingresar su correo', 'warning');
+        return;
+      }
+      bodySolicitud.ci = '';
+      bodySolicitud.correo = correo;
+    } else {
+      Swal.fire('Aviso', 'Seleccione un rol para continuar', 'warning');
+      return;
+    }
+    
+    const datos = await apiRequest('/api/auth/login', 'POST', bodySolicitud);
+    
+    if (datos.usuario.rol !== rol) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Rol incorrecto',
+        text: `Esta cuenta es de tipo ${datos.usuario.rol}, no ${rol}`
+      });
+      return;
+    }
     
     token = datos.token;
     usuarioActual = datos.usuario;
     localStorage.setItem('token', token);
     
-    Swal.fire({ icon: 'success', title: '¡Bienvenido!', text: `Hola ${datos.usuario.nombres}`, timer: 1500, showConfirmButton: false });
+    Swal.fire({ 
+      icon: 'success', 
+      title: '¡Bienvenido!', 
+      text: `Hola ${datos.usuario.nombres}`, 
+      timer: 1500, 
+      showConfirmButton: false 
+    });
     
     cargarInterfazSegunRol();
   } catch (error) {
@@ -118,6 +191,8 @@ function cerrarSesion() {
       document.querySelectorAll('.vista').forEach(v => v.style.display = 'none');
       document.getElementById('vistaInicio').style.display = 'flex';
       document.getElementById('formLogin').reset();
+      document.getElementById('loginRol').value = '';
+      ajustarCamposLogin();
     }
   });
 }
@@ -403,8 +478,10 @@ async function guardarEdicionCita() {
     });
     Swal.fire('Actualizada', 'La cita ha sido actualizada exitosamente', 'success');
     cerrarModal('modalEditarCita');
-    cargarCitasMedico(document.querySelector('.filtro-btn.active').textContent.toLowerCase().includes('hoy') ? 'hoy' : 
-                    document.querySelector('.filtro-btn.active').textContent.toLowerCase().includes('semana') ? 'semana' : 'meses');
+    const btnActivo = document.querySelector('.filtro-btn.active');
+    const rango = btnActivo.textContent.toLowerCase().includes('hoy') ? 'hoy' : 
+                btnActivo.textContent.toLowerCase().includes('semana') ? 'semana' : 'meses';
+    cargarCitasMedico(rango);
   } catch (error) {
     Swal.fire('Error', error.message, 'error');
   }
@@ -437,8 +514,8 @@ async function cargarUsuariosAdmin() {
 
 function verPassword(hash) {
   Swal.fire({
-    title: 'Contraseña (Hash)',
-    text: `Por seguridad solo se muestra el hash encriptado:\n\n${hash.substring(0, 50)}...`,
+    title: 'Contraseña (Encriptada)',
+    text: `Por seguridad solo se muestra el hash:\n\n${hash.substring(0, 60)}...`,
     icon: 'info',
     confirmButtonColor: '#9333EA'
   });
@@ -544,20 +621,17 @@ async function cargarEstadisticas() {
 window.onload = async () => {
   if (token) {
     try {
-      const respuesta = await fetch(`${API_BASE}/api/auth/verify`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (respuesta.ok) {
-        const datos = await respuesta.json();
-        usuarioActual = datos.usuario;
-        cargarInterfazSegunRol();
-        return;
-      }
-    } catch (e) {}
-    localStorage.removeItem('token');
-    token = null;
+      const datos = await apiRequest('/api/auth/verify');
+      usuarioActual = datos.usuario;
+      cargarInterfazSegunRol();
+      return;
+    } catch (e) {
+      localStorage.removeItem('token');
+      token = null;
+    }
   }
   document.getElementById('vistaInicio').style.display = 'flex';
+  ajustarCamposLogin();
 };
 
 // Cerrar modales al hacer clic fuera

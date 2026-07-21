@@ -36,23 +36,33 @@
           <button class="tab-btn" onclick="cambiarTab('registro')">Registrarse</button>
         </div>
 
-        <!-- FORMULARIO LOGIN -->
+        <!-- FORMULARIO LOGIN (CORREGIDO: AHORA CON SELECTOR DE ROLES) -->
         <form id="formLogin" class="form-auth" onsubmit="iniciarSesion(event)">
           <div class="form-group">
+            <label>Seleccione su Rol *</label>
+            <select id="loginRol" required onchange="ajustarCamposLogin()">
+              <option value="">Elija una opción</option>
+              <option value="paciente">Paciente</option>
+              <option value="medico">Médico</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label>Cédula de Identidad (CI)</label>
-            <input type="text" id="loginCi" required placeholder="Ingrese su CI">
+            <input type="text" id="loginCi" placeholder="Ingrese su CI">
           </div>
           <div class="form-group">
             <label>Correo Electrónico</label>
-            <input type="email" id="loginCorreo" required placeholder="correo@ejemplo.com">
+            <input type="email" id="loginCorreo" placeholder="correo@ejemplo.com">
           </div>
           <div class="form-group">
-            <label>Contraseña</label>
+            <label>Contraseña *</label>
             <div class="input-password">
               <input type="password" id="loginPassword" required placeholder="Ingrese su contraseña">
               <button type="button" class="btn-ojo" onclick="togglePassword('loginPassword', this)">👁️</button>
             </div>
           </div>
+          <p id="loginHint" style="font-size:0.85rem;color:var(--texto-claro);margin-bottom:1rem;text-align:center;"></p>
           <button type="submit" class="btn-principal btn-block">Ingresar</button>
         </form>
 
@@ -127,20 +137,13 @@
               <label>Hora *</label>
               <select id="citaHora" required>
                 <option value="">Seleccione horario</option>
-                <option value="08:00">08:00</option>
-                <option value="08:30">08:30</option>
-                <option value="09:00">09:00</option>
-                <option value="09:30">09:30</option>
-                <option value="10:00">10:00</option>
-                <option value="10:30">10:30</option>
-                <option value="11:00">11:00</option>
-                <option value="11:30">11:30</option>
-                <option value="14:00">14:00</option>
-                <option value="14:30">14:30</option>
-                <option value="15:00">15:00</option>
-                <option value="15:30">15:30</option>
-                <option value="16:00">16:00</option>
-                <option value="16:30">16:30</option>
+                <option value="08:00">08:00</option><option value="08:30">08:30</option>
+                <option value="09:00">09:00</option><option value="09:30">09:30</option>
+                <option value="10:00">10:00</option><option value="10:30">10:30</option>
+                <option value="11:00">11:00</option><option value="11:30">11:30</option>
+                <option value="14:00">14:00</option><option value="14:30">14:30</option>
+                <option value="15:00">15:00</option><option value="15:30">15:30</option>
+                <option value="16:00">16:00</option><option value="16:30">16:30</option>
               </select>
             </div>
           </div>
