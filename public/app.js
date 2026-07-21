@@ -33,9 +33,9 @@ function verificarTiempoRestante(fechaCita, horaCita) {
   const diferencia = (fecha - ahora) / (1000 * 60 * 60);
   return diferencia > 24;
 }
-// Seleccionar rol al hacer clic en la tarjeta
+
+// ==================== LOGIN POR ROLES ====================
 function seleccionarRol(rol, elemento) {
-  // Quitar estilo de selección anterior
   document.querySelectorAll('.rol-card').forEach(card => {
     card.style.background = 'var(--blanco)';
     card.style.borderColor = 'var(--borde)';
@@ -43,58 +43,49 @@ function seleccionarRol(rol, elemento) {
     card.style.boxShadow = 'none';
   });
   
-  // Aplicar estilo a la tarjeta seleccionada
   elemento.style.background = 'var(--tarjeta)';
   elemento.style.borderColor = 'var(--principal)';
   elemento.style.transform = 'translateY(-3px)';
   elemento.style.boxShadow = '0 6px 18px rgba(147, 51, 234, 0.25)';
   
-  // Guardar rol
   document.getElementById('loginRol').value = rol;
   
-  // Mostrar/ocultar campos según el rol (FORZADO para que siempre funcione)
   const campoCi = document.getElementById('campoCi');
   const campoCorreo = document.getElementById('campoCorreo');
   const ciInput = document.getElementById('loginCi');
   const correoInput = document.getElementById('loginCorreo');
   const hint = document.getElementById('loginHint');
   
-  // Limpiar siempre
   ciInput.required = false;
   correoInput.required = false;
   ciInput.value = '';
   correoInput.value = '';
   
-  // ================== CORRECCIÓN CLAVE ==================
   if (rol === 'paciente') {
-    // PACIENTE: Mostrar AMBOS campos
-    campoCi.style.setProperty('display', 'block', 'important');
-    campoCorreo.style.setProperty('display', 'block', 'important');
+    campoCi.style.display = 'block';
+    campoCorreo.style.display = 'block';
     ciInput.required = true;
     correoInput.required = true;
     hint.textContent = '👤 Pacientes: Ingrese su CI y Correo';
   } 
   else if (rol === 'medico') {
-    // MÉDICO: Solo CI
-    campoCi.style.setProperty('display', 'block', 'important');
-    campoCorreo.style.setProperty('display', 'none', 'important');
+    campoCi.style.display = 'block';
+    campoCorreo.style.display = 'none';
     ciInput.required = true;
     correoInput.required = false;
     hint.textContent = '🩺 Médicos: Ingrese su CI (ej: MED001)';
   } 
   else if (rol === 'admin') {
-    // ADMIN: Solo Correo
-    campoCi.style.setProperty('display', 'none', 'important');
-    campoCorreo.style.setProperty('display', 'block', 'important');
+    campoCi.style.display = 'none';
+    campoCorreo.style.display = 'block';
     ciInput.required = false;
     correoInput.required = true;
     hint.textContent = '🛡️ Administrador: Ingrese su correo';
   }
 }
 
-// Eliminamos la función antigua ajustarCamposLogin, ya que todo se hace en seleccionarRol
 function ajustarCamposLogin() {
-  // Función vacía por compatibilidad, no la usamos más
+  // Función de compatibilidad
 }
 
 // ==================== PETICIONES API ====================
@@ -115,6 +106,7 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
   return datos;
 }
 
+// ==================== AUTENTICACIÓN ====================
 async function iniciarSesion(e) {
   e.preventDefault();
   try {
@@ -128,18 +120,28 @@ async function iniciarSesion(e) {
       return;
     }
     
-    // Enviar ROL EXPLÍCITO + datos
     const bodySolicitud = { rol, password };
     
     if (rol === 'paciente') {
-      if (!ci || !correo) return Swal.fire('Aviso', 'Ingrese CI y Correo', 'warning');
+      if (!ci || !correo) {
+        Swal.fire('Aviso', 'Pacientes deben ingresar CI y Correo', 'warning');
+        return;
+      }
       bodySolicitud.ci = ci;
       bodySolicitud.correo = correo;
-    } else if (rol === 'medico') {
-      if (!ci) return Swal.fire('Aviso', 'Ingrese su CI de médico', 'warning');
+    } 
+    else if (rol === 'medico') {
+      if (!ci) {
+        Swal.fire('Aviso', 'Médicos deben ingresar su CI', 'warning');
+        return;
+      }
       bodySolicitud.ci = ci;
-    } else if (rol === 'admin') {
-      if (!correo) return Swal.fire('Aviso', 'Ingrese el correo de administrador', 'warning');
+    } 
+    else if (rol === 'admin') {
+      if (!correo) {
+        Swal.fire('Aviso', 'Administrador debe ingresar su correo', 'warning');
+        return;
+      }
       bodySolicitud.correo = correo;
     }
     
@@ -149,21 +151,10 @@ async function iniciarSesion(e) {
     usuarioActual = datos.usuario;
     localStorage.setItem('token', token);
     
-    Swal.fire({ icon: 'success', title: '¡Bienvenido!', text: datos.usuario.nombres, timer: 1500, showConfirmButton: false });
-    cargarInterfazSegunRol();
-  } catch (error) {
-    Swal.fire({ icon: 'error', title: 'Error', text: error.message });
-  }
-}
-    
-    token = datos.token;
-    usuarioActual = datos.usuario;
-    localStorage.setItem('token', token);
-    
     Swal.fire({ 
       icon: 'success', 
       title: '¡Bienvenido!', 
-      text: `Hola ${datos.usuario.nombres}`, 
+      text: datos.usuario.nombres, 
       timer: 1500, 
       showConfirmButton: false 
     });
@@ -173,6 +164,31 @@ async function iniciarSesion(e) {
     Swal.fire({ icon: 'error', title: 'Error', text: error.message });
   }
 }
+
+async function registrarUsuario(e) {
+  e.preventDefault();
+  try {
+    const datos = await apiRequest('/api/auth/registro', 'POST', {
+      ci: document.getElementById('regCi').value,
+      nombres: document.getElementById('regNombres').value,
+      correo: document.getElementById('regCorreo').value,
+      celular: document.getElementById('regCelular').value,
+      direccion: document.getElementById('regDireccion').value,
+      password: document.getElementById('regPassword').value,
+      confirmPassword: document.getElementById('regConfirmPassword').value
+    });
+    
+    token = datos.token;
+    usuarioActual = datos.usuario;
+    localStorage.setItem('token', token);
+    
+    Swal.fire({ icon: 'success', title: '¡Registro Exitoso!', text: 'Tu cuenta ha sido creada correctamente', timer: 1500, showConfirmButton: false });
+    cargarInterfazSegunRol();
+  } catch (error) {
+    Swal.fire({ icon: 'error', title: 'Error en el registro', text: error.message });
+  }
+}
+
 function cerrarSesion() {
   Swal.fire({
     title: '¿Está seguro?',
@@ -193,7 +209,15 @@ function cerrarSesion() {
       document.getElementById('vistaInicio').style.display = 'flex';
       document.getElementById('formLogin').reset();
       document.getElementById('loginRol').value = '';
-      ajustarCamposLogin();
+      document.getElementById('campoCi').style.display = 'none';
+      document.getElementById('campoCorreo').style.display = 'none';
+      document.getElementById('loginHint').textContent = '';
+      document.querySelectorAll('.rol-card').forEach(card => {
+        card.style.background = 'var(--blanco)';
+        card.style.borderColor = 'var(--borde)';
+        card.style.transform = 'none';
+        card.style.boxShadow = 'none';
+      });
     }
   });
 }
@@ -632,7 +656,8 @@ window.onload = async () => {
     }
   }
   document.getElementById('vistaInicio').style.display = 'flex';
-  ajustarCamposLogin();
+  document.getElementById('campoCi').style.display = 'none';
+  document.getElementById('campoCorreo').style.display = 'none';
 };
 
 // Cerrar modales al hacer clic fuera
@@ -640,22 +665,4 @@ window.onclick = (e) => {
   document.querySelectorAll('.modal').forEach(modal => {
     if (e.target === modal) modal.style.display = 'none';
   });
-};
-window.onload = async () => {
-  if (token) {
-    try {
-      const datos = await apiRequest('/api/auth/verify');
-      usuarioActual = datos.usuario;
-      cargarInterfazSegunRol();
-      return;
-    } catch (e) {
-      localStorage.removeItem('token');
-      token = null;
-    }
-  }
-  document.getElementById('vistaInicio').style.display = 'flex';
-  
-  // Al inicio: ocultar ambos campos hasta que se elija rol
-  document.getElementById('campoCi').style.setProperty('display', 'none', 'important');
-  document.getElementById('campoCorreo').style.setProperty('display', 'none', 'important');
 };
