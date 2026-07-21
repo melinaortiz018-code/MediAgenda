@@ -487,40 +487,67 @@ const ADMIN_PREDEFINIDO = {
 
 const inicializarDatos = async () => {
   try {
-    // ================== NUEVO: Borrar admin y médicos antiguos ==================
-    await Usuario.deleteMany({ 
+    console.log('========================================');
+    console.log('🔄 INICIANDO REINICIO DE CREDENCIALES...');
+    console.log('========================================');
+    
+    // Contar usuarios existentes
+    const totalAntes = await Usuario.countDocuments();
+    console.log(`📊 Total de usuarios ANTES del reinicio: ${totalAntes}`);
+    
+    // BORRAR admin y médicos antiguos
+    const borrados = await Usuario.deleteMany({ 
       $or: [
         { rol: 'admin' }, 
         { ci: { $in: MEDICOS_PREDEFINIDOS.map(m => m.ci) } } 
       ] 
     });
-    console.log('🔄 Usuarios por defecto reiniciados');
+    console.log(`🗑️ Usuarios por defecto borrados: ${borrados.deletedCount}`);
 
-    // ================== Crear Administrador ==================
+    // CREAR ADMINISTRADOR
     const saltAdmin = await bcrypt.genSalt(10);
     const passwordHashAdmin = await bcrypt.hash(ADMIN_PREDEFINIDO.password, saltAdmin);
-    await Usuario.create({ ...ADMIN_PREDEFINIDO, password: passwordHashAdmin });
-    console.log('✅ Administrador predeterminado creado');
+    const adminCreado = await Usuario.create({ ...ADMIN_PREDEFINIDO, password: passwordHashAdmin });
+    console.log('✅ ADMIN CREADO:');
+    console.log('   📧 Correo:', adminCreado.correo);
+    console.log('   🔑 Contraseña:', ADMIN_PREDEFINIDO.password);
+    console.log('   🆔 CI:', adminCreado.ci);
     
-    // ================== Crear 8 Médicos ==================
+    // CREAR 8 MÉDICOS
     for (const medico of MEDICOS_PREDEFINIDOS) {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(medico.password, salt);
-      await Usuario.create({ ...medico, password: passwordHash });
-      console.log(`✅ Médico creado: ${medico.nombres}`);
+      const medicoCreado = await Usuario.create({ ...medico, password: passwordHash });
+      console.log(`✅ MÉDICO CREADO: CI=${medicoCreado.ci} | ${medicoCreado.nombres}`);
     }
-    console.log('📋 Datos iniciales verificados correctamente');
+    
+    const totalDespues = await Usuario.countDocuments();
+    console.log(`📊 Total de usuarios DESPUÉS del reinicio: ${totalDespues}`);
+    console.log('========================================');
+    console.log('✅ CREDENCIALES LISTAS - PRUEBA AHORA:');
+    console.log('   ADMIN: admin@mediagenda.com / Admin123*');
+    console.log('   MEDICOS: CI MED001-MED008 / Medico123*');
+    console.log('========================================');
   } catch (error) {
-    console.error('❌ Error al inicializar datos:', error);
+    console.error('❌ ERROR GRAVE AL INICIALIZAR DATOS:', error);
+    throw error; // Para que el servidor falle y se vea el error
   }
 };
 const conectarDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/mediagenda');
-    console.log('🔌 Conectado a MongoDB exitosamente');
+    // Forzamos el nombre EXACTO de la base de datos para evitar error de mayúsculas/minúsculas
+    const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/';
+    const opcionesConexion = {
+      dbName: 'MediAgenda' // NOMBRE EXACTO IGUAL AL QUE YA EXISTE
+    };
+    
+    await mongoose.connect(mongoURI, opcionesConexion);
+    console.log('🔌 Conectado a MongoDB exitosamente en BD: MediAgenda');
+    
+    // Ejecutar seed y esperar a que TERMINE antes de levantar el servidor
     await inicializarDatos();
   } catch (error) {
-    console.error('❌ Error de conexión MongoDB:', error);
+    console.error('❌ Error FATAL de conexión MongoDB:', error);
     process.exit(1);
   }
 };
