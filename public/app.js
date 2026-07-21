@@ -1,4 +1,3 @@
-```javascript
 const socket = io();
 
 class MediAgendaApp {
@@ -39,16 +38,27 @@ class MediAgendaApp {
 
     cambiarVista(vistaId) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.getElementById(vistaId).classList.add('active');
+        const targetView = document.getElementById(vistaId);
+        if (targetView) {
+            targetView.classList.add('active');
+        } else {
+            console.error(`No se encontró la vista con ID: ${vistaId}`);
+        }
     }
 
+    // FUNCIÓN RECUPERADA PARA QUE COJAN LOS CLICS DE LOS ROLES
     irARol(rol) {
-        if (rol === 'paciente') this.cambiarVista('view-auth-paciente');
-        if (rol === 'medico') {
+        const rolLimpio = rol ? rol.toLowerCase().trim() : '';
+        if (rolLimpio === 'paciente') {
+            this.cambiarVista('view-auth-paciente');
+        } else if (rolLimpio === 'medico' || rolLimpio === 'médico') {
             this.cambiarVista('view-auth-medico');
             this.poblarDoctoresDemo();
+        } else if (rolLimpio === 'admin') {
+            this.cambiarVista('view-auth-admin');
+        } else {
+            console.warn('Rol desconocido:', rol);
         }
-        if (rol === 'admin') this.cambiarVista('view-auth-admin');
     }
 
     volverHome() {
@@ -58,13 +68,17 @@ class MediAgendaApp {
     switchTab(tab, e) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         if (tab === 'login') {
-            e.target.classList.add('active');
-            document.getElementById('form-login-paciente').style.display = 'flex';
-            document.getElementById('form-reg-paciente').style.display = 'none';
+            if (e && e.target) e.target.classList.add('active');
+            const formLogin = document.getElementById('form-login-paciente');
+            const formReg = document.getElementById('form-reg-paciente');
+            if (formLogin) formLogin.style.display = 'flex';
+            if (formReg) formReg.style.display = 'none';
         } else {
-            e.target.classList.add('active');
-            document.getElementById('form-login-paciente').style.display = 'none';
-            document.getElementById('form-reg-paciente').style.display = 'flex';
+            if (e && e.target) e.target.classList.add('active');
+            const formLogin = document.getElementById('form-login-paciente');
+            const formReg = document.getElementById('form-reg-paciente');
+            if (formLogin) formLogin.style.display = 'none';
+            if (formReg) formReg.style.display = 'flex';
         }
     }
 
@@ -340,48 +354,52 @@ class MediAgendaApp {
     actualizarVistasDashboard() {
         if (this.currentUser.rol === 'paciente') {
             const tbody = document.getElementById('tabla-citas-paciente');
-            tbody.innerHTML = '';
-            const misCitas = this.citas.filter(c => c.pacienteCI === this.currentUser.ci);
+            if (tbody) {
+                tbody.innerHTML = '';
+                const misCitas = this.citas.filter(c => c.pacienteCI === this.currentUser.ci);
 
-            misCitas.forEach(c => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${c.medicoNombre}</td>
-                    <td>${c.especialidad}</td>
-                    <td>${c.fecha} - ${c.hora}</td>
-                    <td><b>${c.estado}</b></td>
-                    <td>
-                        ${c.estado === 'Pendiente' || c.estado === 'Confirmada' ? `
-                            <button class="btn-glossy btn-warning-bright" onclick="app.abrirModalAccion('${c._id}', 'Reprogramar')">Reprogramar</button>
-                            <button class="btn-glossy btn-danger" onclick="app.abrirModalAccion('${c._id}', 'Cancelar')">Cancelar</button>
-                        ` : `<span>Sin acciones</span>`}
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                misCitas.forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${c.medicoNombre}</td>
+                        <td>${c.especialidad}</td>
+                        <td>${c.fecha} - ${c.hora}</td>
+                        <td><b>${c.estado}</b></td>
+                        <td>
+                            ${c.estado === 'Pendiente' || c.estado === 'Confirmada' ? `
+                                <button class="btn-glossy btn-warning-bright" onclick="app.abrirModalAccion('${c._id}', 'Reprogramar')">Reprogramar</button>
+                                <button class="btn-glossy btn-danger" onclick="app.abrirModalAccion('${c._id}', 'Cancelar')">Cancelar</button>
+                            ` : `<span>Sin acciones</span>`}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
         }
 
         if (this.currentUser.rol === 'medico') {
             const tbody = document.getElementById('tabla-citas-medico');
-            tbody.innerHTML = '';
-            const misCitasMed = this.citas.filter(c => c.medicoId === this.currentUser.ci);
+            if (tbody) {
+                tbody.innerHTML = '';
+                const misCitasMed = this.citas.filter(c => c.medicoId === this.currentUser.ci);
 
-            misCitasMed.forEach(c => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${c.pacienteNombre}</td>
-                    <td>${c.motivo}</td>
-                    <td>${c.fecha} - ${c.hora}</td>
-                    <td><b>${c.estado}</b></td>
-                    <td>${c.receta || 'Sin receta aún'}</td>
-                    <td>
-                        <button class="btn-glossy btn-success-bright" onclick="app.cambiarEstadoCita('${c._id}', 'Confirmada')">Confirmar</button>
-                        <button class="btn-glossy btn-primary-bright" onclick="app.cambiarEstadoCita('${c._id}', 'En curso')">En curso</button>
-                        <button class="btn-glossy btn-success-bright" onclick="app.cambiarEstadoCita('${c._id}', 'Atendida')">Atendida</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                misCitasMed.forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${c.pacienteNombre}</td>
+                        <td>${c.motivo}</td>
+                        <td>${c.fecha} - ${c.hora}</td>
+                        <td><b>${c.estado}</b></td>
+                        <td>${c.receta || 'Sin receta aún'}</td>
+                        <td>
+                            <button class="btn-glossy btn-success-bright" onclick="app.cambiarEstadoCita('${c._id}', 'Confirmada')">Confirmar</button>
+                            <button class="btn-glossy btn-primary-bright" onclick="app.cambiarEstadoCita('${c._id}', 'En curso')">En curso</button>
+                            <button class="btn-glossy btn-success-bright" onclick="app.cambiarEstadoCita('${c._id}', 'Atendida')">Atendida</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
         }
 
         if (this.currentUser.rol === 'admin') {
@@ -390,25 +408,32 @@ class MediAgendaApp {
             const reagendadas = this.citas.filter(c => c.estado === 'Reprogramada').length;
             const canceladas = this.citas.filter(c => c.estado === 'Cancelada').length;
 
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-exitosas').textContent = exitosas;
-            document.getElementById('stat-reagendadas').textContent = reagendadas;
-            document.getElementById('stat-canceladas').textContent = canceladas;
+            const elTotal = document.getElementById('stat-total');
+            const elExitosas = document.getElementById('stat-exitosas');
+            const elReagendadas = document.getElementById('stat-reagendadas');
+            const elCanceladas = document.getElementById('stat-canceladas');
+
+            if (elTotal) elTotal.textContent = total;
+            if (elExitosas) elExitosas.textContent = exitosas;
+            if (elReagendadas) elReagendadas.textContent = reagendadas;
+            if (elCanceladas) elCanceladas.textContent = canceladas;
 
             const tbody = document.getElementById('tabla-usuarios-admin');
-            tbody.innerHTML = '';
-            this.usuarios.forEach(u => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${u.ci}</td>
-                    <td>${u.nombre}</td>
-                    <td><b>${u.rol.toUpperCase()}</b></td>
-                    <td>
-                        <button class="btn-glossy btn-danger" onclick="app.eliminarUsuario('${u.ci}')">Eliminar</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+            if (tbody) {
+                tbody.innerHTML = '';
+                this.usuarios.forEach(u => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${u.ci}</td>
+                        <td>${u.nombre}</td>
+                        <td><b>${u.rol.toUpperCase()}</b></td>
+                        <td>
+                            <button class="btn-glossy btn-danger" onclick="app.eliminarUsuario('${u.ci}')">Eliminar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
         }
     }
 
@@ -425,5 +450,3 @@ class MediAgendaApp {
 }
 
 const app = new MediAgendaApp();
-
-```
