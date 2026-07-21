@@ -116,13 +116,27 @@ class MediAgendaApp {
         socket.emit('registrar_usuario', data, (res) => {
             if (res.success) {
                 alert('¡Registro exitoso! Ya puedes iniciar sesión.');
-                this.switchTab('login', { target: document.querySelector('.tab-btn') });
+                
+                // Limpiar el formulario de registro
+                e.target.reset();
+
+                // Forzar el cambio visual a la pestaña de Iniciar Sesión de forma segura
+                const botonesTabs = document.querySelectorAll('.tab-btn');
+                if (botonesTabs.length > 0) {
+                    botonesTabs.forEach(b => b.classList.remove('active'));
+                    botonesTabs[0].classList.add('active'); // Selecciona el botón de login
+                }
+
+                const formLogin = document.getElementById('form-login-paciente');
+                const formReg = document.getElementById('form-reg-paciente');
+                if (formLogin) formLogin.style.display = 'flex';
+                if (formReg) formReg.style.display = 'none';
+
             } else {
                 alert(res.error);
             }
         });
     }
-
     loginPaciente(e) {
         e.preventDefault();
         const data = {
