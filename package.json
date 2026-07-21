@@ -1,13 +1,18 @@
 {
-  "name": "MediAgenda",
+  "name": "mediagenda",
   "version": "1.0.0",
-  "description": "Sistema web de citas Médicas",
+  "description": "Sistema de Gestion de Citas Medicas",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "express": "^4.19.2",
+    "mongoose": "^8.3.1",
+    "socket.io": "^4.7.5",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.x"
   }
 }

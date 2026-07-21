@@ -3,247 +3,392 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediAgenda | Citas Médicas</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <!-- FontAwesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>MediAgenda - Sistema de Gestión Médica</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-
-    <!-- ========================================== -->
-    <!-- PANTALLA 1: INICIO Y SELECCIÓN DE ROLES    -->
-    <!-- ========================================== -->
-    <section id="view-roles" class="view active">
-        <div class="container text-center">
-            <h1 class="logo-title">MediAgenda</h1>
-            <p class="subtitle">Seleccione su rol</p>
-            <div class="role-cards">
-                <button class="card-btn glossy" onclick="app.showView('view-patient-auth')">
-                    <i class="fa-solid fa-user-injured fa-3x"></i>
-                    <h2>Paciente</h2>
-                </button>
-                <button class="card-btn glossy" onclick="app.showView('view-doctor-auth')">
-                    <i class="fa-solid fa-user-doctor fa-3x"></i>
-                    <h2>Médico</h2>
-                </button>
-                <button class="card-btn glossy admin-btn" onclick="app.showView('view-admin-auth')">
-                    <i class="fa-solid fa-user-shield fa-3x"></i>
-                    <h2>Administrador</h2>
-                </button>
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div id="app">
+        <!-- VISTA: SELECCIÓN DE ROL / INICIO -->
+        <section id="view-home" class="view active">
+            <div class="hero-container">
+                <div class="logo-badge">🏥 MediAgenda Cloud</div>
+                <h1>Sistema Inteligente de Gestión de Citas Médicas</h1>
+                <p>Selecciona tu rol para acceder a la plataforma sincronizada en tiempo real.</p>
+                
+                <div class="role-grid">
+                    <div class="role-card" onclick="app.irARol('paciente')">
+                        <div class="icon">🧑‍⚕️</div>
+                        <h3>PACIENTE</h3>
+                        <p>Agenda citas, consulta tu historial y mantén tu perfil actualizado.</p>
+                        <button class="btn-glossy btn-primary-bright">Acceder como Paciente</button>
+                    </div>
+                    <div class="role-card" onclick="app.irARol('medico')">
+                        <div class="icon">🩺</div>
+                        <h3>MÉDICO</h3>
+                        <p>Gestiona tu agenda, libera turnos y atiende a tus pacientes.</p>
+                        <button class="btn-glossy btn-primary-bright">Acceder como Médico</button>
+                    </div>
+                    <div class="role-card" onclick="app.irARol('admin')">
+                        <div class="icon">⚙️</div>
+                        <h3>ADMINISTRADOR</h3>
+                        <p>Administra usuarios, médicos, estadísticas globales y seguridades.</p>
+                        <button class="btn-glossy btn-primary-bright">Acceder como Admin</button>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ========================================== -->
-    <!-- SECCIÓN PACIENTE                           -->
-    <!-- ========================================== -->
-    <section id="view-patient-auth" class="view">
-        <div class="container auth-container">
-            <button class="back-btn" onclick="app.showView('view-roles')"><i class="fa-solid fa-arrow-left"></i> Volver</button>
-            <div class="auth-box">
-                <h2>Portal Paciente</h2>
-                <form id="form-patient-login" class="active">
-                    <div class="input-group">
-                        <label>Correo electrónico</label>
-                        <input type="email" id="pat-login-email" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Contraseña</label>
-                        <div class="pwd-wrapper">
-                            <input type="password" id="pat-login-pwd" required>
-                            <i class="fa-solid fa-eye toggle-pwd" onclick="app.togglePassword('pat-login-pwd', this)"></i>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-main glossy">Iniciar Sesión</button>
-                    <p class="switch-form" onclick="app.toggleAuthForm('patient')">¿No tienes cuenta? Regístrate aquí</p>
-                </form>
-                <form id="form-patient-register" style="display:none;">
+        <!-- VISTA: AUTENTICACIÓN PACIENTE -->
+        <section id="view-auth-paciente" class="view">
+            <div class="auth-card">
+                <button class="btn-back" onclick="app.volverHome()">← Volver</button>
+                <h2>Portal de Pacientes</h2>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="app.switchTab('login')">Iniciar Sesión</button>
+                    <button class="tab-btn" onclick="app.switchTab('register')">Registrarse</button>
+                </div>
+
+                <!-- Form Login -->
+                <form id="form-login-paciente" onsubmit="app.loginPaciente(event)" class="auth-form">
                     <div class="input-group">
                         <label>Cédula de Identidad (CI)</label>
-                        <input type="text" id="pat-reg-ci" required>
+                        <input type="text" id="login-ci" required placeholder="Ej: 0951234567">
                     </div>
                     <div class="input-group">
-                        <label>Nombres completos:</label>
-                        <input type="text" id="pat-reg-name" required>
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="login-email" required placeholder="correo@dominio.com">
                     </div>
-                    <div class="input-group">
-                        <label>Usuario / Correo:</label>
-                        <input type="email" id="pat-reg-email" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Celular o tlf</label>
-                        <input type="tel" id="pat-reg-phone" required>
-                    </div>
-                    <div class="input-group">
+                    <div class="input-group password-container">
                         <label>Contraseña</label>
-                        <div class="pwd-wrapper">
-                            <input type="password" id="pat-reg-pwd" required>
-                            <i class="fa-solid fa-eye toggle-pwd" onclick="app.togglePassword('pat-reg-pwd', this)"></i>
-                        </div>
+                        <input type="password" id="login-pass" required placeholder="********">
+                        <span class="toggle-pass" onclick="app.togglePass('login-pass', this)">👁️</span>
+                    </div>
+                    <button type="submit" class="btn-glossy btn-success-bright">Ingresar</button>
+                </form>
+
+                <!-- Form Registro -->
+                <form id="form-reg-paciente" onsubmit="app.registrarPaciente(event)" class="auth-form" style="display:none;">
+                    <div class="input-group">
+                        <label>Cédula de Identidad (CI)</label>
+                        <input type="text" id="reg-ci" required placeholder="Ej: 0951234567">
                     </div>
                     <div class="input-group">
+                        <label>Nombres Completos</label>
+                        <input type="text" id="reg-nombre" required placeholder="Juan Pérez">
+                    </div>
+                    <div class="input-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="reg-email" required placeholder="correo@dominio.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Número de Celular</label>
+                        <input type="tel" id="reg-tel" required placeholder="0991234568">
+                    </div>
+                    <div class="input-group password-container">
+                        <label>Crear Contraseña</label>
+                        <input type="password" id="reg-pass" required placeholder="********">
+                        <span class="toggle-pass" onclick="app.togglePass('reg-pass', this)">👁️</span>
+                    </div>
+                    <div class="input-group password-container">
                         <label>Confirmar Contraseña</label>
-                        <input type="password" id="pat-reg-pwd-conf" required>
+                        <input type="password" id="reg-pass-confirm" required placeholder="********">
+                        <span class="toggle-pass" onclick="app.togglePass('reg-pass-confirm', this)">👁️</span>
                     </div>
-                    <button type="submit" class="btn-main glossy">Registrarse</button>
-                    <p class="switch-form" onclick="app.toggleAuthForm('patient')">¿Ya tienes cuenta? Inicia Sesión</p>
+                    <button type="submit" class="btn-glossy btn-success-bright">Registrarse</button>
                 </form>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="view-patient-dashboard" class="view">
-        <div class="dashboard-header">
-            <h2>Bienvenido, <span>Paciente</span></h2>
-            <button class="btn-danger glossy" onclick="app.showView('view-roles')">Cerrar Sesión</button>
-        </div>
-        <div class="container dashboard-grid">
-            <div class="panel">
-                <h3>Agendar Nueva Cita</h3>
-                <form id="form-book-appointment">
-                    <div class="input-group">
-                        <label>Especialidad</label>
-                        <select id="appt-specialty" onchange="app.filterDoctors()" required>
-                            <option value="">Seleccione...</option>
-                            <option value="psicologia">Psicología</option>
-                            <option value="odontologia">Odontología</option>
-                            <option value="general">Medicina General</option>
-                            <option value="pediatria">Pediatría</option>
-                        </select>
+        <!-- VISTA: DASHBOARD PACIENTE -->
+        <section id="view-dashboard-paciente" class="view">
+            <header class="dashboard-header">
+                <h2>Panel del Paciente - <span id="lbl-nombre-paciente"></span></h2>
+                <button class="btn-glossy btn-danger" onclick="app.logout()">Cerrar Sesión</button>
+            </header>
+            
+            <div class="dashboard-grid">
+                <!-- Agendar Cita -->
+                <div class="card-panel">
+                    <h3>📅 Agendar Nueva Cita</h3>
+                    <form onsubmit="app.agendarCita(event)" class="form-grid">
+                        <div class="input-group">
+                            <label>Especialidad</label>
+                            <select id="cita-especialidad" onchange="app.filtrarDoctores()" required>
+                                <option value="">Seleccione...</option>
+                                <option value="Psicología">Psicología</option>
+                                <option value="Odontología">Odontología</option>
+                                <option value="Medicina General">Medicina General</option>
+                                <option value="Pediatría">Pediatría</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Médico Especialista</label>
+                            <select id="cita-medico" required>
+                                <option value="">Seleccione especialidad primero</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Fecha</label>
+                            <input type="date" id="cita-fecha" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Hora</label>
+                            <input type="time" id="cita-hora" required>
+                        </div>
+                        <div class="input-group full-width">
+                            <label>Motivo de Consulta</label>
+                            <textarea id="cita-motivo" rows="2" required placeholder="Describa brevemente sus síntomas..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-glossy btn-success-bright full-width">Agendar Cita</button>
+                    </form>
+                </div>
+
+                <!-- Historial de Citas -->
+                <div class="card-panel">
+                    <h3>📋 Mis Citas Médicas</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Médico</th>
+                                    <th>Especialidad</th>
+                                    <th>Fecha / Hora</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-citas-paciente">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
                     </div>
+                </div>
+
+                <!-- Perfil del Paciente -->
+                <div class="card-panel full-width">
+                    <h3>👤 Mi Perfil</h3>
+                    <form onsubmit="app.guardarPerfil(event)" class="form-grid">
+                        <div class="input-group">
+                            <label>Nombre Completo</label>
+                            <input type="text" id="perfil-nombre" disabled>
+                        </div>
+                        <div class="input-group">
+                            <label>Cédula de Identidad</label>
+                            <input type="text" id="perfil-ci" disabled>
+                        </div>
+                        <div class="input-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" id="perfil-email" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Número de Celular</label>
+                            <input type="tel" id="perfil-tel" required>
+                        </div>
+                        <button type="submit" class="btn-glossy btn-warning-bright">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA: AUTENTICACIÓN MÉDICO -->
+        <section id="view-auth-medico" class="view">
+            <div class="auth-card wide">
+                <button class="btn-back" onclick="app.volverHome()">← Volver</button>
+                <h2>Portal Médico - Acceso Clínico</h2>
+                <p>Selecciona un médico precargado para pruebas automáticas:</p>
+                <div class="input-group">
+                    <label>Doctores Precargados en Sistema:</label>
+                    <select id="select-medico-demo" onchange="app.autofillMedico(this)">
+                        <option value="">Seleccione médico de prueba...</option>
+                    </select>
+                </div>
+                <form onsubmit="app.loginMedico(event)" class="auth-form">
                     <div class="input-group">
-                        <label>Médico</label>
-                        <select id="appt-doctor" required disabled><option>Seleccione especialidad primero</option></select>
+                        <label>Cédula (CI) / Usuario</label>
+                        <input type="text" id="medico-ci-login" required>
                     </div>
-                    <div class="input-group">
-                        <label>Fecha y Hora</label>
-                        <input type="datetime-local" id="appt-date" required>
+                    <div class="input-group password-container">
+                        <label>Contraseña</label>
+                        <input type="password" id="medico-pass-login" required>
+                        <span class="toggle-pass" onclick="app.togglePass('medico-pass-login', this)">👁️</span>
                     </div>
-                    <div class="input-group">
-                        <label>Motivo de Consulta</label>
-                        <textarea id="appt-reason" rows="3" required></textarea>
-                    </div>
-                    <button type="submit" class="btn-main glossy">Agendar Cita</button>
+                    <button type="submit" class="btn-glossy btn-success-bright">Iniciar Sesión Médico</button>
                 </form>
             </div>
-            <div class="panel">
-                <h3>Mis Citas</h3>
-                <div class="appointment-list">
-                    <div class="appt-card pending">
-                        <h4>Dr. Ficticio (Odontología)</h4>
-                        <p><strong>Fecha:</strong> 25/10/2026 - 10:00 AM</p>
-                        <p><strong>Estado:</strong> <span class="badge">Pendiente</span></p>
-                        <div class="actions">
-                            <button class="btn-small glossy" onclick="app.promptReason('reprogramar')">Reprogramar</button>
-                            <button class="btn-small btn-danger glossy" onclick="app.promptReason('cancelar')">Cancelar</button>
+        </section>
+
+        <!-- VISTA: DASHBOARD MÉDICO -->
+        <section id="view-dashboard-medico" class="view">
+            <header class="dashboard-header">
+                <h2>Panel Médico - Dr(a). <span id="lbl-nombre-medico"></span></h2>
+                <button class="btn-glossy btn-danger" onclick="app.logout()">Cerrar Sesión</button>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Configurar Turnos y Horarios Disponibles -->
+                <div class="card-panel">
+                    <h3>🕒 Configurar Turnos y Horarios</h3>
+                    <form onsubmit="app.guardarHorarioMedico(event)" class="form-grid">
+                        <div class="input-group">
+                            <label>Fecha a habilitar</label>
+                            <input type="date" id="horario-fecha" required>
                         </div>
+                        <div class="input-group full-width">
+                            <label>Horas Disponibles (Separa por comas, ej: 09:00, 10:00, 11:00)</label>
+                            <input type="text" id="horario-horas" placeholder="09:00, 10:00, 11:00, 14:00, 15:00" required>
+                        </div>
+                        <button type="submit" class="btn-glossy btn-success-bright full-width">Guardar / Liberar Turnos</button>
+                    </form>
+                </div>
+
+                <!-- Gestión y Atención de Citas -->
+                <div class="card-panel full-width">
+                    <h3>📅 Citas Asignadas y Gestión de Pacientes</h3>
+                    <div class="filters-bar">
+                        <button class="btn-glossy btn-primary-bright" onclick="app.filtrarAgendaMedico('hoy')">Hoy</button>
+                        <button class="btn-glossy btn-primary-bright" onclick="app.filtrarAgendaMedico('semana')">Esta Semana</button>
+                        <button class="btn-glossy btn-primary-bright" onclick="app.filtrarAgendaMedico('todos')">Todas / Proyección</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>Motivo</th>
+                                    <th>Fecha y Hora</th>
+                                    <th>Estado Actual</th>
+                                    <th>Receta / Observaciones</th>
+                                    <th>Acciones Médicas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-citas-medico">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ========================================== -->
-    <!-- SECCIÓN MÉDICO                             -->
-    <!-- ========================================== -->
-    <section id="view-doctor-auth" class="view">
-        <div class="container auth-container">
-            <button class="back-btn" onclick="app.showView('view-roles')"><i class="fa-solid fa-arrow-left"></i> Volver</button>
-            <div class="auth-box">
-                <h2>Portal Médico</h2>
-                <form id="form-doctor-login">
+        <!-- VISTA: LOGIN ADMIN -->
+        <section id="view-auth-admin" class="view">
+            <div class="auth-card">
+                <button class="btn-back" onclick="app.volverHome()">← Volver</button>
+                <h2>Panel Administrador</h2>
+                <form onsubmit="app.loginAdmin(event)" class="auth-form">
                     <div class="input-group">
-                        <label>Usuario / Correo </label>
-                        <input type="text" id="doc-login-email" required>
+                        <label>Usuario Admin</label>
+                        <input type="text" id="admin-user" value="admin" required>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group password-container">
                         <label>Contraseña</label>
-                        <div class="pwd-wrapper">
-                            <input type="password" id="doc-login-pwd" required>
-                            <i class="fa-solid fa-eye toggle-pwd" onclick="app.togglePassword('doc-login-pwd', this)"></i>
-                        </div>
+                        <input type="password" id="admin-pass" value="admin123" required>
+                        <span class="toggle-pass" onclick="app.togglePass('admin-pass', this)">👁️</span>
                     </div>
-                    <button type="submit" class="btn-main glossy">Ingresar al Consultorio</button>
+                    <button type="submit" class="btn-glossy btn-success-bright">Acceder al Panel</button>
                 </form>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="view-doctor-dashboard" class="view">
-        <div class="dashboard-header">
-            <h2>Panel Médico: <span>Dr. Especialista</span></h2>
-            <button class="btn-danger glossy" onclick="app.showView('view-roles')">Cerrar Sesión</button>
-        </div>
-        <div class="container">
-            <div class="panel" style="margin-top: 20px;">
-                <h3>Citas del Día</h3>
-                <div class="appointment-list">
-                    <div class="appt-card pending">
-                        <h4>Paciente: Juan Pérez</h4>
-                        <p><strong>Horario:</strong> 10:00 AM - 10:30 AM</p>
-                        <p><strong>Motivo:</strong> Revisión general y limpieza.</p>
-                        <div class="actions">
-                            <button class="btn-small glossy" onclick="Swal.fire('En curso', 'Cita iniciada', 'info')">Iniciar Atención</button>
-                            <button class="btn-small btn-danger glossy" onclick="app.promptReason('cancelar')">Cancelar Cita</button>
+        <!-- VISTA: DASHBOARD ADMIN -->
+        <section id="view-dashboard-admin" class="view">
+            <header class="dashboard-header">
+                <h2>Panel de Control - Administrador</h2>
+                <button class="btn-glossy btn-danger" onclick="app.logout()">Cerrar Sesión</button>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Estadísticas Globales -->
+                <div class="card-panel full-width stats-container">
+                    <div class="stat-card">
+                        <h4>Total Citas</h4>
+                        <p id="stat-total">0</p>
+                    </div>
+                    <div class="stat-card success">
+                        <h4>Atendidas / Exitosas</h4>
+                        <p id="stat-exitosas">0</p>
+                    </div>
+                    <div class="stat-card warning">
+                        <h4>Reagendadas</h4>
+                        <p id="stat-reagendadas">0</p>
+                    </div>
+                    <div class="stat-card danger">
+                        <h4>Canceladas</h4>
+                        <p id="stat-canceladas">0</p>
+                    </div>
+                </div>
+
+                <!-- Agregar Nuevo Médico -->
+                <div class="card-panel">
+                    <h3>➕ Registrar Nuevo Médico</h3>
+                    <form onsubmit="app.registrarMedico(event)" class="form-grid">
+                        <div class="input-group">
+                            <label>Cédula (CI)</label>
+                            <input type="text" id="admin-med-ci" required>
                         </div>
+                        <div class="input-group">
+                            <label>Nombre Completo</label>
+                            <input type="text" id="admin-med-nombre" required placeholder="Dr. Carlos Vera">
+                        </div>
+                        <div class="input-group">
+                            <label>Especialidad</label>
+                            <select id="admin-med-esp" required>
+                                <option value="Psicología">Psicología</option>
+                                <option value="Odontología">Odontología</option>
+                                <option value="Medicina General">Medicina General</option>
+                                <option value="Pediatría">Pediatría</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" id="admin-med-email" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Contraseña Temporal</label>
+                            <input type="text" id="admin-med-pass" required value="medico123">
+                        </div>
+                        <button type="submit" class="btn-glossy btn-success-bright full-width">Registrar Médico</button>
+                    </form>
+                </div>
+
+                <!-- Gestión de Usuarios -->
+                <div class="card-panel">
+                    <h3>👥 Base de Datos de Usuarios</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cédula</th>
+                                    <th>Nombre</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-usuarios-admin">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ========================================== -->
-    <!-- SECCIÓN ADMINISTRADOR                      -->
-    <!-- ========================================== -->
-    <section id="view-admin-auth" class="view">
-        <div class="container auth-container">
-            <button class="back-btn" onclick="app.showView('view-roles')"><i class="fa-solid fa-arrow-left"></i> Volver</button>
-            <div class="auth-box">
-                <h2>Administración del Sistema</h2>
-                <form id="form-admin-login">
-                    <div class="input-group">
-                        <label>Usuario / correo </label>
-                        <input type="text" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Contraseña</label>
-                        <div class="pwd-wrapper">
-                            <input type="password" id="admin-login-pwd" required>
-                            <i class="fa-solid fa-eye toggle-pwd" onclick="app.togglePassword('admin-login-pwd', this)"></i>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-main glossy" style="background: linear-gradient(145deg, #d8bfd8, #cda4cd);">Acceso Administrador</button>
-                </form>
+        <!-- MODAL ÚNICO PARA MOTIVOS DE CAMBIO / CANCELACIÓN -->
+        <div id="modal-motivo" class="modal">
+            <div class="modal-content">
+                <h3>Razón del Cambio / Cancelación</h3>
+                <p id="modal-subtext">Por favor indique el motivo de la modificación de su cita:</p>
+                <textarea id="texto-motivo-modal" rows="3" placeholder="Escriba aquí el motivo..." required></textarea>
+                <div class="modal-buttons">
+                    <button class="btn-glossy btn-danger" onclick="app.cerrarModal()">Cancelar</button>
+                    <button class="btn-glossy btn-success-bright" onclick="app.ejecutarAccionModal()">Confirmar</button>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <section id="view-admin-dashboard" class="view">
-        <div class="dashboard-header">
-            <h2>Panel de Control General</h2>
-            <button class="btn-danger glossy" onclick="app.showView('view-roles')">Cerrar Sesión</button>
-        </div>
-        <div class="container dashboard-grid">
-            <div class="panel">
-                <h3>Estadísticas</h3>
-                <p><strong>Total Usuarios:</strong> 150</p>
-                <p><strong>Citas Pendientes:</strong> 12</p>
-                <p><strong>Citas Atendidas:</strong> 340</p>
-            </div>
-            <div class="panel">
-                <h3>Gestión Rápida</h3>
-                <button class="btn-main glossy">Registrar Nuevo Médico</button>
-                <button class="btn-main glossy" style="background: #a18cd1;">Ver Lista de Usuarios</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Scripts de Firebase y Lógica -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
