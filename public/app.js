@@ -44,8 +44,8 @@ function verificarTiempoRestante(fechaCita, horaCita) {
   return diferencia > 24;
 }
 
-// ==================== LOGIN POR ROLES ====================
-function seleccionarRol(rol, elemento) {
+// ==================== SELECCIÓN DE ROL ====================
+function seleccionarRol(rolElegido, elemento) {
   // Estilo de tarjetas
   document.querySelectorAll('.rol-card').forEach(card => {
     card.style.background = 'var(--blanco)';
@@ -59,69 +59,54 @@ function seleccionarRol(rol, elemento) {
   elemento.style.transform = 'translateY(-3px)';
   elemento.style.boxShadow = '0 6px 18px rgba(147, 51, 234, 0.25)';
   
-  // Cambiar campos al seleccionar rol en login
-document.getElementById('loginRol').addEventListener('change', () => {
-  const rol = document.getElementById('loginRol').value;
+  // Elementos del formulario
+  const loginRol = document.getElementById('loginRol');
   const grupoCI = document.getElementById('grupoLoginCI');
   const grupoCorreo = document.getElementById('grupoLoginCorreo');
   const camposLogin = document.getElementById('camposLogin');
+  const tabsAuth = document.getElementById('tabsAuth');
+  const hint = document.getElementById('loginHint');
+  const ciInput = document.getElementById('loginCI');
+  const correoInput = document.getElementById('loginCorreo');
+  const passwordInput = document.getElementById('loginPassword');
 
+  // Asignar rol
+  loginRol.value = rolElegido;
   camposLogin.style.display = 'block';
-
-  if (rol === 'paciente') {
-    grupoCI.style.display = 'block';
-    grupoCorreo.style.display = 'block';
-  } else if (rol === 'medico') {
-    grupoCI.style.display = 'block';
-    grupoCorreo.style.display = 'none'; // ✅ OCULTA correo para médico
-  } else if (rol === 'admin') {
-    grupoCI.style.display = 'none'; // ✅ OCULTA CI para admin
-    grupoCorreo.style.display = 'block';
-  }
-});
-  
-  // Limpiar
-  ciInput.required = false;
-  correoInput.required = false;
-  ciInput.value = '';
-  correoInput.value = '';
-  document.getElementById('loginPassword').value = '';
-  
-  // Mostrar contenedor de campos
-  camposLogin.style.display = 'block';
-  
-  // Ocultar pestañas de registro por defecto
   tabsAuth.style.display = 'none';
   document.getElementById('formRegistro').style.display = 'none';
   document.getElementById('formLogin').style.display = 'block';
-  
-  if (rol === 'paciente') {
-    // Paciente: mostrar pestañas de login/registro
+
+  // Limpiar campos
+  ciInput.value = '';
+  correoInput.value = '';
+  passwordInput.value = '';
+  ciInput.required = false;
+  correoInput.required = false;
+
+  // Configurar según rol
+  if (rolElegido === 'paciente') {
     tabsAuth.style.display = 'flex';
-    campoCi.style.display = 'block';
-    campoCorreo.style.display = 'block';
+    grupoCI.style.display = 'block';
+    grupoCorreo.style.display = 'block';
     ciInput.required = true;
     correoInput.required = true;
     hint.textContent = '👤 Pacientes: Ingrese su CI y Correo, o regístrese';
   } 
-  else if (rol === 'medico') {
-    campoCi.style.display = 'block';
-    campoCorreo.style.display = 'none';
+  else if (rolElegido === 'medico') {
+    grupoCI.style.display = 'block';
+    grupoCorreo.style.display = 'none';
     ciInput.required = true;
     correoInput.required = false;
     hint.textContent = '🩺 Médicos: Ingrese su CI (ej: MED001)';
   } 
-  else if (rol === 'admin') {
-    campoCi.style.display = 'none';
-    campoCorreo.style.display = 'block';
+  else if (rolElegido === 'admin') {
+    grupoCI.style.display = 'none';
+    grupoCorreo.style.display = 'block';
     ciInput.required = false;
     correoInput.required = true;
     hint.textContent = '🛡️ Administrador: Ingrese su correo';
   }
-}
-
-function ajustarCamposLogin() {
-  // Función de compatibilidad
 }
 
 // ==================== PETICIONES API ====================
@@ -145,17 +130,15 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 // ==================== AUTENTICACIÓN ====================
 async function iniciarSesion() {
   const rol = document.getElementById('loginRol').value;
-  const ci = document.getElementById('loginCI').value.trim(); // ✅ Quita espacios sobrantes
+  const ci = document.getElementById('loginCI').value.trim();
   const correo = document.getElementById('loginCorreo').value.trim();
   const password = document.getElementById('loginPassword').value;
 
-  // Validar que se eligió rol
   if (!rol) {
     Swal.fire('Error', 'Selecciona un tipo de cuenta', 'warning');
     return;
   }
 
-  // Preparar datos EXACTOS que pide el backend
   const datos = { rol, password };
   if (rol === 'paciente') {
     if (!ci || !correo) return Swal.fire('Error', 'Paciente necesita CI y Correo', 'warning');
@@ -163,10 +146,10 @@ async function iniciarSesion() {
     datos.correo = correo;
   } else if (rol === 'medico') {
     if (!ci) return Swal.fire('Error', 'Médico necesita solo el CI', 'warning');
-    datos.ci = ci; // ✅ SOLO envía CI, NO correo
+    datos.ci = ci;
   } else if (rol === 'admin') {
     if (!correo) return Swal.fire('Error', 'Administrador necesita el Correo', 'warning');
-    datos.correo = correo; // ✅ SOLO envía correo, NO CI
+    datos.correo = correo;
   }
 
   try {
@@ -179,14 +162,13 @@ async function iniciarSesion() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.mensaje);
 
-    // Guardar sesión
     token = data.token;
     usuarioActual = data.usuario;
     localStorage.setItem('token', token);
     localStorage.setItem('usuario', JSON.stringify(usuarioActual));
 
     Swal.fire('✅ Bienvenido', `Hola ${usuarioActual.nombres}`, 'success').then(() => {
-      mostrarVistaPrincipal();
+      cargarInterfazSegunRol();
     });
 
   } catch (err) {
@@ -218,6 +200,7 @@ async function registrarUsuario(e) {
     Swal.fire({ icon: 'error', title: 'Error en el registro', text: error.message });
   }
 }
+
 function cerrarSesion() {
   Swal.fire({
     title: '¿Está seguro?',
@@ -230,21 +213,16 @@ function cerrarSesion() {
     cancelButtonText: 'Cancelar'
   }).then((result) => {
     if (result.isConfirmed) {
-      // Borrar todos los datos de sesión
       token = null;
       usuarioActual = null;
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
 
-      // Ocultar barra de navegación y todas las vistas internas
       document.getElementById('navbar').style.display = 'none';
       document.querySelectorAll('.vista').forEach(v => v.style.display = 'none');
-
-      // ✅ Mostrar la pantalla principal con selección de roles
       document.getElementById('vistaInicio').style.display = 'flex';
-      document.getElementById('vistaSeleccionRol').style.display = 'flex'; // ESTA LÍNEA FALTABA
+      document.getElementById('vistaSeleccionRol').style.display = 'flex';
 
-      // Reiniciar formularios y estados
       document.getElementById('formLogin').reset();
       document.getElementById('formRegistro').reset();
       document.getElementById('loginRol').value = '';
@@ -252,7 +230,6 @@ function cerrarSesion() {
       document.getElementById('tabsAuth').style.display = 'none';
       document.getElementById('loginHint').textContent = '';
 
-      // Reiniciar estilos de las tarjetas de roles
       document.querySelectorAll('.rol-card').forEach(card => {
         card.style.background = 'var(--blanco)';
         card.style.borderColor = 'var(--borde)';
@@ -263,7 +240,7 @@ function cerrarSesion() {
   });
 }
 
-// ==================== CARGAR INTERFAZ ====================
+// ==================== CARGA DE INTERFAZ ====================
 function cargarInterfazSegunRol() {
   document.getElementById('navbar').style.display = 'flex';
   document.getElementById('userName').textContent = usuarioActual.nombres;
@@ -306,6 +283,7 @@ function mostrarVista(idVista, btn = null) {
     btn.classList.add('active');
   }
   
+  if (idVista === 'vistaAgendar') cargarMedicos();
   if (idVista === 'vistaMisCitas') cargarMisCitas();
   if (idVista === 'vistaPerfil') cargarPerfil();
   if (idVista === 'vistaMedicoCalendario') cargarCalendarioMedico();
@@ -313,10 +291,10 @@ function mostrarVista(idVista, btn = null) {
   if (idVista === 'vistaAdminUsuarios') cargarUsuariosAdmin();
   if (idVista === 'vistaAdminEstadisticas') cargarEstadisticas();
 }
-// Función para cargar médicos según la especialidad seleccionada
-// Cargar lista completa de médicos (sin filtrar primero, para ver si llegan datos)
+
+// ==================== CARGA DE MÉDICOS ====================
 async function cargarMedicos() {
-  const selectMedicos = document.getElementById('medicoCita');
+  const selectMedicos = document.getElementById('citaMedico');
   if (!selectMedicos || !token) return;
 
   selectMedicos.innerHTML = '<option value="">Seleccione un médico</option>';
@@ -334,7 +312,6 @@ async function cargarMedicos() {
       return;
     }
 
-    // Agregar todos los médicos primero
     medicos.forEach(medico => {
       const opcion = document.createElement('option');
       opcion.value = medico._id;
@@ -347,14 +324,6 @@ async function cargarMedicos() {
     Swal.fire('Error', 'No se pudo cargar la lista de médicos', 'error');
   }
 }
-
-// Ejecutar al abrir la vista de agendar cita
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('vistaAgendarCita')?.addEventListener('click', cargarMedicos);
-});
-
-// Asignar el evento al selector de especialidad
-document.getElementById('especialidadCita')?.addEventListener('change', cargarMedicosPorEspecialidad);
 
 async function agendarCita(e) {
   e.preventDefault();
@@ -369,7 +338,7 @@ async function agendarCita(e) {
     
     Swal.fire({ icon: 'success', title: '¡Cita Agendada!', text: 'Tu cita ha sido reservada correctamente' });
     e.target.reset();
-    document.getElementById('citaMedico').innerHTML = '<option value="">Primero seleccione especialidad</option>';
+    document.getElementById('citaMedico').innerHTML = '<option value="">Seleccione un médico</option>';
   } catch (error) {
     Swal.fire({ icon: 'error', title: 'No se pudo agendar', text: error.message });
   }
@@ -504,7 +473,7 @@ async function actualizarPerfil(e) {
   }
 }
 
-// ==================== MÉDICO: CALENDARIO Y DISPONIBILIDAD ====================
+// ==================== MÉDICO: CALENDARIO ====================
 function cargarCalendarioMedico() {
   mesActual = new Date();
   diaSeleccionado = new Date();
@@ -522,8 +491,6 @@ function generarCalendario() {
   const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   
   document.getElementById('mesActual').textContent = `${meses[mesActual.getMonth()]} ${mesActual.getFullYear()}`;
-  
-  // Encabezado de días
   document.getElementById('diasSemana').innerHTML = diasSemana.map(d => `<div>${d}</div>`).join('');
   
   const primerDia = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1).getDay();
@@ -532,13 +499,8 @@ function generarCalendario() {
   const hoyStr = formatearFechaCorta(hoy);
   
   let html = '';
+  for (let i = 0; i < primerDia; i++) html += '<div></div>';
   
-  // Espacios vacíos antes del primer día
-  for (let i = 0; i < primerDia; i++) {
-    html += '<div></div>';
-  }
-  
-  // Días del mes
   for (let dia = 1; dia <= ultimoDia; dia++) {
     const fecha = new Date(mesActual.getFullYear(), mesActual.getMonth(), dia);
     const fechaStr = formatearFechaCorta(fecha);
@@ -570,10 +532,9 @@ function cargarHorariosDia() {
   
   document.getElementById('diaSeleccionado').textContent = formatearFecha(fechaStr);
   
-  // Inicializar disponibilidad para este día si no existe
   if (!disponibilidadHorarios[fechaStr]) {
     disponibilidadHorarios[fechaStr] = {};
-    horarios.forEach(h => disponibilidadHorarios[fechaStr][h] = true); // Por defecto disponible
+    horarios.forEach(h => disponibilidadHorarios[fechaStr][h] = true);
   }
   
   const html = horarios.map(hora => {
@@ -608,7 +569,6 @@ function guardarDisponibilidad() {
 // ==================== MÉDICO: GESTIÓN DE CITAS ====================
 async function cargarCitasMedico(rango, btn) {
   if (btn) {
-    // Quitar active de todos los filtros de esta sección
     const filtros = btn.closest('.filtros-medico');
     filtros.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -623,7 +583,6 @@ async function cargarCitasMedico(rango, btn) {
 }
 
 function filtrarCitasMedico(estado, btn) {
-  // Quitar active de todos los filtros de esta sección
   const filtros = btn.closest('.filtros-medico');
   filtros.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -689,7 +648,6 @@ async function guardarEdicionCita() {
     });
     Swal.fire('Actualizada', 'La cita ha sido actualizada exitosamente', 'success');
     cerrarModal('modalEditarCita');
-    // Recargar citas
     const btnRango = document.querySelectorAll('.filtros-medico')[1].querySelector('.filtro-btn.active');
     const rango = btnRango.textContent.toLowerCase().includes('hoy') ? 'hoy' : 
                 btnRango.textContent.toLowerCase().includes('semana') ? 'semana' : 'meses';
@@ -699,8 +657,7 @@ async function guardarEdicionCita() {
   }
 }
 
-// ==================== ADMIN: USUARIOS ====================
-// Al cargar la lista de usuarios en administración
+// ==================== ADMINISTRADOR ====================
 async function cargarUsuariosAdmin() {
   try {
     const respuesta = await fetch('/api/admin/usuarios', {
@@ -712,14 +669,12 @@ async function cargarUsuariosAdmin() {
     tabla.innerHTML = '';
 
     usuarios.forEach(usuario => {
-      // ✅ Mostrar el rol real, no un valor equivocado
       const rolTexto = {
         'paciente': 'Paciente',
         'medico': 'Médico',
         'admin': 'Administrador'
       }[usuario.rol] || usuario.rol;
 
-      // ✅ Mostrar especialidad solo si es médico
       const especialidadTexto = usuario.rol === 'medico' ? (usuario.especialidad || 'Sin especialidad') : '-';
 
       const fila = document.createElement('tr');
@@ -730,8 +685,8 @@ async function cargarUsuariosAdmin() {
         <td>${rolTexto}</td>
         <td>${especialidadTexto}</td>
         <td>
-          <button class="btn-cambiar-pass" onclick="cambiarContrasena('${usuario._id}')">Cambiar Pass</button>
-          ${usuario.rol !== 'admin' ? `<button class="btn-eliminar" onclick="eliminarUsuario('${usuario._id}')">Eliminar</button>` : ''}
+          <button class="btn-cambiar-pass" onclick="cambiarPasswordAdmin('${usuario._id}', '${usuario.nombres}')">Cambiar Pass</button>
+          ${usuario.rol !== 'admin' ? `<button class="btn-eliminar" onclick="eliminarUsuario('${usuario._id}', '${usuario.nombres}')">Eliminar</button>` : ''}
         </td>
       `;
       tabla.appendChild(fila);
@@ -741,33 +696,26 @@ async function cargarUsuariosAdmin() {
     Swal.fire('Error', 'No se pudieron cargar los usuarios', 'error');
   }
 }
-function verPassword(hash) {
-  Swal.fire({
-    title: 'Contraseña (Encriptada)',
-    text: `Por seguridad solo se muestra el hash:\n\n${hash.substring(0, 60)}...`,
-    icon: 'info',
-    confirmButtonColor: '#9333EA'
-  });
-}
 
 async function cambiarPasswordAdmin(id, nombre) {
   const { value: nuevaPass } = await Swal.fire({
     title: `Cambiar contraseña a ${nombre}`,
     input: 'text',
     inputLabel: 'Nueva contraseña (mínimo 6 caracteres)',
-    inputPlaceholder: 'Ingrese nueva contraseña temporal',
+    inputPlaceholder: 'Ingrese nueva contraseña',
     showCancelButton: true,
     confirmButtonColor: '#9333EA',
     cancelButtonColor: '#EF4444',
     inputValidator: (value) => {
-      if (!value || value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+      if (!value || value.length < 6) return 'Mínimo 6 caracteres';
     }
   });
   
   if (nuevaPass) {
     try {
       await apiRequest(`/api/admin/usuarios/${id}/password`, 'PUT', { nuevaPassword: nuevaPass });
-      Swal.fire('Actualizada', 'Contraseña actualizada exitosamente', 'success');
+      Swal.fire('Actualizada', 'Contraseña actualizada', 'success');
+      cargarUsuariosAdmin();
     } catch (error) {
       Swal.fire('Error', error.message, 'error');
     }
@@ -777,7 +725,7 @@ async function cambiarPasswordAdmin(id, nombre) {
 async function eliminarUsuario(id, nombre) {
   const confirmacion = await Swal.fire({
     title: '¿Eliminar usuario?',
-    text: `Está a punto de eliminar a ${nombre}. Esta acción no se puede deshacer.`,
+    text: `Eliminarás a ${nombre}. No se puede deshacer.`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#EF4444',
@@ -788,7 +736,7 @@ async function eliminarUsuario(id, nombre) {
   if (confirmacion.isConfirmed) {
     try {
       await apiRequest(`/api/admin/usuarios/${id}`, 'DELETE');
-      Swal.fire('Eliminado', 'Usuario eliminado exitosamente', 'success');
+      Swal.fire('Eliminado', 'Usuario eliminado', 'success');
       cargarUsuariosAdmin();
     } catch (error) {
       Swal.fire('Error', error.message, 'error');
@@ -812,7 +760,7 @@ async function agregarMedico(e) {
       genero: document.getElementById('medicoGenero').value,
       password: document.getElementById('medicoPassword').value
     });
-    Swal.fire('Agregado', 'Médico agregado exitosamente al sistema', 'success');
+    Swal.fire('Agregado', 'Médico agregado correctamente', 'success');
     cerrarModal('modalAgregarMedico');
     e.target.reset();
     cargarUsuariosAdmin();
@@ -821,7 +769,6 @@ async function agregarMedico(e) {
   }
 }
 
-// ==================== ADMIN: ESTADÍSTICAS ====================
 async function cargarEstadisticas() {
   try {
     const stats = await apiRequest('/api/admin/estadisticas');
@@ -846,7 +793,7 @@ async function cargarEstadisticas() {
   }
 }
 
-// ==================== INICIALIZACIÓN ====================
+// ==================== INICIO DE LA APLICACIÓN ====================
 window.onload = async () => {
   if (token) {
     try {
@@ -860,13 +807,10 @@ window.onload = async () => {
     }
   }
   document.getElementById('vistaInicio').style.display = 'flex';
-  document.getElementById('campoCi').style.display = 'none';
-  document.getElementById('campoCorreo').style.display = 'none';
   document.getElementById('camposLogin').style.display = 'none';
   document.getElementById('tabsAuth').style.display = 'none';
 };
 
-// Cerrar modales al hacer clic fuera
 window.onclick = (e) => {
   document.querySelectorAll('.modal').forEach(modal => {
     if (e.target === modal) modal.style.display = 'none';
