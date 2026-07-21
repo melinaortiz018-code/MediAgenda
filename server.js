@@ -38,23 +38,21 @@ io.on('connection', (socket) => {
   console.log('Un usuario se ha conectado');
 
   socket.on('login', async (data, callback) => {
-    socket.on('login', async (data, callback) => {
-        try {
-            // Acepta cualquier nombre con el que el cliente envíe el identificador
-            const identificador = data.ci || data.email || data.cedula;
-            const password = data.password;
+    try {
+      // Acepta cualquier nombre con el que el cliente envíe el identificador
+      const identificador = data.ci || data.email || data.cedula;
+      const password = data.password;
 
-            console.log("Intentando iniciar sesión con identificador:", identificador, "y Password:", password);
+      console.log("Intentando iniciar sesión con identificador:", identificador, "y Password:", password);
 
-            const user = await User.findOne({ 
-                $or: [
-                    { ci: identificador }, 
-                    { email: identificador }
-                ],
-                password: password
-            });
+      const user = await User.findOne({ 
+        $or: [
+          { ci: identificador }, 
+          { email: identificador }
+        ],
+        password: password
+      });
 
-            console.log("Resultado de la búsqueda en MongoDB:", user);
       console.log("Resultado de la búsqueda en MongoDB:", user);
       
       if (user) {
