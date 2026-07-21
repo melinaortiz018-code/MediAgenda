@@ -224,7 +224,10 @@ function cargarInterfazSegunRol() {
       <button onclick="mostrarVista('vistaAdminEstadisticas', this)">Estadísticas</button>
     `;
     mostrarVista('vistaAdminUsuarios');
-  }
+    if (idVista === 'vistaAdminUsuarios') cargarUsuariosAdmin();
+    if (idVista === 'vistaAdminEstadisticas') cargarEstadisticas(); // ✅ Se actualiza al entrar
+    
+}
 }
 
 function mostrarVista(idVista, boton = null) {
@@ -481,20 +484,38 @@ async function guardarNuevaPass(e) {
 
 async function cargarEstadisticas() {
   try {
+    // Primero intentamos la ruta original
     const datos = await apiRequest('/api/admin/estadisticas');
     document.getElementById('estPacientes').textContent = datos.totalPacientes || 0;
     document.getElementById('estMedicos').textContent = datos.totalMedicos || 0;
     document.getElementById('estCitasMes').textContent = datos.citasMes || 0;
     document.getElementById('estPendientes').textContent = datos.citasPendientes || 0;
   } catch (error) {
-    // Valores por defecto si no hay datos
-    document.getElementById('estPacientes').textContent = '0';
-    document.getElementById('estMedicos').textContent = '0';
-    document.getElementById('estCitasMes').textContent = '0';
-    document.getElementById('estPendientes').textContent = '0';
+    console.log('Ruta principal fallida, probando alternativas...');
+    try {
+      // Probamos la ruta que usa tu sistema
+      const datos = await apiRequest('/api/estadisticas');
+      document.getElementById('estPacientes').textContent = datos.totalPacientes || 0;
+      document.getElementById('estMedicos').textContent = datos.totalMedicos || 0;
+      document.getElementById('estCitasMes').textContent = datos.citasMes || 0;
+      document.getElementById('estPendientes').textContent = datos.citasPendientes || 0;
+    } catch {
+      // Si no hay ruta, calculamos desde la lista de usuarios para que se vean los reales
+      try {
+        const usuarios = await apiRequest('/api/admin/usuarios');
+        const pacientes = usuarios.filter(u => u.rol === 'paciente').length;
+        const medicos = usuarios.filter(u => u.rol === 'medico').length;
+        
+        document.getElementById('estPacientes').textContent = pacientes;
+        document.getElementById('estMedicos').textContent = medicos;
+        // Las citas se mantienen hasta que se conecte la ruta correspondiente
+      } catch {
+        document.getElementById('estPacientes').textContent = '0';
+        document.getElementById('estMedicos').textContent = '0';
+      }
+    }
   }
 }
-
 // ==============================================
 // INICIO DEL SISTEMA
 // ==============================================
