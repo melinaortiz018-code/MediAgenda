@@ -199,42 +199,44 @@ class MediAgendaApp {
     }
 
     autofillMedico(selectElement) {
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const ci = selectedOption.value;
-    const password = selectedOption.dataset.password; // O un diccionario con las contraseñas predefinidas
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const ci = selectedOption.value;
+        const password = selectedOption.dataset.password || 'medico123'; // Contraseña por defecto si aplica
 
-    // Rellenar los campos del formulario de login de médico
-    const inputCi = document.querySelector('#view-auth-medico input[name="ci"]') || document.getElementById('medico-ci');
-    const inputPass = document.querySelector('#view-auth-medico input[type="password"]') || document.getElementById('medico-password');
+        const inputCi = document.getElementById('medico-ci-login');
+        const inputPass = document.getElementById('medico-pass-login');
 
-    if (inputCi && ci) inputCi.value = ci;
-    if (inputPass && password) inputPass.value = password;
-}
+        if (inputCi && ci) inputCi.value = ci;
+        if (inputPass && password) inputPass.value = password;
+    }
 
     loginMedico(e) {
-    e.preventDefault();
-    const data = {
-        ci: document.getElementById('medico-ci-login').value.trim(),
-        password: document.getElementById('medico-pass-login').value
-    };
+        e.preventDefault();
+        
+        const inputCi = document.getElementById('medico-ci-login');
+        const inputPass = document.getElementById('medico-pass-login');
 
-    socket.emit('login', data, (res) => {
-        if (res.success) {
-            // Permitir el acceso si el rol es médico (ignorando mayúsculas/minúsculas)
-            const rolUser = res.user.rol ? res.user.rol.toLowerCase().trim() : '';
-            if (rolUser === 'medico' || rolUser === 'médico') {
-                this.currentUser = res.user;
-                document.getElementById('lbl-nombre-medico').textContent = this.currentUser.nombre;
-                this.cambiarVista('view-dashboard-medico');
-                this.actualizarVistasDashboard();
+        const data = {
+            ci: inputCi ? inputCi.value.trim() : '',
+            password: inputPass ? inputPass.value : ''
+        };
+
+        socket.emit('login', data, (res) => {
+            if (res.success) {
+                const rolUser = res.user.rol ? res.user.rol.toLowerCase().trim() : '';
+                if (rolUser === 'medico' || rolUser === 'médico') {
+                    this.currentUser = res.user;
+                    document.getElementById('lbl-nombre-medico').textContent = this.currentUser.nombre;
+                    this.cambiarVista('view-dashboard-medico');
+                    this.actualizarVistasDashboard();
+                } else {
+                    alert('Este usuario no tiene el rol de médico autorizado.');
+                }
             } else {
-                alert('Este usuario no tiene el rol de médico autorizado.');
+                alert(res.error || 'Credenciales de médico incorrectas.');
             }
-        } else {
-            alert(res.error || 'Credenciales de médico incorrectas.');
-        }
-    });
-}
+        });
+    }
 
     guardarHorarioMedico(e) {
         e.preventDefault();
