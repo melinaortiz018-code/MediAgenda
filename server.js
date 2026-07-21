@@ -74,8 +74,17 @@ io.on('connection', (socket) => {
 
   socket.on('login', async (data, callback) => {
     try {
-      console.log("Intentando iniciar sesión con CI:", data.ci, "y Password:", data.password);
-      const user = await User.findOne({ ci: data.ci, password: data.password });
+      console.log("Intentando iniciar sesión con identificador:", data.ci, "y Password:", data.password);
+      
+      // Busca si coincide con la cédula O con el correo electrónico
+      const user = await User.findOne({
+        $or: [
+          { ci: data.ci },
+          { email: data.ci }
+        ],
+        password: data.password
+      });
+
       console.log("Resultado de la búsqueda en MongoDB:", user);
       
       if (user) {
