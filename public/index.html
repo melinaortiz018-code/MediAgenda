@@ -69,34 +69,38 @@
                 </form>
 
                 <!-- Form Registro -->
-                <form id="form-reg-paciente" onsubmit="app.registrarPaciente(event)" class="auth-form" style="display:none;">
+                <form id="form-reg-paciente" class="auth-form" style="display: none;" onsubmit="app.registrarPaciente(event)">
                     <div class="input-group">
                         <label>Cédula de Identidad (CI)</label>
-                        <input type="text" id="reg-ci" required placeholder="Ej: 0951234567">
+                        <input type="text" id="reg-ci" required>
                     </div>
+                    
                     <div class="input-group">
                         <label>Nombres Completos</label>
-                        <input type="text" id="reg-nombre" required placeholder="Alejando Mauricio Pérez Moreira">
+                        <input type="text" id="reg-nombre" required>
                     </div>
+                    
                     <div class="input-group">
                         <label>Correo Electrónico</label>
-                        <input type="email" id="reg-email" required placeholder="correo@dominio.com">
+                        <input type="email" id="reg-email" required>
                     </div>
+                    
                     <div class="input-group">
-                        <label>Número de Celular o Telefono</label>
-                        <input type="tel" id="reg-tel" required placeholder="0991234568">
+                        <label>Número de Celular o Teléfono</label>
+                        <input type="text" id="reg-tel">
                     </div>
-                    <div class="input-group password-container">
+                    
+                    <div class="input-group">
                         <label>Crear Contraseña</label>
-                        <input type="password" id="reg-pass" required placeholder="********">
-                        <span class="toggle-pass" onclick="app.togglePass('reg-pass', this)">👁️</span>
+                        <input type="password" id="reg-pass" required>
                     </div>
-                    <div class="input-group password-container">
+                    
+                    <div class="input-group">
                         <label>Confirmar Contraseña</label>
-                        <input type="password" id="reg-pass-confirm" required placeholder="********">
-                        <span class="toggle-pass" onclick="app.togglePass('reg-pass-confirm', this)">👁️</span>
+                        <input type="password" id="reg-pass-confirm" required>
                     </div>
-                    <button type="submit" class="btn-glossy btn-success-bright">Registrarse</button>
+
+                    <button type="submit" class="btn-glossy btn-success">Registrarse</button>
                 </form>
             </div>
         </section>
@@ -196,7 +200,7 @@
         <section id="view-auth-medico" class="view">
             <div class="auth-card wide">
                 <button class="btn-back" onclick="app.volverHome()">← Volver</button>
-                <h2>Portal Médico </h2>
+                <h2>Portal Médico</h2>
                 <form onsubmit="app.loginMedico(event)" class="auth-form">
                     <div class="input-group">
                         <label>Cédula (CI) / Usuario</label>
