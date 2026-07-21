@@ -404,3 +404,16 @@ tr:hover {
     justify-content: center;
   }
 }
+/* Tarjetas de citas */
+.tarjeta-cita {
+  background: var(--blanco);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border-left: 4px solid var(--principal);
+}
+
+.estado-pendiente { color: #f59e0b; font-weight: 600; }
+.estado-confirmada { color: var(--verde); font-weight: 600; }
+.estado-atendida { color: var(--texto-claro); font-weight: 600; }
+.estado-cancelada { color: var(--rojo); font-weight: 600; }

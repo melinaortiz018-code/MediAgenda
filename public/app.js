@@ -111,15 +111,14 @@ async function iniciarSesion() {
   if (!rol) return Swal.fire('Atención', 'Selecciona un tipo de cuenta', 'warning');
   if (!password) return Swal.fire('Atención', 'Escribe tu contraseña', 'warning');
 
-  // Enviar solo los datos necesarios
   const datosEnvio = { rol, password };
   if (rol === 'paciente') {
     if (!ci || !correo) return Swal.fire('Atención', 'Ingresa tu cédula y correo', 'warning');
     datosEnvio.ci = ci;
     datosEnvio.correo = correo;
   } else if (rol === 'medico') {
-    if (!ci) return Swal.fire('Atención', 'Ingresa tu cédula', 'warning');
-    datosEnvio.ci = ci;
+    if (!ci) return Swal.fire('Atención', 'Ingresa tu cédula (ej: MED001)', 'warning');
+    datosEnvio.ci = ci; // ✅ Solo envía cédula, sin datos extra
   } else if (rol === 'admin') {
     if (!correo) return Swal.fire('Atención', 'Ingresa tu correo', 'warning');
     datosEnvio.correo = correo;
@@ -249,18 +248,30 @@ function mostrarVista(idVista, boton = null) {
 // FUNCIONES DE PACIENTE
 // ==============================================
 async function cargarMedicos() {
+  const selectEspecialidad = document.getElementById('citaEspecialidad');
   const selectMedicos = document.getElementById('citaMedico');
+  selectEspecialidad.value = '';
   selectMedicos.innerHTML = '<option value="">Seleccione primero una especialidad</option>';
 }
 
 async function cargarMedicosPorEspecialidad() {
   const especialidad = document.getElementById('citaEspecialidad').value;
   const selectMedicos = document.getElementById('citaMedico');
-  selectMedicos.innerHTML = '<option value="">Cargando médicos...</option>';
+  
+  if (!especialidad) {
+    selectMedicos.innerHTML = '<option value="">Seleccione una especialidad primero</option>';
+    return;
+  }
 
+  selectMedicos.innerHTML = '<option value="">Cargando médicos...</option>';
   try {
-    const medicos = await apiRequest(`/api/medicos?especialidad=${especialidad}`);
+    // ✅ Carga médicos filtrados correctamente
+    const medicos = await apiRequest(`/api/medicos?especialidad=${encodeURIComponent(especialidad)}`);
     selectMedicos.innerHTML = '<option value="">Seleccione un médico</option>';
+    if (medicos.length === 0) {
+      selectMedicos.innerHTML = '<option value="">No hay médicos disponibles en esta especialidad</option>';
+      return;
+    }
     medicos.forEach(medico => {
       const opcion = document.createElement('option');
       opcion.value = medico._id;
@@ -268,10 +279,9 @@ async function cargarMedicosPorEspecialidad() {
       selectMedicos.appendChild(opcion);
     });
   } catch (error) {
-    selectMedicos.innerHTML = '<option value="">No hay médicos disponibles</option>';
+    selectMedicos.innerHTML = '<option value="">Error al cargar médicos</option>';
   }
 }
-
 async function agendarCita(e) {
   e.preventDefault();
   try {
@@ -289,13 +299,84 @@ async function agendarCita(e) {
   }
 }
 
-async function cargarMisCitas() {}
-async function cargarPerfil() {}
-async function actualizarPerfil(e) { e.preventDefault(); }
+async function cargarMisCitas() {
+  const contenedor = document.getElementById('listaMisCitas');
+  contenedor.innerHTML = '<p>Cargando tus citas...</p>';
+
+  try {
+    const citas = await apiRequest('/api/citas/mis-citas');
+    if (citas.length === 0) {
+      contenedor.innerHTML = '<p style="text-align:center;color:var(--texto-claro);">No tienes citas programadas</p>';
+      return;
+    }
+
+    contenedor.innerHTML = '';
+    citas.forEach(cita => {
+      const estado = {
+        pendiente: 'Pendiente',
+        confirmada: 'Confirmada',
+        atendida: 'Atendida',
+        cancelada: 'Cancelada'
+      }[cita.estado] || cita.estado;
+
+      const tarjeta = document.createElement('div');
+      tarjeta.className = 'tarjeta-cita';
+      tarjeta.innerHTML = `
+        <h4>${cita.especialidad} - ${cita.medico?.nombres || 'Médico no asignado'}</h4>
+        <p><strong>Fecha:</strong> ${new Date(cita.fecha).toLocaleDateString('es-EC')}</p>
+        <p><strong>Hora:</strong> ${cita.hora}</p>
+        <p><strong>Motivo:</strong> ${cita.motivo}</p>
+        <p><strong>Estado:</strong> <span class="estado-${cita.estado}">${estado}</span></p>
+      `;
+      contenedor.appendChild(tarjeta);
+    });
+  } catch (error) {
+    contenedor.innerHTML = '<p style="text-align:center;color:var(--rojo);">Error al cargar tus citas</p>';
+  }
+}
+async function cargarPerfil() {
+  try {
+    // ✅ Obtiene los datos completos del usuario
+    const usuario = usuarioActual || JSON.parse(localStorage.getItem('usuario'));
+    if (!usuario) throw new Error('No hay datos de usuario');
+
+    document.getElementById('perfilNombres').value = usuario.nombres || '';
+    document.getElementById('perfilCi').value = usuario.ci || '';
+    document.getElementById('perfilCorreo').value = usuario.correo || '';
+    document.getElementById('perfilCelular').value = usuario.celular || '';
+    document.getElementById('perfilDireccion').value = usuario.direccion || '';
+  } catch (error) {
+    Swal.fire('Error', 'No se pudieron cargar tus datos', 'error');
+  }
+}
+
+async function actualizarPerfil(e) {
+  e.preventDefault();
+  try {
+    const datosActualizados = {
+      correo: document.getElementById('perfilCorreo').value,
+      celular: document.getElementById('perfilCelular').value,
+      direccion: document.getElementById('perfilDireccion').value
+    };
+
+    await apiRequest('/api/usuarios/perfil', 'PUT', datosActualizados);
+    
+    // ✅ Actualiza los datos locales
+    usuarioActual.correo = datosActualizados.correo;
+    usuarioActual.celular = datosActualizados.celular;
+    usuarioActual.direccion = datosActualizados.direccion;
+    localStorage.setItem('usuario', JSON.stringify(usuarioActual));
+
+    Swal.fire('✅ Perfil actualizado', 'Tus datos se guardaron correctamente', 'success');
+  } catch (error) {
+    Swal.fire('Error', error.message, 'error');
+  }
+}
 
 // ==============================================
 // FUNCIONES DE ADMINISTRADOR
 // ==============================================
+
 async function cargarUsuariosAdmin() {
   try {
     const usuarios = await apiRequest('/api/admin/usuarios');
@@ -303,11 +384,12 @@ async function cargarUsuariosAdmin() {
     cuerpoTabla.innerHTML = '';
 
     usuarios.forEach(usuario => {
-      const nombreRol = {
-        paciente: 'Paciente',
-        medico: 'Médico',
-        admin: 'Administrador'
-      }[usuario.rol];
+      // ✅ CORREGIDO: Muestra el rol real sin errores
+      let nombreRol;
+      if (usuario.rol === 'paciente') nombreRol = 'Paciente';
+      else if (usuario.rol === 'medico') nombreRol = 'Médico';
+      else if (usuario.rol === 'admin') nombreRol = 'Administrador';
+      else nombreRol = usuario.rol;
 
       const especialidad = usuario.especialidad || '-';
 
