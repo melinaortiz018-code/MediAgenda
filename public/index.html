@@ -13,27 +13,26 @@
         <!-- VISTA: SELECCIÓN DE ROL / INICIO -->
         <section id="view-home" class="view active">
             <div class="hero-container">
-                <div class="logo-badge">🏥 MediAgenda Cloud</div>
-                <h1>Sistema Inteligente de Gestión de Citas Médicas</h1>
-                <p>Selecciona tu rol para acceder a la plataforma sincronizada en tiempo real.</p>
+                <div class="logo-badge">🏥 MediAgenda</div>
+                <h1>Sistema de Gestión de Citas Médicas</h1>
+                <p>Selecciona tu rol para acceder</p>
                 
                 <div class="role-grid">
                     <div class="role-card" onclick="app.irARol('paciente')">
                         <div class="icon">🧑‍⚕️</div>
                         <h3>PACIENTE</h3>
-                        <p>Agenda citas, consulta tu historial y mantén tu perfil actualizado.</p>
+                        <p>Agenda tu cita.</p>
                         <button class="btn-glossy btn-primary-bright">Acceder como Paciente</button>
                     </div>
                     <div class="role-card" onclick="app.irARol('medico')">
                         <div class="icon">🩺</div>
                         <h3>MÉDICO</h3>
-                        <p>Gestiona tu agenda, libera turnos y atiende a tus pacientes.</p>
+                        <p>Gestiona tu agenda.</p>
                         <button class="btn-glossy btn-primary-bright">Acceder como Médico</button>
                     </div>
                     <div class="role-card" onclick="app.irARol('admin')">
                         <div class="icon">⚙️</div>
                         <h3>ADMINISTRADOR</h3>
-                        <p>Administra usuarios, médicos, estadísticas globales y seguridades.</p>
                         <button class="btn-glossy btn-primary-bright">Acceder como Admin</button>
                     </div>
                 </div>
@@ -76,14 +75,14 @@
                     </div>
                     <div class="input-group">
                         <label>Nombres Completos</label>
-                        <input type="text" id="reg-nombre" required placeholder="Juan Pérez">
+                        <input type="text" id="reg-nombre" required placeholder="Alejando Mauricio Pérez Moreira">
                     </div>
                     <div class="input-group">
                         <label>Correo Electrónico</label>
                         <input type="email" id="reg-email" required placeholder="correo@dominio.com">
                     </div>
                     <div class="input-group">
-                        <label>Número de Celular</label>
+                        <label>Número de Celular o Telefono</label>
                         <input type="tel" id="reg-tel" required placeholder="0991234568">
                     </div>
                     <div class="input-group password-container">
