@@ -119,53 +119,42 @@ async function iniciarSesion(e) {
   e.preventDefault();
   try {
     const rol = document.getElementById('loginRol').value;
-    // ✅ NUEVO: Usar trim() para eliminar espacios accidentales
     const ci = document.getElementById('loginCi').value.trim();
     const correo = document.getElementById('loginCorreo').value.trim();
     const password = document.getElementById('loginPassword').value;
     
-    console.log('📤 Enviando al servidor: rol=', rol, 'ci=', ci, 'correo=', correo);
+    if (!rol) {
+      Swal.fire('Aviso', 'Primero seleccione un tipo de cuenta', 'warning');
+      return;
+    }
     
-    let bodySolicitud = { password };
+    // Enviar ROL EXPLÍCITO + datos
+    const bodySolicitud = { rol, password };
     
     if (rol === 'paciente') {
-      if (!ci || !correo) {
-        Swal.fire('Aviso', 'Pacientes deben ingresar CI y Correo', 'warning');
-        return;
-      }
+      if (!ci || !correo) return Swal.fire('Aviso', 'Ingrese CI y Correo', 'warning');
       bodySolicitud.ci = ci;
       bodySolicitud.correo = correo;
     } else if (rol === 'medico') {
-      if (!ci) {
-        Swal.fire('Aviso', 'Médicos deben ingresar su CI', 'warning');
-        return;
-      }
+      if (!ci) return Swal.fire('Aviso', 'Ingrese su CI de médico', 'warning');
       bodySolicitud.ci = ci;
-      bodySolicitud.correo = ''; // ✅ CI enviado, correo vacío explícitamente
     } else if (rol === 'admin') {
-      if (!correo) {
-        Swal.fire('Aviso', 'Administrador debe ingresar su correo', 'warning');
-        return;
-      }
-      bodySolicitud.ci = ''; // ✅ CI vacío explícitamente
+      if (!correo) return Swal.fire('Aviso', 'Ingrese el correo de administrador', 'warning');
       bodySolicitud.correo = correo;
-    } else {
-      Swal.fire('Aviso', 'Seleccione un tipo de cuenta primero', 'warning');
-      return;
     }
-    
-    console.log('📤 Body final enviado:', bodySolicitud);
     
     const datos = await apiRequest('/api/auth/login', 'POST', bodySolicitud);
     
-    if (datos.usuario.rol !== rol) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Rol incorrecto',
-        text: `Esta cuenta es de tipo ${datos.usuario.rol}, no ${rol}`
-      });
-      return;
-    }
+    token = datos.token;
+    usuarioActual = datos.usuario;
+    localStorage.setItem('token', token);
+    
+    Swal.fire({ icon: 'success', title: '¡Bienvenido!', text: datos.usuario.nombres, timer: 1500, showConfirmButton: false });
+    cargarInterfazSegunRol();
+  } catch (error) {
+    Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+  }
+}
     
     token = datos.token;
     usuarioActual = datos.usuario;
