@@ -33,7 +33,67 @@ function verificarTiempoRestante(fechaCita, horaCita) {
   const diferencia = (fecha - ahora) / (1000 * 60 * 60);
   return diferencia > 24;
 }
+// Seleccionar rol al hacer clic en la tarjeta
+function seleccionarRol(rol, elemento) {
+  // Quitar estilo de selección anterior
+  document.querySelectorAll('.rol-card').forEach(card => {
+    card.style.background = 'var(--blanco)';
+    card.style.borderColor = 'var(--borde)';
+    card.style.transform = 'none';
+    card.style.boxShadow = 'none';
+  });
+  
+  // Aplicar estilo a la tarjeta seleccionada
+  elemento.style.background = 'var(--tarjeta)';
+  elemento.style.borderColor = 'var(--principal)';
+  elemento.style.transform = 'translateY(-3px)';
+  elemento.style.boxShadow = '0 6px 18px rgba(147, 51, 234, 0.25)';
+  
+  // Guardar rol en el input oculto
+  document.getElementById('loginRol').value = rol;
+  
+  // Mostrar/ocultar campos según el rol
+  ajustarCamposLogin();
+}
 
+// Ajustar campos visibles según el rol
+function ajustarCamposLogin() {
+  const rol = document.getElementById('loginRol').value;
+  const campoCi = document.getElementById('campoCi');
+  const campoCorreo = document.getElementById('campoCorreo');
+  const ciInput = document.getElementById('loginCi');
+  const correoInput = document.getElementById('loginCorreo');
+  const hint = document.getElementById('loginHint');
+  
+  ciInput.required = false;
+  correoInput.required = false;
+  ciInput.value = '';
+  correoInput.value = '';
+  
+  if (rol === 'paciente') {
+    campoCi.style.display = 'block';
+    campoCorreo.style.display = 'block';
+    ciInput.required = true;
+    correoInput.required = true;
+    hint.textContent = '👤 Pacientes: Ingrese su CI y Correo';
+  } else if (rol === 'medico') {
+    campoCi.style.display = 'block';
+    campoCorreo.style.display = 'none';
+    ciInput.required = true;
+    correoInput.required = false;
+    hint.textContent = '🩺 Médicos: Ingrese su CI (ej: MED001)';
+  } else if (rol === 'admin') {
+    campoCi.style.display = 'none';
+    campoCorreo.style.display = 'block';
+    ciInput.required = false;
+    correoInput.required = true;
+    hint.textContent = '🛡️ Administrador: Ingrese su correo';
+  } else {
+    campoCi.style.display = 'none';
+    campoCorreo.style.display = 'none';
+    hint.textContent = '';
+  }
+}
 // ==================== LOGIN POR ROLES ====================
 function ajustarCamposLogin() {
   const rol = document.getElementById('loginRol').value;
@@ -639,4 +699,22 @@ window.onclick = (e) => {
   document.querySelectorAll('.modal').forEach(modal => {
     if (e.target === modal) modal.style.display = 'none';
   });
+};
+window.onload = async () => {
+  if (token) {
+    try {
+      const datos = await apiRequest('/api/auth/verify');
+      usuarioActual = datos.usuario;
+      cargarInterfazSegunRol();
+      return;
+    } catch (e) {
+      localStorage.removeItem('token');
+      token = null;
+    }
+  }
+  document.getElementById('vistaInicio').style.display = 'flex';
+  // Ocultar campos hasta que se elija un rol
+  document.getElementById('campoCi').style.display = 'none';
+  document.getElementById('campoCorreo').style.display = 'none';
+  ajustarCamposLogin();
 };
