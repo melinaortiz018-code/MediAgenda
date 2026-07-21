@@ -88,7 +88,6 @@ io.on('connection', (socket) => {
       callback({ success: false, error: "Error en el servidor." });
     }
   });
-
   // Citas Médicas
   socket.on('crear_cita', async (data, callback) => {
     try {
