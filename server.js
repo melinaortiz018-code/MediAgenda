@@ -68,46 +68,70 @@ const auth = (rolesPermitidos = []) => {
   };
 };
 
-// ==================== RUTAS AUTENTICACIÓN ====================
-app.post('/api/auth/registro', async (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
-    const { ci, nombres, correo, celular, direccion, password, confirmPassword } = req.body;
+    const { ci, correo, password } = req.body;
     
-    if (!ci || !nombres || !correo || !password || !confirmPassword)
-      return res.status(400).json({ mensaje: 'Todos los campos obligatorios deben llenarse' });
+    // 🔍 LOG PARA VER QUÉ RECIBE EL SERVIDOR (mira los logs de Render)
+    console.log('🔐 Intento de login recibido:');
+    console.log('   CI recibido:', `[${ci}]`);
+    console.log('   Correo recibido:', `[${correo}]`);
+    console.log('   Password recibido:', `[${password}]`);
     
-    if (password !== confirmPassword)
-      return res.status(400).json({ mensaje: 'Las contraseñas no coinciden' });
+    if (!password)
+      return res.status(400).json({ mensaje: 'La contraseña es obligatoria' });
     
-    if (password.length < 6)
-      return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres' });
+    let usuario;
     
-    const existeCI = await Usuario.findOne({ ci });
-    if (existeCI) return res.status(400).json({ mensaje: 'Ya existe un usuario con este CI' });
+    if (ci && correo) {
+      usuario = await Usuario.findOne({ ci, correo });
+      console.log('   📋 Buscando paciente por CI + Correo -> Encontrado:', !!usuario);
+    } 
+    else if (ci && !correo) {
+      usuario = await Usuario.findOne({ ci });
+      console.log('   🩺 Buscando médico por CI -> Encontrado:', !!usuario);
+    } 
+    else if (!ci && correo) {
+      usuario = await Usuario.findOne({ correo });
+      console.log('   🛡️ Buscando admin por correo -> Encontrado:', !!usuario);
+    } 
+    else {
+      console.log('   ❌ Faltan datos');
+      return res.status(400).json({ mensaje: 'Faltan datos de acceso' });
+    }
     
-    const existeCorreo = await Usuario.findOne({ correo });
-    if (existeCorreo) return res.status(400).json({ mensaje: 'Ya existe un usuario con este correo' });
+    if (!usuario) {
+      console.log('   ❌ USUARIO NO ENCONTRADO');
+      return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
+    }
     
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    console.log('   ✅ Usuario encontrado:', usuario.nombres, '| Rol:', usuario.rol);
     
-    const usuario = new Usuario({
-      ci, nombres, correo, celular, direccion,
-      password: passwordHash, rol: 'paciente'
-    });
+    const passwordValido = await bcrypt.compare(password, usuario.password);
+    console.log('   🔑 Contraseña válida:', passwordValido);
     
-    await usuario.save();
+    if (!passwordValido) {
+      console.log('   ❌ CONTRASEÑA INCORRECTA');
+      return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
+    }
+    
+    if (!usuario.activo) return res.status(400).json({ mensaje: 'Cuenta desactivada' });
+    
     const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.status(201).json({
+    res.json({
       token,
-      usuario: { id: usuario._id, ci: usuario.ci, nombres: usuario.nombres, correo: usuario.correo, rol: usuario.rol }
+      usuario: {
+        id: usuario._id, ci: usuario.ci, nombres: usuario.nombres, correo: usuario.correo,
+        rol: usuario.rol, celular: usuario.celular, direccion: usuario.direccion,
+        especialidad: usuario.especialidad
+      }
     });
   } catch (error) {
+    console.error('❌ Error en login:', error);
     res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
   }
 });
-
 // RUTA DE LOGIN CORREGIDA: FLEXIBLE POR ROLES
 app.post('/api/auth/login', async (req, res) => {
   try {

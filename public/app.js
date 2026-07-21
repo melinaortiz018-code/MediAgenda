@@ -115,14 +115,16 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
   return datos;
 }
 
-// ==================== AUTENTICACIÓN ====================
 async function iniciarSesion(e) {
   e.preventDefault();
   try {
     const rol = document.getElementById('loginRol').value;
-    const ci = document.getElementById('loginCi').value;
-    const correo = document.getElementById('loginCorreo').value;
+    // ✅ NUEVO: Usar trim() para eliminar espacios accidentales
+    const ci = document.getElementById('loginCi').value.trim();
+    const correo = document.getElementById('loginCorreo').value.trim();
     const password = document.getElementById('loginPassword').value;
+    
+    console.log('📤 Enviando al servidor: rol=', rol, 'ci=', ci, 'correo=', correo);
     
     let bodySolicitud = { password };
     
@@ -139,18 +141,20 @@ async function iniciarSesion(e) {
         return;
       }
       bodySolicitud.ci = ci;
-      bodySolicitud.correo = '';
+      bodySolicitud.correo = ''; // ✅ CI enviado, correo vacío explícitamente
     } else if (rol === 'admin') {
       if (!correo) {
         Swal.fire('Aviso', 'Administrador debe ingresar su correo', 'warning');
         return;
       }
-      bodySolicitud.ci = '';
+      bodySolicitud.ci = ''; // ✅ CI vacío explícitamente
       bodySolicitud.correo = correo;
     } else {
-      Swal.fire('Aviso', 'Seleccione un rol para continuar', 'warning');
+      Swal.fire('Aviso', 'Seleccione un tipo de cuenta primero', 'warning');
       return;
     }
+    
+    console.log('📤 Body final enviado:', bodySolicitud);
     
     const datos = await apiRequest('/api/auth/login', 'POST', bodySolicitud);
     
@@ -180,32 +184,6 @@ async function iniciarSesion(e) {
     Swal.fire({ icon: 'error', title: 'Error', text: error.message });
   }
 }
-
-async function registrarUsuario(e) {
-  e.preventDefault();
-  try {
-    const datos = await apiRequest('/api/auth/registro', 'POST', {
-      ci: document.getElementById('regCi').value,
-      nombres: document.getElementById('regNombres').value,
-      correo: document.getElementById('regCorreo').value,
-      celular: document.getElementById('regCelular').value,
-      direccion: document.getElementById('regDireccion').value,
-      password: document.getElementById('regPassword').value,
-      confirmPassword: document.getElementById('regConfirmPassword').value
-    });
-    
-    token = datos.token;
-    usuarioActual = datos.usuario;
-    localStorage.setItem('token', token);
-    
-    Swal.fire({ icon: 'success', title: '¡Registro Exitoso!', text: 'Tu cuenta ha sido creada correctamente', timer: 1500, showConfirmButton: false });
-    
-    cargarInterfazSegunRol();
-  } catch (error) {
-    Swal.fire({ icon: 'error', title: 'Error en el registro', text: error.message });
-  }
-}
-
 function cerrarSesion() {
   Swal.fire({
     title: '¿Está seguro?',
