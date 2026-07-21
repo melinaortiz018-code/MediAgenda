@@ -309,39 +309,44 @@ function mostrarVista(idVista, btn = null) {
   if (idVista === 'vistaAdminEstadisticas') cargarEstadisticas();
 }
 // Función para cargar médicos según la especialidad seleccionada
-async function cargarMedicosPorEspecialidad() {
-  const especialidad = document.getElementById('especialidadCita').value;
+// Cargar lista completa de médicos (sin filtrar primero, para ver si llegan datos)
+async function cargarMedicos() {
   const selectMedicos = document.getElementById('medicoCita');
-  
-  // Limpiar opciones anteriores
-  selectMedicos.innerHTML = '<option value="">Seleccione un médico</option>';
+  if (!selectMedicos || !token) return;
 
-  if (!especialidad || !token) return;
+  selectMedicos.innerHTML = '<option value="">Seleccione un médico</option>';
 
   try {
     const respuesta = await fetch('/api/medicos', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
+    if (!respuesta.ok) throw new Error('Error al cargar');
     const medicos = await respuesta.json();
-    if (!respuesta.ok) throw new Error(medicos.mensaje);
 
-    // Filtrar solo los médicos de la especialidad elegida
-    const medicosFiltrados = medicos.filter(m => m.especialidad === especialidad);
+    if (medicos.length === 0) {
+      selectMedicos.innerHTML = '<option value="">No hay médicos disponibles</option>';
+      return;
+    }
 
-    // Agregar opciones al selector
-    medicosFiltrados.forEach(medico => {
+    // Agregar todos los médicos primero
+    medicos.forEach(medico => {
       const opcion = document.createElement('option');
       opcion.value = medico._id;
-      opcion.textContent = `${medico.nombres} - ${medico.especialidad}`;
+      opcion.textContent = `${medico.nombres} | ${medico.especialidad}`;
       selectMedicos.appendChild(opcion);
     });
 
   } catch (error) {
-    console.error('Error al cargar médicos:', error);
-    Swal.fire('Error', 'No se pudieron cargar los médicos', 'error');
+    console.error('Error:', error);
+    Swal.fire('Error', 'No se pudo cargar la lista de médicos', 'error');
   }
 }
+
+// Ejecutar al abrir la vista de agendar cita
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('vistaAgendarCita')?.addEventListener('click', cargarMedicos);
+});
 
 // Asignar el evento al selector de especialidad
 document.getElementById('especialidadCita')?.addEventListener('change', cargarMedicosPorEspecialidad);
@@ -690,30 +695,47 @@ async function guardarEdicionCita() {
 }
 
 // ==================== ADMIN: USUARIOS ====================
+// Al cargar la lista de usuarios en administración
 async function cargarUsuariosAdmin() {
   try {
-    const usuarios = await apiRequest('/api/admin/usuarios');
-    const tbody = document.getElementById('tablaUsuarios');
-    
-    tbody.innerHTML = usuarios.map(u => `
-      <tr>
-        <td>${u.ci}</td>
-        <td>${u.nombres}</td>
-        <td>${u.correo}</td>
-        <td><strong>${u.rol}</strong></td>
-        <td>${u.especialidad || '-'}</td>
-        <td><button class="btn-editar" onclick="verPassword('${u.password}')">Ver</button></td>
-        <td class="acciones">
-          <button class="btn-editar" onclick="cambiarPasswordAdmin('${u._id}', '${u.nombres}')">Cambiar Pass</button>
-          ${u.rol !== 'admin' ? `<button class="btn-cancelar" onclick="eliminarUsuario('${u._id}', '${u.nombres}')">Eliminar</button>` : ''}
+    const respuesta = await fetch('/api/admin/usuarios', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const usuarios = await respuesta.json();
+
+    const tabla = document.getElementById('tablaUsuarios');
+    tabla.innerHTML = '';
+
+    usuarios.forEach(usuario => {
+      // ✅ Mostrar el rol real, no un valor equivocado
+      const rolTexto = {
+        'paciente': 'Paciente',
+        'medico': 'Médico',
+        'admin': 'Administrador'
+      }[usuario.rol] || usuario.rol;
+
+      // ✅ Mostrar especialidad solo si es médico
+      const especialidadTexto = usuario.rol === 'medico' ? (usuario.especialidad || 'Sin especialidad') : '-';
+
+      const fila = document.createElement('tr');
+      fila.innerHTML = `
+        <td>${usuario.ci}</td>
+        <td>${usuario.nombres}</td>
+        <td>${usuario.correo}</td>
+        <td>${rolTexto}</td>
+        <td>${especialidadTexto}</td>
+        <td>
+          <button class="btn-cambiar-pass" onclick="cambiarContrasena('${usuario._id}')">Cambiar Pass</button>
+          ${usuario.rol !== 'admin' ? `<button class="btn-eliminar" onclick="eliminarUsuario('${usuario._id}')">Eliminar</button>` : ''}
         </td>
-      </tr>
-    `).join('');
+      `;
+      tabla.appendChild(fila);
+    });
   } catch (error) {
+    console.error('Error al cargar usuarios:', error);
     Swal.fire('Error', 'No se pudieron cargar los usuarios', 'error');
   }
 }
-
 function verPassword(hash) {
   Swal.fire({
     title: 'Contraseña (Encriptada)',
