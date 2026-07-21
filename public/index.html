@@ -1,1113 +1,275 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediAgenda - Citas Médicas</title>
-    <!-- FontAwesome para íconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js para Estadísticas de Admin -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --bg-color: #f4effa;
-            --primary-purple: #9b72cf;
-            --primary-light: #d6c7ff;
-            --primary-dark: #6c4ab6;
-            --accent-pink: #f3d5f5;
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --text-color: #4a3b63;
-            --danger-color: #ff7675;
-            --success-color: #55efc4;
-            --warning-color: #ffeaa7;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #ebdcf9 0%, #f4effa 50%, #d8c2f8 100%);
-            color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Nav Header */
-        header {
-            background: rgba(155, 114, 207, 0.9);
-            backdrop-filter: blur(8px);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(108, 74, 182, 0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo {
-            font-size: 1.6rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        /* Botones Brillosos */
-        .btn-shiny {
-            background: linear-gradient(135deg, #a88beb, #9870e8);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: bold;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(155, 114, 207, 0.4);
-        }
-
-        .btn-shiny::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                60deg,
-                transparent,
-                rgba(255, 255, 255, 0.4),
-                transparent
-            );
-            transform: rotate(30deg);
-            transition: 0.8s;
-        }
-
-        .btn-shiny:hover::after {
-            left: 100%;
-        }
-
-        .btn-shiny:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(155, 114, 207, 0.6);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ff7675, #d63031);
-            box-shadow: 0 4px 15px rgba(214, 48, 49, 0.3);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #74b9ff, #0984e3);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            flex: 1;
-            width: 100%;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(108, 74, 182, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            margin-bottom: 2rem;
-        }
-
-        /* Formularios */
-        .form-group {
-            margin-bottom: 1.2rem;
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--primary-dark);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid var(--primary-light);
-            border-radius: 12px;
-            outline: none;
-            transition: 0.3s;
-            background: rgba(255, 255, 255, 0.8);
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-purple);
-            box-shadow: 0 0 8px rgba(155, 114, 207, 0.4);
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 40px;
-            cursor: pointer;
-            color: var(--primary-purple);
-        }
-
-        /* Tabs de Autenticación */
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            background: var(--primary-light);
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            color: var(--primary-dark);
-        }
-
-        .auth-tab.active {
-            background: var(--primary-purple);
-            color: white;
-        }
-
-        /* Tablas */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--primary-light);
-        }
-
-        th {
-            background-color: rgba(155, 114, 207, 0.1);
-            color: var(--primary-dark);
-        }
-
-        /* Badges */
-        .badge {
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
-
-        .badge-pendiente { background: var(--warning-color); color: #8a6d3b; }
-        .badge-exitosa { background: var(--success-color); color: #276749; }
-        .badge-cancelada { background: var(--danger-color); color: white; }
-        .badge-reagendada { background: #74b9ff; color: white; }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        @media (max-width: 768px) {
-            .grid-2 { grid-template-columns: 1fr; }
-        }
-
-        .credentials-box {
-            background: #f0e6ff;
-            border-left: 4px solid var(--primary-purple);
-            padding: 10px;
-            margin-bottom: 15px;
-            font-size: 0.85rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediAgenda - Citas Médicas</title>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-
-    <!-- Header Navigation -->
+  <div class="container">
     <header>
-        <div class="logo">
-            <i class="fa-solid fa-heart-pulse"></i> MediAgenda
-        </div>
-        <div class="user-info" id="userInfo">
-            <!-- Dinámico desde JS -->
-        </div>
+      <h1>MediAgenda 💜</h1>
+      <p>Gestión médica simple, bonita y segura</p>
     </header>
 
-    <div class="container">
-
-        <!-- ================= AVISO DE CREDENCIALES PRE-CARGADAS ================= -->
-        <div id="credentialsNotice" class="card credentials-box" style="display:none;">
-            <h4><i class="fa-solid fa-key"></i> Credenciales de Acceso Demo:</h4>
-            <p><strong>Admin:</strong> CI: <code>0000000000</code> | Clave: <code>admin123</code></p>
-            <p><strong>Médico Ejemplo (Psicología):</strong> CI: <code>1111111111</code> | Clave: <code>medico123</code></p>
-            <p><em>(Ver lista completa en vista Administrador)</em></p>
+    <!-- VISTA 1: SELECCIÓN DE ROL -->
+    <div id="role-selection" class="card">
+      <h2 style="text-align: center;">Selecciona tu Rol para Ingresar</h2>
+      <div class="role-grid">
+        <div class="card role-card" onclick="selectRole('patient')">
+          <h3>👤 Paciente</h3>
+          <p>Agenda, reagenda y revisa tus citas médicas.</p>
+          <button class="btn-shiny">Ingresar</button>
         </div>
-
-        <!-- ================= VISTA AUTHENTICATION ================= -->
-        <div id="authSection" class="card" style="max-width: 500px; margin: 2rem auto;">
-            <div class="auth-tabs">
-                <div class="auth-tab active" onclick="switchAuthTab('login')">Iniciar Sesión</div>
-                <div class="auth-tab" onclick="switchAuthTab('register')">Registrarse</div>
-            </div>
-
-            <!-- Login Form -->
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label>Cédula de Identidad (CI)</label>
-                    <input type="text" id="loginCI" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Correo Electrónico</label>
-                    <input type="email" id="loginEmail" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="loginPassword" class="form-control" required>
-                    <i class="fa-solid fa-eye password-toggle" onclick="togglePasswordVisibility('loginPassword', this)"></i>
-                </div>
-                <button type="submit" class="btn-shiny" style="width: 100%;">Ingresar</button>
-            </form>
-
-            <!-- Register Form -->
-            <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
-                <div class="form-group">
-                    <label>Cédula de Identidad (CI)</label>
-                    <input type="text" id="regCI" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Nombres Completos</label>
-                    <input type="text" id="regName" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Correo Electrónico</label>
-                    <input type="email" id="regEmail" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Número de Celular</label>
-                    <input type="tel" id="regPhone" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Dirección de Contacto</label>
-                    <input type="text" id="regAddress" class="form-control" placeholder="Ej: Av. Principal 123" required>
-                </div>
-                <div class="form-group">
-                    <label>Crear Contraseña</label>
-                    <input type="password" id="regPassword" class="form-control" required minlength="6">
-                    <i class="fa-solid fa-eye password-toggle" onclick="togglePasswordVisibility('regPassword', this)"></i>
-                </div>
-                <div class="form-group">
-                    <label>Confirmar Contraseña</label>
-                    <input type="password" id="regConfirmPassword" class="form-control" required minlength="6">
-                    <i class="fa-solid fa-eye password-toggle" onclick="togglePasswordVisibility('regConfirmPassword', this)"></i>
-                </div>
-                <button type="submit" class="btn-shiny" style="width: 100%;">Registrarme</button>
-            </form>
+        <div class="card role-card" onclick="selectRole('doctor')">
+          <h3>🩺 Médico</h3>
+          <p>Gestiona tu agenda, horarios y recetas.</p>
+          <button class="btn-shiny">Ingresar</button>
         </div>
-
-        <!-- ================= VISTA PACIENTE ================= -->
-        <div id="patientSection" style="display: none;">
-            <div class="grid-2">
-                <!-- Formulario Agendar Cita -->
-                <div class="card">
-                    <h2><i class="fa-regular fa-calendar-plus"></i> Agendar Cita Médica</h2>
-                    <br>
-                    <form id="appointmentForm" onsubmit="handleBookAppointment(event)">
-                        <div class="form-group">
-                            <label>Especialidad</label>
-                            <select id="appSpecialty" class="form-control" onchange="updateDoctorDropdown()" required>
-                                <option value="">Seleccione una especialidad...</option>
-                                <option value="Psicología">Psicología</option>
-                                <option value="Odontología">Odontología</option>
-                                <option value="Medicina General">Medicina General</option>
-                                <option value="Pediatría">Pediatría</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Doctor Specialist</label>
-                            <select id="appDoctor" class="form-control" required>
-                                <option value="">Seleccione especialidad primero...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Fecha y Hora</label>
-                            <input type="datetime-local" id="appDateTime" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Motivo de Consulta</label>
-                            <textarea id="appReason" class="form-control" rows="3" required></textarea>
-                        </div>
-                        <button type="submit" class="btn-shiny" style="width: 100%;">Agendar</button>
-                    </form>
-                </div>
-
-                <!-- Perfil y Datos Personales -->
-                <div class="card">
-                    <h2><i class="fa-solid fa-user-gear"></i> Mis Datos Personales</h2>
-                    <br>
-                    <form id="profileForm" onsubmit="handleUpdateProfile(event)">
-                        <div class="form-group">
-                            <label>Nombres Completos</label>
-                            <input type="text" id="profName" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Correo Electrónico</label>
-                            <input type="email" id="profEmail" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Teléfono de Contacto</label>
-                            <input type="tel" id="profPhone" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Dirección</label>
-                            <input type="text" id="profAddress" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn-shiny">Guardar Cambios</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Cuadro de Citas Agendadas -->
-            <div class="card">
-                <h2><i class="fa-solid fa-list-check"></i> Mis Citas Médicas</h2>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Fecha / Hora</th>
-                                <th>Especialidad</th>
-                                <th>Doctor</th>
-                                <th>Motivo</th>
-                                <th>Estado</th>
-                                <th>Observaciones / Receta</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="patientAppointmentsTable">
-                            <!-- Dinámico -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="card role-card" onclick="selectRole('admin')">
+          <h3>⚙️ Administrador</h3>
+          <p>Control total de usuarios, médicos y métricas.</p>
+          <button class="btn-shiny">Ingresar</button>
         </div>
-
-        <!-- ================= VISTA MÉDICO ================= -->
-        <div id="doctorSection" style="display: none;">
-            <div class="card">
-                <h2><i class="fa-solid fa-user-doctor"></i> Panel del Médico</h2>
-                <p id="doctorWelcomeText"></p>
-                <br>
-                <!-- Filtros de Tiempo -->
-                <div style="margin-bottom: 1rem; display:flex; gap: 10px;">
-                    <button class="btn-shiny" onclick="filterDoctorAppointments('day')">Citas de Hoy</button>
-                    <button class="btn-shiny btn-secondary" onclick="filterDoctorAppointments('week')">Próxima Semana</button>
-                    <button class="btn-shiny btn-secondary" onclick="filterDoctorAppointments('2months')">Próximos 2 Meses</button>
-                    <button class="btn-shiny btn-secondary" onclick="filterDoctorAppointments('all')">Todas</button>
-                </div>
-
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Fecha / Hora</th>
-                                <th>Paciente</th>
-                                <th>Contacto</th>
-                                <th>Motivo</th>
-                                <th>Estado Cita</th>
-                                <th>Receta / Observaciones</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="doctorAppointmentsTable">
-                            <!-- Dinámico -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= VISTA ADMINISTRADOR ================= -->
-        <div id="adminSection" style="display: none;">
-            <!-- Panel Estadístico -->
-            <div class="card">
-                <h2><i class="fa-solid fa-chart-pie"></i> Estadísticas Generales</h2>
-                <div style="max-width: 400px; margin: 1rem auto;">
-                    <canvas id="statsChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Gestión de Usuarios -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2><i class="fa-solid fa-users-gear"></i> Gestión de Usuarios Registrados</h2>
-                    <button class="btn-shiny" onclick="openAddDoctorModal()"><i class="fa-solid fa-plus"></i> Agregar Médico</button>
-                </div>
-                <br>
-                <button class="btn-shiny btn-danger" onclick="cleanDuplicateOrInactive()"><i class="fa-solid fa-broom"></i> Limpiar Cuentas Inactivas / Duplicadas</button>
-                <br><br>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Rol</th>
-                                <th>CI</th>
-                                <th>Nombre</th>
-                                <th>Correo</th>
-                                <th>Contraseña</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminUsersTable">
-                            <!-- Dinámico -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
+      </div>
     </div>
 
-    <!-- Modal para Agregar Médico -->
-    <div id="addDoctorModal" class="modal">
-        <div class="modal-content card">
-            <h3>Agregar Nuevo Médico</h3>
-            <br>
-            <form id="addDoctorForm" onsubmit="handleAddDoctor(event)">
-                <div class="form-group">
-                    <label>CI</label>
-                    <input type="text" id="docCI" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Nombre Completo</label>
-                    <input type="text" id="docName" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Correo</label>
-                    <input type="email" id="docEmail" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Especialidad</label>
-                    <select id="docSpecialty" class="form-control" required>
-                        <option value="Psicología">Psicología</option>
-                        <option value="Odontología">Odontología</option>
-                        <option value="Medicina General">Medicina General</option>
-                        <option value="Pediatría">Pediatría</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" id="docPassword" class="form-control" required>
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" class="btn-shiny btn-danger" onclick="closeModal('addDoctorModal')">Cancelar</button>
-                    <button type="submit" class="btn-shiny">Guardar</button>
-                </div>
-            </form>
+    <!-- VISTA 2: FORMULARIOS DE LOGIN / REGISTRO -->
+    <div id="auth-section" class="card hidden">
+      <button onclick="showRoleSelection()" class="btn-shiny" style="padding: 5px 15px; margin-bottom: 15px;">← Volver</button>
+      <h2 id="auth-title">Iniciar Sesión</h2>
+
+      <!-- Formulario Login -->
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group" id="group-ci-login">
+          <label>Cédula de Identidad (C.I.)</label>
+          <input type="text" id="login-ci">
         </div>
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" id="login-email" required>
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <div class="password-wrapper">
+            <input type="password" id="login-pass" required>
+            <span class="eye-icon" onclick="togglePass('login-pass')">👁️</span>
+          </div>
+        </div>
+        <button type="submit" class="btn-shiny">Iniciar Sesión</button>
+        <p id="toggle-reg-msg" style="margin-top: 15px;">¿No tienes cuenta? <a href="#" onclick="toggleAuthMode('register')">Regístrate aquí</a></p>
+      </form>
+
+      <!-- Formulario Registro Paciente -->
+      <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Cédula de Identidad (C.I.)</label>
+          <input type="text" id="reg-ci" required>
+        </div>
+        <div class="form-group">
+          <label>Nombres Completos</label>
+          <input type="text" id="reg-name" required>
+        </div>
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" id="reg-email" required>
+        </div>
+        <div class="form-group">
+          <label>Número de Celular</label>
+          <input type="tel" id="reg-phone" required>
+        </div>
+        <div class="form-group">
+          <label>Dirección de Domicilio</label>
+          <input type="text" id="reg-address">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <div class="password-wrapper">
+            <input type="password" id="reg-pass" required>
+            <span class="eye-icon" onclick="togglePass('reg-pass')">👁️</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Confirmar Contraseña</label>
+          <div class="password-wrapper">
+            <input type="password" id="reg-pass-confirm" required>
+            <span class="eye-icon" onclick="togglePass('reg-pass-confirm')">👁️</span>
+          </div>
+        </div>
+        <button type="submit" class="btn-shiny">Registrarme</button>
+        <p style="margin-top: 15px;">¿Ya tienes cuenta? <a href="#" onclick="toggleAuthMode('login')">Inicia Sesión</a></p>
+      </form>
     </div>
 
-    <!-- Modal Editar Cita / Receta Médica -->
-    <div id="doctorEditModal" class="modal">
-        <div class="modal-content card">
-            <h3>Atención de Cita Médica</h3>
-            <br>
-            <form id="doctorEditForm" onsubmit="handleSaveDoctorDiagnosis(event)">
-                <input type="hidden" id="editAppId">
-                <div class="form-group">
-                    <label>Estado de la Cita</label>
-                    <select id="editAppStatus" class="form-control">
-                        <option value="pendiente">Pendiente</option>
-                        <option value="exitosa">Exitosa (Atendida)</option>
-                        <option value="cancelada">Cancelada</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Receta u Observaciones Médicas</label>
-                    <textarea id="editAppNotes" class="form-control" rows="4"></textarea>
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" class="btn-shiny btn-danger" onclick="closeModal('doctorEditModal')">Cancelar</button>
-                    <button type="submit" class="btn-shiny">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
+    <!-- PANEL PACIENTE -->
+    <div id="patient-dashboard" class="hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center;" class="card">
+        <h2>Bienvenido(a), <span id="patient-welcome-name"></span></h2>
+        <button onclick="logout()" class="btn-shiny btn-danger">Cerrar Sesión</button>
+      </div>
+
+      <!-- Editar Datos -->
+      <div class="card">
+        <h3>Mis Datos Personales</h3>
+        <form onsubmit="updatePatientData(event)">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label>Correo Electrónico</label>
+              <input type="email" id="edit-email" required>
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="text" id="edit-phone" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input type="text" id="edit-address">
+          </div>
+          <button type="submit" class="btn-shiny">Guardar Cambios</button>
+        </form>
+      </div>
+
+      <!-- Agendar Cita -->
+      <div class="card">
+        <h3>Agendar Nueva Cita</h3>
+        <form onsubmit="handleBookAppointment(event)">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label>Especialidad</label>
+              <select id="app-specialty" onchange="loadDoctorsBySpecialty()" required>
+                <option value="">-- Seleccionar --</option>
+                <option value="Psicología">Psicología</option>
+                <option value="Odontología">Odontología</option>
+                <option value="Medicina General">Medicina General</option>
+                <option value="Pediatría">Pediatría</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Doctor Especialista</label>
+              <select id="app-doctor" required>
+                <option value="">-- Primero elige especialidad --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fecha</label>
+              <input type="date" id="app-date" required>
+            </div>
+            <div class="form-group">
+              <label>Hora</label>
+              <input type="time" id="app-time" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Motivo de Consulta</label>
+            <textarea id="app-reason" rows="2" required></textarea>
+          </div>
+          <button type="submit" class="btn-shiny">Agendar</button>
+        </form>
+      </div>
+
+      <!-- Cuadro de Citas del Paciente -->
+      <div class="card">
+        <h3>Mis Citas Médicas</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Especialidad</th>
+              <th>Doctor</th>
+              <th>Fecha y Hora</th>
+              <th>Estado</th>
+              <th>Receta/Observación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="patient-appointments-list"></tbody>
+        </table>
+      </div>
     </div>
 
-    <script>
-        /* ================= INICIALIZACIÓN DE DATOS PRECOMPILADOS ================= */
-        const initialDoctors = [
-            { ci: "1111111111", name: "Dra. Elena Rostova", email: "elena@mediagenda.com", pass: "medico123", role: "doctor", specialty: "Psicología" },
-            { ci: "1111111112", name: "Dr. Carlos Mendoza", email: "carlos@mediagenda.com", pass: "medico123", role: "doctor", specialty: "Psicología" },
-            { ci: "2222222221", name: "Dra. Sofía Martínez", email: "sofia@mediagenda.com", pass: "medico123", role: "doctor", specialty: "Odontología" },
-            { ci: "2222222222", name: "Dr. Andrés Silva", email: "andres@mediagenda.com", pass: "medico123", role: "doctor", specialty: "Odontología" },
-            { ci: "3333333331", name: "Dra. Laura Gómez", email: "laura@mediagenda.com", pass: "medico123", role: "doctor", specialty: "Medicina General" },
-            { ci: "3333333332", name: "Dr. Gabriel Torres", email: "gabriel@mediagenda.com", pass: "medico123", role: "doctor", specialty: "Medicina General" },
-            { ci: "4444444441", name: "Dra. Mariana Ríos", email: "mariana@mediagenda.com", pass: "medico123", role: "doctor", specialty: "Pediatría" },
-            { ci: "4444444442", name: "Dr. Lucas Benítez", email: "lucas@mediagenda.com", pass: "medico123", role: "doctor", specialty: "Pediatría" }
-        ];
-
-        const initialAdmin = {
-            ci: "0000000000", name: "Administrador General", email: "admin@mediagenda.com", pass: "admin123", role: "admin"
-        };
-
-        // Cargar Base de Datos Local
-        function initStorage() {
-            if (!localStorage.getItem('mg_users')) {
-                localStorage.setItem('mg_users', JSON.stringify([initialAdmin, ...initialDoctors]));
-            }
-            if (!localStorage.getItem('mg_appointments')) {
-                localStorage.setItem('mg_appointments', JSON.stringify([]));
-            }
-        }
-        initStorage();
-
-        // Getters y Setters con sincronización
-        function getUsers() { return JSON.parse(localStorage.getItem('mg_users')) || []; }
-        function setUsers(users) { 
-            localStorage.setItem('mg_users', JSON.stringify(users)); 
-            notifySync();
-        }
-        function getAppointments() { return JSON.parse(localStorage.getItem('mg_appointments')) || []; }
-        function setAppointments(apps) { 
-            localStorage.setItem('mg_appointments', JSON.stringify(apps)); 
-            notifySync();
-        }
-        function getCurrentUser() { return JSON.parse(localStorage.getItem('mg_current_user')); }
-        function setCurrentUser(user) { localStorage.setItem('mg_current_user', JSON.stringify(user)); }
-
-        // Sincronización entre Pestañas/Dispositivos
-        window.addEventListener('storage', (e) => {
-            renderUI();
-        });
-
-        function notifySync() {
-            // Disparar render en pestaña actual
-            renderUI();
-        }
-
-        /* ================= CONTROLADOR DE INTERFAZ (UI) ================= */
-        let statsChartInstance = null;
-
-        function renderUI() {
-            const currentUser = getCurrentUser();
-            const userInfo = document.getElementById('userInfo');
-            const authSection = document.getElementById('authSection');
-            const patientSection = document.getElementById('patientSection');
-            const doctorSection = document.getElementById('doctorSection');
-            const adminSection = document.getElementById('adminSection');
-            const credentialsNotice = document.getElementById('credentialsNotice');
-
-            // Ocultar todo por defecto
-            authSection.style.display = 'none';
-            patientSection.style.display = 'none';
-            doctorSection.style.display = 'none';
-            adminSection.style.display = 'none';
-
-            if (!currentUser) {
-                authSection.style.display = 'block';
-                credentialsNotice.style.display = 'block';
-                userInfo.innerHTML = '';
-            } else {
-                credentialsNotice.style.display = 'none';
-                userInfo.innerHTML = `
-                    <span><i class="fa-solid fa-user"></i> ${currentUser.name} (${currentUser.role.toUpperCase()})</span>
-                    <button class="btn-shiny btn-danger" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
-                `;
-
-                if (currentUser.role === 'patient') {
-                    patientSection.style.display = 'block';
-                    loadPatientProfile();
-                    renderPatientAppointments();
-                } else if (currentUser.role === 'doctor') {
-                    doctorSection.style.display = 'block';
-                    document.getElementById('doctorWelcomeText').innerText = `Bienvenido(a), ${currentUser.name} - Especialidad: ${currentUser.specialty}`;
-                    renderDoctorAppointments('all');
-                } else if (currentUser.role === 'admin') {
-                    adminSection.style.display = 'block';
-                    renderAdminUsers();
-                    renderAdminStats();
-                }
-            }
-        }
-
-        /* ================= AUTENTICACIÓN ================= */
-        function switchAuthTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            if(tab === 'login') {
-                document.querySelectorAll('.auth-tab')[0].classList.add('active');
-                document.getElementById('loginForm').style.display = 'block';
-                document.getElementById('registerForm').style.display = 'none';
-            } else {
-                document.querySelectorAll('.auth-tab')[1].classList.add('active');
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('registerForm').style.display = 'block';
-            }
-        }
-
-        function togglePasswordVisibility(inputId, icon) {
-            const input = document.getElementById(inputId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-            }
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const ci = document.getElementById('loginCI').value.trim();
-            const email = document.getElementById('loginEmail').value.trim();
-            const pass = document.getElementById('loginPassword').value;
-
-            const users = getUsers();
-            const user = users.find(u => u.ci === ci && u.email.toLowerCase() === email.toLowerCase() && u.pass === pass);
-
-            if (user) {
-                setCurrentUser(user);
-                renderUI();
-            } else {
-                alert('Credenciales incorrectas. Verifique su CI, Correo y Contraseña.');
-            }
-        }
-
-        function handleRegister(e) {
-            e.preventDefault();
-            const ci = document.getElementById('regCI').value.trim();
-            const name = document.getElementById('regName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const phone = document.getElementById('regPhone').value.trim();
-            const address = document.getElementById('regAddress').value.trim();
-            const pass = document.getElementById('regPassword').value;
-            const confirmPass = document.getElementById('regConfirmPassword').value;
-
-            if (pass !== confirmPass) {
-                alert('Las contraseñas no coinciden.');
-                return;
-            }
-
-            const users = getUsers();
-            if (users.some(u => u.ci === ci)) {
-                alert('Ya existe un usuario registrado con esta Cédula (CI).');
-                return;
-            }
-
-            const newUser = { ci, name, email, phone, address, pass, role: 'patient' };
-            users.push(newUser);
-            setUsers(users);
-            setCurrentUser(newUser);
-            alert('¡Registro exitoso! Bienvenido a MediAgenda.');
-            renderUI();
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('mg_current_user');
-            renderUI();
-        }
-
-        /* ================= SECCIÓN PACIENTE ================= */
-        function updateDoctorDropdown() {
-            const spec = document.getElementById('appSpecialty').value;
-            const docSelect = document.getElementById('appDoctor');
-            docSelect.innerHTML = '<option value="">Seleccione un doctor...</option>';
-
-            const doctors = getUsers().filter(u => u.role === 'doctor' && u.specialty === spec);
-            doctors.forEach(doc => {
-                const opt = document.createElement('option');
-                opt.value = doc.name;
-                opt.innerText = doc.name;
-                docSelect.appendChild(opt);
-            });
-        }
-
-        function handleBookAppointment(e) {
-            e.preventDefault();
-            const currentUser = getCurrentUser();
-            const spec = document.getElementById('appSpecialty').value;
-            const doctor = document.getElementById('appDoctor').value;
-            const dateTime = document.getElementById('appDateTime').value;
-            const reason = document.getElementById('appReason').value.trim();
-
-            if (!spec || !doctor || !dateTime || !reason) {
-                alert('Por favor complete todos los campos obligatorios para agendar.');
-                return;
-            }
-
-            const appointments = getAppointments();
-
-            // Validación: No duplicar citas del mismo médico a la misma hora
-            const duplicateDoctor = appointments.some(a => a.doctor === doctor && a.dateTime === dateTime && a.status !== 'cancelada');
-            if (duplicateDoctor) {
-                alert('El doctor seleccionado ya tiene un turno reservado a esta misma fecha y hora.');
-                return;
-            }
-
-            // Validación: Paciente no puede duplicar citas
-            const duplicatePatient = appointments.some(a => a.patientCI === currentUser.ci && a.dateTime === dateTime && a.status !== 'cancelada');
-            if (duplicatePatient) {
-                alert('Ya tienes una cita agendada exactamente a esa misma hora.');
-                return;
-            }
-
-            const newApp = {
-                id: Date.now(),
-                patientCI: currentUser.ci,
-                patientName: currentUser.name,
-                patientPhone: currentUser.phone,
-                specialty: spec,
-                doctor: doctor,
-                dateTime: dateTime,
-                reason: reason,
-                status: 'pendiente',
-                notes: ''
-            };
-
-            appointments.push(newApp);
-            setAppointments(appointments);
-            alert('¡Cita agendada exitosamente!');
-            document.getElementById('appointmentForm').reset();
-            renderPatientAppointments();
-        }
-
-        function renderPatientAppointments() {
-            const currentUser = getCurrentUser();
-            const appointments = getAppointments().filter(a => a.patientCI === currentUser.ci);
-            const tbody = document.getElementById('patientAppointmentsTable');
-            tbody.innerHTML = '';
-
-            appointments.forEach(app => {
-                const tr = document.createElement('tr');
-                const canModify = check24HoursCondition(app.dateTime);
-
-                tr.innerHTML = `
-                    <td>${new Date(app.dateTime).toLocaleString()}</td>
-                    <td>${app.specialty}</td>
-                    <td>${app.doctor}</td>
-                    <td>${app.reason}</td>
-                    <td><span class="badge badge-${app.status}">${app.status.toUpperCase()}</span></td>
-                    <td>${app.notes || '<em>Sin observaciones</em>'}</td>
-                    <td>
-                        ${app.status !== 'cancelada' ? `
-                            <button class="btn-shiny btn-secondary" onclick="rescheduleAppointment(${app.id})" ${!canModify ? 'disabled style="opacity:0.5;cursor:not-allowed;" title="Menos de 24h restantes"' : ''}>Reagendar</button>
-                            <button class="btn-shiny btn-danger" onclick="cancelAppointment(${app.id})" ${!canModify ? 'disabled style="opacity:0.5;cursor:not-allowed;" title="Menos de 24h restantes"' : ''}>Cancelar</button>
-                        ` : 'N/A'}
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function check24HoursCondition(appDateTimeStr) {
-            const appTime = new Date(appDateTimeStr).getTime();
-            const currentTime = new Date().getTime();
-            const hoursDiff = (appTime - currentTime) / (1000 * 60 * 60);
-            return hoursDiff >= 24;
-        }
-
-        function rescheduleAppointment(id) {
-            if (confirm('¿Está seguro de que desea reagendar esta cita? Se le pedirá seleccionar una nueva fecha.')) {
-                const newDate = prompt('Ingrese la nueva fecha y hora (Formato: YYYY-MM-DDTHH:MM, Ej: 2026-08-01T10:00):');
-                if (newDate) {
-                    const appointments = getAppointments();
-                    const app = appointments.find(a => a.id === id);
-                    if (app) {
-                        app.dateTime = newDate;
-                        app.status = 'reagendada';
-                        setAppointments(appointments);
-                        alert('Cita reagendada con éxito.');
-                    }
-                }
-            }
-        }
-
-        function cancelAppointment(id) {
-            if (confirm('¿Está seguro de que desea cancelar su cita médica? Esta acción no se puede deshacer.')) {
-                const appointments = getAppointments();
-                const app = appointments.find(a => a.id === id);
-                if (app) {
-                    app.status = 'cancelada';
-                    setAppointments(appointments);
-                    alert('Cita cancelada.');
-                }
-            }
-        }
-
-        function loadPatientProfile() {
-            const currentUser = getCurrentUser();
-            document.getElementById('profName').value = currentUser.name || '';
-            document.getElementById('profEmail').value = currentUser.email || '';
-            document.getElementById('profPhone').value = currentUser.phone || '';
-            document.getElementById('profAddress').value = currentUser.address || '';
-        }
-
-        function handleUpdateProfile(e) {
-            e.preventDefault();
-            const currentUser = getCurrentUser();
-            const users = getUsers();
-
-            const updatedUser = {
-                ...currentUser,
-                name: document.getElementById('profName').value.trim(),
-                email: document.getElementById('profEmail').value.trim(),
-                phone: document.getElementById('profPhone').value.trim(),
-                address: document.getElementById('profAddress').value.trim()
-            };
-
-            const index = users.findIndex(u => u.ci === currentUser.ci);
-            if (index !== -1) {
-                users[index] = updatedUser;
-                setUsers(users);
-                setCurrentUser(updatedUser);
-                alert('¡Datos personales actualizados correctamente!');
-            }
-        }
-
-        /* ================= SECCIÓN MÉDICO ================= */
-        function renderDoctorAppointments(filter = 'all') {
-            const currentUser = getCurrentUser();
-            let apps = getAppointments().filter(a => a.doctor === currentUser.name);
-
-            const now = new Date();
-            if (filter === 'day') {
-                apps = apps.filter(a => new Date(a.dateTime).toDateString() === now.toDateString());
-            } else if (filter === 'week') {
-                const nextWeek = new Date();
-                nextWeek.setDate(now.getDate() + 7);
-                apps = apps.filter(a => new Date(a.dateTime) >= now && new Date(a.dateTime) <= nextWeek);
-            } else if (filter === '2months') {
-                const next2Months = new Date();
-                next2Months.setMonth(now.getMonth() + 2);
-                apps = apps.filter(a => new Date(a.dateTime) >= now && new Date(a.dateTime) <= next2Months);
-            }
-
-            const tbody = document.getElementById('doctorAppointmentsTable');
-            tbody.innerHTML = '';
-
-            apps.forEach(app => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${new Date(app.dateTime).toLocaleString()}</td>
-                    <td>${app.patientName} (CI: ${app.patientCI})</td>
-                    <td>${app.patientPhone || 'N/A'}</td>
-                    <td>${app.reason}</td>
-                    <td><span class="badge badge-${app.status}">${app.status.toUpperCase()}</span></td>
-                    <td>${app.notes || '<em>Sin receta registrada</em>'}</td>
-                    <td>
-                        <button class="btn-shiny" onclick="openDoctorEditModal(${app.id})"><i class="fa-solid fa-pen-to-square"></i> Atender / Recetar</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function filterDoctorAppointments(timeframe) {
-            renderDoctorAppointments(timeframe);
-        }
-
-        function openDoctorEditModal(id) {
-            const app = getAppointments().find(a => a.id === id);
-            if (app) {
-                document.getElementById('editAppId').value = app.id;
-                document.getElementById('editAppStatus').value = app.status;
-                document.getElementById('editAppNotes').value = app.notes || '';
-                document.getElementById('doctorEditModal').style.display = 'flex';
-            }
-        }
-
-        function handleSaveDoctorDiagnosis(e) {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('editAppId').value);
-            const status = document.getElementById('editAppStatus').value;
-            const notes = document.getElementById('editAppNotes').value.trim();
-
-            const apps = getAppointments();
-            const app = apps.find(a => a.id === id);
-            if (app) {
-                app.status = status;
-                app.notes = notes;
-                setAppointments(apps);
-                closeModal('doctorEditModal');
-                alert('Diagnóstico / Receta guardada con éxito.');
-            }
-        }
-
-        /* ================= SECCIÓN ADMINISTRADOR ================= */
-        function renderAdminUsers() {
-            const users = getUsers();
-            const tbody = document.getElementById('adminUsersTable');
-            tbody.innerHTML = '';
-
-            users.forEach(u => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${u.role.toUpperCase()}</strong></td>
-                    <td>${u.ci}</td>
-                    <td>${u.name}</td>
-                    <td>${u.email}</td>
-                    <td><code>${u.pass}</code></td>
-                    <td>
-                        <button class="btn-shiny btn-secondary" onclick="adminChangePassword('${u.ci}')">Cambiar Clave</button>
-                        ${u.role !== 'admin' ? `<button class="btn-shiny btn-danger" onclick="adminDeleteUser('${u.ci}')">Eliminar</button>` : ''}
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function adminChangePassword(ci) {
-            const newPass = prompt('Ingrese la nueva contraseña para este usuario:');
-            if (newPass) {
-                const users = getUsers();
-                const user = users.find(u => u.ci === ci);
-                if (user) {
-                    user.pass = newPass;
-                    setUsers(users);
-                    alert('Contraseña actualizada correctamente.');
-                }
-            }
-        }
-
-        function adminDeleteUser(ci) {
-            if (confirm('¿Desea eliminar definitivamente este usuario?')) {
-                let users = getUsers();
-                users = users.filter(u => u.ci !== ci);
-                setUsers(users);
-                alert('Usuario eliminado.');
-            }
-        }
-
-        function cleanDuplicateOrInactive() {
-            let users = getUsers();
-            const apps = getAppointments();
-
-            // Filtrar duplicados por CI
-            const uniqueUsers = [];
-            const seenCIs = new Set();
-
-            users.forEach(u => {
-                if (!seenCIs.has(u.ci)) {
-                    seenCIs.add(u.ci);
-                    uniqueUsers.push(u);
-                }
-            });
-
-            // Opcional: Eliminar pacientes sin citas registradas (considerados inactivos)
-            const activeUsers = uniqueUsers.filter(u => {
-                if (u.role === 'patient') {
-                    return apps.some(a => a.patientCI === u.ci);
-                }
-                return true;
-            });
-
-            setUsers(activeUsers);
-            alert('Se ha realizado la limpieza de cuentas duplicadas o inactivas.');
-        }
-
-        function openAddDoctorModal() {
-            document.getElementById('addDoctorModal').style.display = 'flex';
-        }
-
-        function handleAddDoctor(e) {
-            e.preventDefault();
-            const ci = document.getElementById('docCI').value.trim();
-            const name = document.getElementById('docName').value.trim();
-            const email = document.getElementById('docEmail').value.trim();
-            const specialty = document.getElementById('docSpecialty').value;
-            const pass = document.getElementById('docPassword').value;
-
-            const users = getUsers();
-            if (users.some(u => u.ci === ci)) {
-                alert('Ya existe un usuario con este CI.');
-                return;
-            }
-
-            users.push({ ci, name, email, pass, specialty, role: 'doctor' });
-            setUsers(users);
-            closeModal('addDoctorModal');
-            document.getElementById('addDoctorForm').reset();
-            alert('Nuevo médico agregado con éxito.');
-        }
-
-        function renderAdminStats() {
-            const apps = getAppointments();
-            const exitosas = apps.filter(a => a.status === 'exitosa').length;
-            const canceladas = apps.filter(a => a.status === 'cancelada').length;
-            const reagendadas = apps.filter(a => a.status === 'reagendada').length;
-            const pendientes = apps.filter(a => a.status === 'pendiente').length;
-
-            const ctx = document.getElementById('statsChart').getContext('2d');
-            
-            if (statsChartInstance) {
-                statsChartInstance.destroy();
-            }
-
-            statsChartInstance = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Exitosas', 'Canceladas', 'Reagendadas', 'Pendientes'],
-                    datasets: [{
-                        data: [exitosas, canceladas, reagendadas, pendientes],
-                        backgroundColor: ['#55efc4', '#ff7675', '#74b9ff', '#ffeaa7']
-                    }]
-                }
-            });
-        }
-
-        /* ================= MODALES Y AUXILIARES ================= */
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-
-        // Ejecución Inicial
-        renderUI();
-    </script>
+    <!-- PANEL MÉDICO -->
+    <div id="doctor-dashboard" class="hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center;" class="card">
+        <h2>Panel Médico: <span id="doctor-welcome-name"></span></h2>
+        <button onclick="logout()" class="btn-shiny btn-danger">Cerrar Sesión</button>
+      </div>
+      <div class="card">
+        <h3>Próximas Citas Médicas</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Paciente</th>
+              <th>Fecha y Hora</th>
+              <th>Motivo</th>
+              <th>Estado</th>
+              <th>Receta / Observaciones</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="doctor-appointments-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PANEL ADMINISTRADOR -->
+    <div id="admin-dashboard" class="hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center;" class="card">
+        <h2>Panel de Administración</h2>
+        <button onclick="logout()" class="btn-shiny btn-danger">Cerrar Sesión</button>
+      </div>
+
+      <!-- Estadísticas -->
+      <div class="card" style="display: flex; justify-content: space-around; text-align: center;">
+        <div><h3 id="stat-success">0</h3><p>Exitosas / Completadas</p></div>
+        <div><h3 id="stat-cancelled">0</h3><p>Canceladas</p></div>
+        <div><h3 id="stat-rescheduled">0</h3><p>Reagendadas</p></div>
+      </div>
+
+      <!-- Crear Nuevo Médico -->
+      <div class="card">
+        <h3>Agregar Nuevo Médico</h3>
+        <form onsubmit="handleAddDoctor(event)">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input type="text" id="doc-ci" placeholder="C.I." required>
+            <input type="text" id="doc-name" placeholder="Nombre Completo" required>
+            <input type="email" id="doc-email" placeholder="Correo" required>
+            <input type="password" id="doc-pass" placeholder="Contraseña" required>
+            <select id="doc-spec" required>
+              <option value="Psicología">Psicología</option>
+              <option value="Odontología">Odontología</option>
+              <option value="Medicina General">Medicina General</option>
+              <option value="Pediatría">Pediatría</option>
+            </select>
+            <select id="doc-gender" required>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-shiny" style="margin-top: 10px;">Agregar Médico</button>
+        </form>
+      </div>
+
+      <!-- Lista de Usuarios y Contraseñas -->
+      <div class="card">
+        <h3>Usuarios Registrados</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>C.I.</th>
+              <th>Nombre:</th>
+              <th>Correo:</th>
+              <th>Contraseña:</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-list"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="sweetalert2.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
