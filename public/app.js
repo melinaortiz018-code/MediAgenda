@@ -330,6 +330,11 @@ async function cargarEstadisticas() { /* ... */ }
 
 // INICIO
 window.onload = async () => {
+  // OCULTAR MODALES AL CARGAR
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.style.display = 'none';
+  });
+
   if (token) {
     try {
       const datos = await apiRequest('/api/auth/verify');
