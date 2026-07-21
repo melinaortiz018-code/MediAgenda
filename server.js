@@ -11,10 +11,12 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(cors());
 app.use(express.json());
+
+// Configuración correcta de archivos estáticos para Render y entorno local
 app.use(express.static(path.join(__dirname, 'public')));
 
-// CONEXIÓN A MONGODB ATLAS 
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://<db_username>:A2gGkS925WxgfzKs@mediagenda.eyawg89.mongodb.net/?appName=Mediagenda";
+// CONEXIÓN A MONGODB ATLAS (Asegurando el nombre de la base de datos 'mediagenda')
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://<db_username>:A2gGkS925WxgfzKs@mediagenda.eyawg89.mongodb.net/mediagenda?retryWrites=true&w=majority&appName=Mediagenda";
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("Conectado exitosamente a MongoDB Atlas"))
@@ -125,10 +127,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('obtener_datos_iniciales', async (_, callback) => {
-    const usuarios = await User.find();
-    const citas = await Appointment.find();
-    const horarios = await Schedule.find();
-    callback({ usuarios, citas, horarios });
+    try {
+      const usuarios = await User.find();
+      const citas = await Appointment.find();
+      const horarios = await Schedule.find();
+      callback({ usuarios, citas, horarios });
+    } catch (e) {
+      callback({ usuarios: [], citas: [], horarios: [] });
+    }
   });
 });
 
