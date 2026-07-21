@@ -213,7 +213,6 @@ async function registrarUsuario(e) {
     Swal.fire({ icon: 'error', title: 'Error en el registro', text: error.message });
   }
 }
-
 function cerrarSesion() {
   Swal.fire({
     title: '¿Está seguro?',
@@ -226,17 +225,29 @@ function cerrarSesion() {
     cancelButtonText: 'Cancelar'
   }).then((result) => {
     if (result.isConfirmed) {
+      // Borrar todos los datos de sesión
       token = null;
       usuarioActual = null;
       localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+
+      // Ocultar barra de navegación y todas las vistas internas
       document.getElementById('navbar').style.display = 'none';
       document.querySelectorAll('.vista').forEach(v => v.style.display = 'none');
+
+      // ✅ Mostrar la pantalla principal con selección de roles
       document.getElementById('vistaInicio').style.display = 'flex';
+      document.getElementById('vistaSeleccionRol').style.display = 'flex'; // ESTA LÍNEA FALTABA
+
+      // Reiniciar formularios y estados
       document.getElementById('formLogin').reset();
+      document.getElementById('formRegistro').reset();
       document.getElementById('loginRol').value = '';
       document.getElementById('camposLogin').style.display = 'none';
       document.getElementById('tabsAuth').style.display = 'none';
       document.getElementById('loginHint').textContent = '';
+
+      // Reiniciar estilos de las tarjetas de roles
       document.querySelectorAll('.rol-card').forEach(card => {
         card.style.background = 'var(--blanco)';
         card.style.borderColor = 'var(--borde)';
@@ -297,29 +308,43 @@ function mostrarVista(idVista, btn = null) {
   if (idVista === 'vistaAdminUsuarios') cargarUsuariosAdmin();
   if (idVista === 'vistaAdminEstadisticas') cargarEstadisticas();
 }
-
-// ==================== PACIENTE: AGENDAR CITA ====================
+// Función para cargar médicos según la especialidad seleccionada
 async function cargarMedicosPorEspecialidad() {
-  const especialidad = document.getElementById('citaEspecialidad').value;
-  const selectMedico = document.getElementById('citaMedico');
+  const especialidad = document.getElementById('especialidadCita').value;
+  const selectMedicos = document.getElementById('medicoCita');
   
-  if (!especialidad) {
-    selectMedico.innerHTML = '<option value="">Primero seleccione especialidad</option>';
-    return;
-  }
-  
+  // Limpiar opciones anteriores
+  selectMedicos.innerHTML = '<option value="">Seleccione un médico</option>';
+
+  if (!especialidad || !token) return;
+
   try {
-    const medicos = await apiRequest('/api/medicos');
-    const medicosFiltrados = medicos.filter(m => m.especialidad === especialidad);
-    
-    selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
-    medicosFiltrados.forEach(m => {
-      selectMedico.innerHTML += `<option value="${m._id}">${m.nombres} (${m.genero === 'M' ? 'Dr.' : 'Dra.'})</option>`;
+    const respuesta = await fetch('/api/medicos', {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
+
+    const medicos = await respuesta.json();
+    if (!respuesta.ok) throw new Error(medicos.mensaje);
+
+    // Filtrar solo los médicos de la especialidad elegida
+    const medicosFiltrados = medicos.filter(m => m.especialidad === especialidad);
+
+    // Agregar opciones al selector
+    medicosFiltrados.forEach(medico => {
+      const opcion = document.createElement('option');
+      opcion.value = medico._id;
+      opcion.textContent = `${medico.nombres} - ${medico.especialidad}`;
+      selectMedicos.appendChild(opcion);
+    });
+
   } catch (error) {
+    console.error('Error al cargar médicos:', error);
     Swal.fire('Error', 'No se pudieron cargar los médicos', 'error');
   }
 }
+
+// Asignar el evento al selector de especialidad
+document.getElementById('especialidadCita')?.addEventListener('change', cargarMedicosPorEspecialidad);
 
 async function agendarCita(e) {
   e.preventDefault();
