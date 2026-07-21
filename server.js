@@ -74,13 +74,17 @@ io.on('connection', (socket) => {
 
   socket.on('login', async (data, callback) => {
     try {
+      console.log("Intentando iniciar sesión con CI:", data.ci, "y Password:", data.password);
       const user = await User.findOne({ ci: data.ci, password: data.password });
+      console.log("Resultado de la búsqueda en MongoDB:", user);
+      
       if (user) {
         callback({ success: true, user });
       } else {
         callback({ success: false, error: "Credenciales incorrectas o usuario no encontrado." });
       }
     } catch (e) {
+      console.error("Error en login:", e);
       callback({ success: false, error: "Error en el servidor." });
     }
   });
