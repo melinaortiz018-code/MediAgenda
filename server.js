@@ -31,7 +31,6 @@ const usuarioSchema = new mongoose.Schema({
   activo: { type: Boolean, default: true }
 }, { timestamps: true });
 
-// MODELO DE CITA ACTUALIZADO CON NUEVOS ESTADOS
 const citaSchema = new mongoose.Schema({
   paciente: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
   medico: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
@@ -75,7 +74,55 @@ const auth = (rolesPermitidos = []) => {
 
 // ==================== RUTAS AUTENTICACIÓN ====================
 
-// RUTA DE LOGIN POR ROLES (LA ÚNICA, ELIMINADA LA DUPLICADA)
+// 🆕 RUTA DE REGISTRO DE PACIENTES (LA QUE FALTABA)
+app.post('/api/auth/registro', async (req, res) => {
+  try {
+    const { ci, nombres, correo, celular, direccion, password, confirmPassword } = req.body;
+    
+    console.log('📝 Intento de registro recibido:', { ci, nombres, correo });
+    
+    if (!ci || !nombres || !correo || !password || !confirmPassword)
+      return res.status(400).json({ mensaje: 'Todos los campos obligatorios deben llenarse' });
+    
+    if (password !== confirmPassword)
+      return res.status(400).json({ mensaje: 'Las contraseñas no coinciden' });
+    
+    if (password.length < 6)
+      return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres' });
+    
+    const existeCI = await Usuario.findOne({ ci });
+    if (existeCI) return res.status(400).json({ mensaje: 'Ya existe un usuario con este CI' });
+    
+    const existeCorreo = await Usuario.findOne({ correo });
+    if (existeCorreo) return res.status(400).json({ mensaje: 'Ya existe un usuario con este correo' });
+    
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+    
+    const usuario = new Usuario({
+      ci, nombres, correo, celular, direccion,
+      password: passwordHash, rol: 'paciente'
+    });
+    
+    await usuario.save();
+    const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, JWT_SECRET, { expiresIn: '7d' });
+    
+    console.log('✅ Paciente registrado correctamente:', nombres);
+    
+    res.status(201).json({
+      token,
+      usuario: { 
+        id: usuario._id, ci: usuario.ci, nombres: usuario.nombres, 
+        correo: usuario.correo, rol: usuario.rol 
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error en registro:', error);
+    res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+  }
+});
+
+// RUTA DE LOGIN POR ROLES
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { rol, ci, correo, password } = req.body;
@@ -87,7 +134,6 @@ app.post('/api/auth/login', async (req, res) => {
     
     let usuario;
     
-    // BUSCAR SEGÚN EL ROL EXPLÍCITO
     if (rol === 'paciente') {
       if (!ci || !correo) return res.status(400).json({ mensaje: 'Paciente requiere CI y Correo' });
       usuario = await Usuario.findOne({ ci, correo, rol: 'paciente' });
@@ -157,7 +203,6 @@ app.post('/api/citas', auth(['paciente']), async (req, res) => {
     const [h, m] = hora.split(':');
     fechaCita.setHours(parseInt(h), parseInt(m), 0, 0);
     
-    // VALIDACIÓN ACTUALIZADA: incluye En Consulta como estado ocupado
     const citaDuplicada = await Cita.findOne({
       medico: medicoId,
       fecha: new Date(fecha),
@@ -247,7 +292,6 @@ app.put('/api/citas/:id/reagendar', auth(['paciente', 'medico']), async (req, re
     if (req.usuario.rol === 'paciente' && diferenciaHoras <= 24)
       return res.status(400).json({ mensaje: 'Solo puedes reagendar con más de 24 horas de antelación' });
     
-    // VALIDACIÓN ACTUALIZADA: incluye En Consulta
     const citaDuplicada = await Cita.findOne({
       medico: cita.medico._id,
       fecha: new Date(nuevaFecha),
@@ -414,7 +458,6 @@ app.delete('/api/admin/usuarios/:id', auth(['admin']), async (req, res) => {
   }
 });
 
-// ESTADÍSTICAS ACTUALIZADAS: cuenta Exitosa en vez de Realizada
 app.get('/api/admin/estadisticas', auth(['admin']), async (req, res) => {
   try {
     const totalCitas = await Cita.countDocuments();
@@ -463,9 +506,6 @@ const inicializarDatos = async () => {
     console.log('🔄 INICIANDO REINICIO DE CREDENCIALES...');
     console.log('========================================');
     
-    const totalAntes = await Usuario.countDocuments();
-    console.log(`📊 Total de usuarios ANTES del reinicio: ${totalAntes}`);
-    
     const borrados = await Usuario.deleteMany({ 
       $or: [
         { rol: 'admin' }, 
@@ -476,24 +516,15 @@ const inicializarDatos = async () => {
 
     const saltAdmin = await bcrypt.genSalt(10);
     const passwordHashAdmin = await bcrypt.hash(ADMIN_PREDEFINIDO.password, saltAdmin);
-    const adminCreado = await Usuario.create({ ...ADMIN_PREDEFINIDO, password: passwordHashAdmin });
-    console.log('✅ ADMIN CREADO:');
-    console.log('   📧 Correo:', adminCreado.correo);
-    console.log('   🔑 Contraseña:', ADMIN_PREDEFINIDO.password);
+    await Usuario.create({ ...ADMIN_PREDEFINIDO, password: passwordHashAdmin });
+    console.log('✅ ADMIN CREADO: admin@mediagenda.com / Admin123*');
     
     for (const medico of MEDICOS_PREDEFINIDOS) {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(medico.password, salt);
       await Usuario.create({ ...medico, password: passwordHash });
     }
-    console.log('✅ 8 MÉDICOS CREADOS correctamente');
-    
-    const totalDespues = await Usuario.countDocuments();
-    console.log(`📊 Total de usuarios DESPUÉS: ${totalDespues}`);
-    console.log('========================================');
-    console.log('✅ CREDENCIALES LISTAS:');
-    console.log('   ADMIN: admin@mediagenda.com / Admin123*');
-    console.log('   MEDICOS: CI MED001-MED008 / Medico123*');
+    console.log('✅ 8 MÉDICOS CREADOS: CI MED001-MED008 / Medico123*');
     console.log('========================================');
   } catch (error) {
     console.error('❌ ERROR GRAVE AL INICIALIZAR DATOS:', error);
@@ -504,13 +535,8 @@ const inicializarDatos = async () => {
 const conectarDB = async () => {
   try {
     const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/';
-    const opcionesConexion = {
-      dbName: 'MediAgenda'
-    };
-    
-    await mongoose.connect(mongoURI, opcionesConexion);
+    await mongoose.connect(mongoURI, { dbName: 'MediAgenda' });
     console.log('🔌 Conectado a MongoDB exitosamente en BD: MediAgenda');
-    
     await inicializarDatos();
   } catch (error) {
     console.error('❌ Error FATAL de conexión MongoDB:', error);
