@@ -135,36 +135,37 @@ app.post('/api/auth/login', async (req, res) => {
 // RUTA DE LOGIN CORREGIDA: FLEXIBLE POR ROLES
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { ci, correo, password } = req.body;
+    const { rol, ci, correo, password } = req.body;
     
-    if (!password)
-      return res.status(400).json({ mensaje: 'La contraseña es obligatoria' });
+    console.log('🔐 Intento login | Rol:', rol, '| CI:', `[${ci}]`, '| Correo:', `[${correo}]`);
+    
+    if (!password) return res.status(400).json({ mensaje: 'Contraseña obligatoria' });
+    if (!rol) return res.status(400).json({ mensaje: 'Seleccione un tipo de cuenta' });
     
     let usuario;
     
-    // Caso 1: Paciente (CI + Correo)
-    if (ci && correo) {
-      usuario = await Usuario.findOne({ ci, correo });
+    // BUSCAR SEGÚN EL ROL EXPLÍCITO (sin adivinar)
+    if (rol === 'paciente') {
+      if (!ci || !correo) return res.status(400).json({ mensaje: 'Paciente requiere CI y Correo' });
+      usuario = await Usuario.findOne({ ci, correo, rol: 'paciente' });
+    } 
+    else if (rol === 'medico') {
+      if (!ci) return res.status(400).json({ mensaje: 'Médico requiere CI' });
+      usuario = await Usuario.findOne({ ci, rol: 'medico' });
+    } 
+    else if (rol === 'admin') {
+      if (!correo) return res.status(400).json({ mensaje: 'Admin requiere correo' });
+      usuario = await Usuario.findOne({ correo, rol: 'admin' });
     }
-    // Caso 2: Médico (solo CI)
-    else if (ci && !correo) {
-      usuario = await Usuario.findOne({ ci });
-    }
-    // Caso 3: Administrador (solo Correo)
-    else if (!ci && correo) {
-      usuario = await Usuario.findOne({ correo });
-    }
-    // Caso 4: Faltan datos
-    else {
-      return res.status(400).json({ mensaje: 'Ingrese sus credenciales correctamente' });
-    }
+    
+    console.log('   ✅ Usuario encontrado:', usuario ? `${usuario.nombres} (${usuario.rol})` : 'NO ENCONTRADO');
     
     if (!usuario) return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
     
-    const passwordValido = await bcrypt.compare(password, usuario.password);
-    if (!passwordValido) return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
+    const passValida = await bcrypt.compare(password, usuario.password);
+    console.log('   🔑 Contraseña válida:', passValida);
     
-    if (!usuario.activo) return res.status(400).json({ mensaje: 'Cuenta desactivada' });
+    if (!passValida) return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
     
     const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, JWT_SECRET, { expiresIn: '7d' });
     
@@ -177,10 +178,10 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+    console.error('❌ Error login:', error);
+    res.status(500).json({ mensaje: 'Error en el servidor' });
   }
 });
-
 // NUEVA RUTA: VERIFICAR TOKEN (MANTENER SESIÓN)
 app.get('/api/auth/verify', auth(), async (req, res) => {
   try {
