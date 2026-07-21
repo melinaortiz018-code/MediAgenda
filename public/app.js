@@ -73,7 +73,6 @@ function seleccionarRol(rolElegido, elemento) {
   // Asignar rol
   loginRol.value = rolElegido;
   camposLogin.style.display = 'block';
-  tabsAuth.style.display = 'none';
   document.getElementById('formRegistro').style.display = 'none';
   document.getElementById('formLogin').style.display = 'block';
 
@@ -86,6 +85,7 @@ function seleccionarRol(rolElegido, elemento) {
 
   // Configurar según rol
   if (rolElegido === 'paciente') {
+    // ✅ Mostrar pestañas de registro solo para pacientes
     tabsAuth.style.display = 'flex';
     grupoCI.style.display = 'block';
     grupoCorreo.style.display = 'block';
@@ -94,18 +94,22 @@ function seleccionarRol(rolElegido, elemento) {
     hint.textContent = '👤 Pacientes: Ingrese su CI y Correo, o regístrese';
   } 
   else if (rolElegido === 'medico') {
+    // ✅ Ocultar pestañas y correo para médicos
+    tabsAuth.style.display = 'none';
     grupoCI.style.display = 'block';
     grupoCorreo.style.display = 'none';
     ciInput.required = true;
     correoInput.required = false;
-    hint.textContent = '🩺 Médicos: Ingrese su CI (ej: MED001)';
+    hint.textContent = '🩺 Médicos: Ingrese su CI (ej: MED001) y contraseña';
   } 
   else if (rolElegido === 'admin') {
+    // ✅ Ocultar pestañas y CI para administrador
+    tabsAuth.style.display = 'none';
     grupoCI.style.display = 'none';
     grupoCorreo.style.display = 'block';
     ciInput.required = false;
     correoInput.required = true;
-    hint.textContent = '🛡️ Administrador: Ingrese su correo';
+    hint.textContent = '🛡️ Administrador: Ingrese su correo y contraseña';
   }
 }
 
@@ -809,7 +813,12 @@ window.onload = async () => {
   document.getElementById('vistaInicio').style.display = 'flex';
   document.getElementById('camposLogin').style.display = 'none';
   document.getElementById('tabsAuth').style.display = 'none';
-};
+  document.addEventListener('DOMContentLoaded', () => {
+  // Asegurar que al inicio los campos estén ocultos
+  document.getElementById('camposLogin').style.display = 'none';
+  document.getElementById('tabsAuth').style.display = 'none';
+});
+
 
 window.onclick = (e) => {
   document.querySelectorAll('.modal').forEach(modal => {
