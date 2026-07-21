@@ -1,466 +1,568 @@
-const socket = io();
+let usuarioActual = null;
+let token = localStorage.getItem('token') || null;
+const API_BASE = '';
 
-class MediAgendaApp {
-    constructor() {
-        this.currentUser = null;
-        this.usuarios = [];
-        this.citas = [];
-        this.horarios = [];
-        this.accionModalData = null;
-        this.initListeners();
-    }
-
-    initListeners() {
-        socket.on('connect', () => {
-            socket.emit('obtener_datos_iniciales', {}, (data) => {
-                this.usuarios = data.usuarios;
-                this.citas = data.citas;
-                this.horarios = data.horarios;
-                this.poblarDoctoresDemo();
-                if (this.currentUser) this.actualizarVistasDashboard();
-            });
-        });
-
-        socket.on('citas_actualizadas', () => {
-            socket.emit('obtener_datos_iniciales', {}, (data) => {
-                this.citas = data.citas;
-                if (this.currentUser) this.actualizarVistasDashboard();
-            });
-        });
-
-        socket.on('actualizar_usuarios', () => {
-            socket.emit('obtener_datos_iniciales', {}, (data) => {
-                this.usuarios = data.usuarios;
-                this.poblarDoctoresDemo();
-            });
-        });
-    }
-
-    cambiarVista(vistaId) {
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        const targetView = document.getElementById(vistaId);
-        if (targetView) {
-            targetView.classList.add('active');
-        } else {
-            console.error(`No se encontró la vista con ID: ${vistaId}`);
-        }
-    }
-
-    // FUNCIÓN RECUPERADA PARA QUE COJAN LOS CLICS DE LOS ROLES
-    irARol(rol) {
-        const rolLimpio = rol ? rol.toLowerCase().trim() : '';
-        if (rolLimpio === 'paciente') {
-            this.cambiarVista('view-auth-paciente');
-        } else if (rolLimpio === 'medico' || rolLimpio === 'médico') {
-            this.cambiarVista('view-auth-medico');
-            this.poblarDoctoresDemo();
-        } else if (rolLimpio === 'admin') {
-            this.cambiarVista('view-auth-admin');
-        } else {
-            console.warn('Rol desconocido:', rol);
-        }
-    }
-
-    volverHome() {
-        this.cambiarVista('view-home');
-    }
-
-    switchTab(tab, e) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        if (tab === 'login') {
-            if (e && e.target) e.target.classList.add('active');
-            const formLogin = document.getElementById('form-login-paciente');
-            const formReg = document.getElementById('form-reg-paciente');
-            if (formLogin) formLogin.style.display = 'flex';
-            if (formReg) formReg.style.display = 'none';
-        } else {
-            if (e && e.target) e.target.classList.add('active');
-            const formLogin = document.getElementById('form-login-paciente');
-            const formReg = document.getElementById('form-reg-paciente');
-            if (formLogin) formLogin.style.display = 'none';
-            if (formReg) formReg.style.display = 'flex';
-        }
-    }
-
-    togglePass(id, icon) {
-        const input = document.getElementById(id);
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.textContent = '🙈';
-        } else {
-            input.type = 'password';
-            icon.textContent = '👁️';
-        }
-    }
-
-    // PACIENTE
-    registrarPaciente(e) {
-        e.preventDefault();
-        const pass = document.getElementById('reg-pass').value;
-        const confirm = document.getElementById('reg-pass-confirm').value;
-
-        if (pass !== confirm) {
-            alert('Las contraseñas no coinciden.');
-            return;
-        }
-
-        const data = {
-            ci: document.getElementById('reg-ci').value.trim(),
-            nombre: document.getElementById('reg-nombre').value.trim(),
-            email: document.getElementById('reg-email').value.trim(),
-            telefono: document.getElementById('reg-tel').value.trim(),
-            password: pass,
-            rol: 'paciente'
-        };
-
-        socket.emit('registrar_usuario', data, (res) => {
-            if (res.success) {
-                alert('¡Registro exitoso! Ya puedes iniciar sesión.');
-                
-                // Limpiar el formulario de registro
-                e.target.reset();
-
-                // Forzar el cambio visual a la pestaña de Iniciar Sesión de forma segura
-                const botonesTabs = document.querySelectorAll('.tab-btn');
-                if (botonesTabs.length > 0) {
-                    botonesTabs.forEach(b => b.classList.remove('active'));
-                    botonesTabs[0].classList.add('active'); // Selecciona el botón de login
-                }
-
-                const formLogin = document.getElementById('form-login-paciente');
-                const formReg = document.getElementById('form-reg-paciente');
-                if (formLogin) formLogin.style.display = 'flex';
-                if (formReg) formReg.style.display = 'none';
-
-            } else {
-                alert(res.error);
-            }
-        });
-    }
-    loginPaciente(e) {
-        e.preventDefault();
-        const data = {
-            ci: document.getElementById('login-ci').value.trim(),
-            email: document.getElementById('login-email').value.trim(),
-            password: document.getElementById('login-pass').value
-        };
-
-        socket.emit('login', data, (res) => {
-            if (res.success && res.user.rol.toLowerCase().trim() === 'paciente') {
-                this.currentUser = res.user;
-                document.getElementById('lbl-nombre-paciente').textContent = this.currentUser.nombre;
-                this.llenarPerfilPaciente();
-                this.cambiarVista('view-dashboard-paciente');
-                this.actualizarVistasDashboard();
-            } else {
-                alert('Credenciales incorrectas o el usuario no es Paciente.');
-            }
-        });
-    }
-
-    filtrarDoctores() {
-        const esp = document.getElementById('cita-especialidad').value;
-        const selectMedico = document.getElementById('cita-medico');
-        selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
-
-        const medicosFiltrados = this.usuarios.filter(u => u.rol && u.rol.toLowerCase().trim() === 'medico' && u.especialidad === esp);
-        medicosFiltrados.forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.ci;
-            opt.textContent = m.nombre;
-            selectMedico.appendChild(opt);
-        });
-    }
-
-    agendarCita(e) {
-        e.preventDefault();
-        const medicoCI = document.getElementById('cita-medico').value;
-        const medicoObj = this.usuarios.find(u => u.ci === medicoCI);
-
-        const data = {
-            pacienteCI: this.currentUser.ci,
-            pacienteNombre: this.currentUser.nombre,
-            especialidad: document.getElementById('cita-especialidad').value,
-            medicoId: medicoCI,
-            medicoNombre: medicoObj ? medicoObj.nombre : 'Dr.',
-            fecha: document.getElementById('cita-fecha').value,
-            hora: document.getElementById('cita-hora').value,
-            motivo: document.getElementById('cita-motivo').value,
-            estado: 'Pendiente'
-        };
-
-        socket.emit('crear_cita', data, (res) => {
-            if (res.success) {
-                alert('¡Cita agendada con éxito!');
-                e.target.reset();
-            } else {
-                alert(res.error);
-            }
-        });
-    }
-
-    llenarPerfilPaciente() {
-        document.getElementById('perfil-nombre').value = this.currentUser.nombre;
-        document.getElementById('perfil-ci').value = this.currentUser.ci;
-        document.getElementById('perfil-email').value = this.currentUser.email;
-        document.getElementById('perfil-tel').value = this.currentUser.telefono || '';
-    }
-
-    guardarPerfil(e) {
-        e.preventDefault();
-        this.currentUser.email = document.getElementById('perfil-email').value;
-        this.currentUser.telefono = document.getElementById('perfil-tel').value;
-        alert('Perfil actualizado correctamente.');
-    }
-
-    // MÉDICO
-    poblarDoctoresDemo() {
-        const select = document.getElementById('select-medico-demo');
-        if (!select) return;
-        select.innerHTML = '<option value="">Seleccione médico de prueba...</option>';
-        const medicos = this.usuarios.filter(u => u.rol && (u.rol.toLowerCase().trim() === 'medico' || u.rol.toLowerCase().trim() === 'médico'));
-        medicos.forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.ci;
-            opt.textContent = `${m.nombre} (${m.especialidad})`;
-            select.appendChild(opt);
-        });
-    }
-
-    autofillMedico(selectElement) {
-        const selectedOption = selectElement.options[selectElement.selectedIndex];
-        const ci = selectedOption.value;
-        const medicoEncontrado = this.usuarios.find(u => u.ci === ci);
-        const password = medicoEncontrado ? medicoEncontrado.password : 'medico123';
-
-        const inputCi = document.getElementById('medico-ci-login');
-        const inputPass = document.getElementById('medico-pass-login');
-
-        if (inputCi && ci) inputCi.value = ci;
-        if (inputPass && password) inputPass.value = password;
-    }
-
-    loginMedico(e) {
-        e.preventDefault();
-        
-        const inputCi = document.getElementById('medico-ci-login');
-        const inputPass = document.getElementById('medico-pass-login');
-
-        const data = {
-            ci: inputCi ? inputCi.value.trim() : '',
-            password: inputPass ? inputPass.value : ''
-        };
-
-        socket.emit('login', data, (res) => {
-            if (res.success) {
-                const rolUser = res.user.rol ? res.user.rol.toLowerCase().trim() : '';
-                if (rolUser === 'medico' || rolUser === 'médico') {
-                    this.currentUser = res.user;
-                    document.getElementById('lbl-nombre-medico').textContent = this.currentUser.nombre;
-                    this.cambiarVista('view-dashboard-medico');
-                    this.actualizarVistasDashboard();
-                } else {
-                    alert('Este usuario no tiene el rol de médico autorizado.');
-                }
-            } else {
-                alert(res.error || 'Credenciales de médico incorrectas.');
-            }
-        });
-    }
-
-    guardarHorarioMedico(e) {
-        e.preventDefault();
-        const fecha = document.getElementById('horario-fecha').value;
-        const horasStr = document.getElementById('horario-horas').value;
-        const horasDisponibles = horasStr.split(',').map(h => h.trim());
-
-        socket.emit('guardar_horario', {
-            medicoId: this.currentUser.ci,
-            fecha,
-            horasDisponibles
-        });
-        alert('Turnos y horarios configurados/liberados exitosamente.');
-    }
-
-    cambiarEstadoCita(id, estado) {
-        const receta = prompt("Ingrese la receta u observaciones médicas:", "");
-        if (receta !== null) {
-            socket.emit('actualizar_estado_cita', { id, estado, receta });
-        }
-    }
-
-    // ADMIN
-    loginAdmin(e) {
-        e.preventDefault();
-        const user = document.getElementById('admin-user').value;
-        const pass = document.getElementById('admin-pass').value;
-
-        if (user === 'admin' && pass === 'admin123') {
-            this.currentUser = { rol: 'admin', nombre: 'Administrador' };
-            this.cambiarVista('view-dashboard-admin');
-            this.actualizarVistasDashboard();
-        } else {
-            alert('Credenciales de administrador incorrectas.');
-        }
-    }
-
-    registrarMedico(e) {
-        e.preventDefault();
-        const data = {
-            ci: document.getElementById('admin-med-ci').value.trim(),
-            nombre: document.getElementById('admin-med-nombre').value.trim(),
-            especialidad: document.getElementById('admin-med-esp').value.trim(),
-            email: document.getElementById('admin-med-email').value.trim(),
-            password: document.getElementById('admin-med-pass').value,
-            rol: 'medico'
-        };
-
-        socket.emit('registrar_usuario', data, (res) => {
-            if (res.success) {
-                alert('Médico registrado exitosamente en la nube.');
-                e.target.reset();
-            } else {
-                alert(res.error);
-            }
-        });
-    }
-
-    // MODAL UNIFICADO PARA REAGENDAR / CANCELAR
-    abrirModalAccion(id, tipo) {
-        this.accionModalData = { id, tipo };
-        const modal = document.getElementById('modal-motivo');
-        const sub = document.getElementById('modal-subtext');
-        if (tipo === 'Cancelar') {
-            sub.textContent = "Indique la razón de la cancelación de su cita:";
-        } else {
-            sub.textContent = "Indique la nueva fecha/hora y motivo de reprogramación:";
-        }
-        document.getElementById('texto-motivo-modal').value = '';
-        modal.style.display = 'flex';
-    }
-
-    cerrarModal() {
-        document.getElementById('modal-motivo').style.display = 'none';
-        this.accionModalData = null;
-    }
-
-    ejecutarAccionModal() {
-        const motivoCambio = document.getElementById('texto-motivo-modal').value;
-        if (!motivoCambio) {
-            alert('Debe ingresar un motivo obligatorio.');
-            return;
-        }
-
-        const { id, tipo } = this.accionModalData;
-        const nuevoEstado = tipo === 'Cancelar' ? 'Cancelada' : 'Reprogramada';
-
-        socket.emit('actualizar_estado_cita', {
-            id,
-            estado: nuevoEstado,
-            motivoCambio
-        });
-
-        this.cerrarModal();
-        alert(`Cita ${nuevoEstado.toLowerCase()} exitosamente.`);
-    }
-
-    // ACTUALIZACIÓN DE VISTAS Y RENDERIZADO
-    actualizarVistasDashboard() {
-        if (this.currentUser.rol === 'paciente') {
-            const tbody = document.getElementById('tabla-citas-paciente');
-            if (tbody) {
-                tbody.innerHTML = '';
-                const misCitas = this.citas.filter(c => c.pacienteCI === this.currentUser.ci);
-
-                misCitas.forEach(c => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${c.medicoNombre}</td>
-                        <td>${c.especialidad}</td>
-                        <td>${c.fecha} - ${c.hora}</td>
-                        <td><b>${c.estado}</b></td>
-                        <td>
-                            ${c.estado === 'Pendiente' || c.estado === 'Confirmada' ? `
-                                <button class="btn-glossy btn-warning-bright" onclick="app.abrirModalAccion('${c._id}', 'Reprogramar')">Reprogramar</button>
-                                <button class="btn-glossy btn-danger" onclick="app.abrirModalAccion('${c._id}', 'Cancelar')">Cancelar</button>
-                            ` : `<span>Sin acciones</span>`}
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        if (this.currentUser.rol === 'medico') {
-            const tbody = document.getElementById('tabla-citas-medico');
-            if (tbody) {
-                tbody.innerHTML = '';
-                const misCitasMed = this.citas.filter(c => c.medicoId === this.currentUser.ci);
-
-                misCitasMed.forEach(c => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${c.pacienteNombre}</td>
-                        <td>${c.motivo}</td>
-                        <td>${c.fecha} - ${c.hora}</td>
-                        <td><b>${c.estado}</b></td>
-                        <td>${c.receta || 'Sin receta aún'}</td>
-                        <td>
-                            <button class="btn-glossy btn-success-bright" onclick="app.cambiarEstadoCita('${c._id}', 'Confirmada')">Confirmar</button>
-                            <button class="btn-glossy btn-primary-bright" onclick="app.cambiarEstadoCita('${c._id}', 'En curso')">En curso</button>
-                            <button class="btn-glossy btn-success-bright" onclick="app.cambiarEstadoCita('${c._id}', 'Atendida')">Atendida</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        if (this.currentUser.rol === 'admin') {
-            const total = this.citas.length;
-            const exitosas = this.citas.filter(c => c.estado === 'Atendida').length;
-            const reagendadas = this.citas.filter(c => c.estado === 'Reprogramada').length;
-            const canceladas = this.citas.filter(c => c.estado === 'Cancelada').length;
-
-            const elTotal = document.getElementById('stat-total');
-            const elExitosas = document.getElementById('stat-exitosas');
-            const elReagendadas = document.getElementById('stat-reagendadas');
-            const elCanceladas = document.getElementById('stat-canceladas');
-
-            if (elTotal) elTotal.textContent = total;
-            if (elExitosas) elExitosas.textContent = exitosas;
-            if (elReagendadas) elReagendadas.textContent = reagendadas;
-            if (elCanceladas) elCanceladas.textContent = canceladas;
-
-            const tbody = document.getElementById('tabla-usuarios-admin');
-            if (tbody) {
-                tbody.innerHTML = '';
-                this.usuarios.forEach(u => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${u.ci}</td>
-                        <td>${u.nombre}</td>
-                        <td><b>${u.rol.toUpperCase()}</b></td>
-                        <td>
-                            <button class="btn-glossy btn-danger" onclick="app.eliminarUsuario('${u.ci}')">Eliminar</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-    }
-
-    eliminarUsuario(ci) {
-        if (confirm("¿Estás seguro de eliminar este usuario?")) {
-            alert("Usuario eliminado de la base de datos.");
-        }
-    }
-
-    logout() {
-        this.currentUser = null;
-        this.volverHome();
-    }
+// ==================== UTILIDADES ====================
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁️' : '👁️‍🗨️';
 }
 
-const app = new MediAgendaApp();
+function cambiarTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('formLogin').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('formRegistro').style.display = tab === 'registro' ? 'block' : 'none';
+  event.target.classList.add('active');
+}
+
+function cerrarModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function formatearFecha(fechaStr) {
+  const fecha = new Date(fechaStr);
+  return fecha.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function verificarTiempoRestante(fechaCita, horaCita) {
+  const fecha = new Date(fechaCita);
+  const [h, m] = horaCita.split(':');
+  fecha.setHours(parseInt(h), parseInt(m), 0, 0);
+  const ahora = new Date();
+  const diferencia = (fecha - ahora) / (1000 * 60 * 60);
+  return diferencia > 24;
+}
+
+// ==================== PETICIONES API ====================
+async function apiRequest(endpoint, method = 'GET', body = null) {
+  const opciones = {
+    method,
+    headers: { 'Content-Type': 'application/json' }
+  };
+  if (token) opciones.headers['Authorization'] = `Bearer ${token}`;
+  if (body) opciones.body = JSON.stringify(body);
+  
+  const respuesta = await fetch(`${API_BASE}${endpoint}`, opciones);
+  const datos = await respuesta.json();
+  
+  if (!respuesta.ok) {
+    throw new Error(datos.mensaje || 'Error en la solicitud');
+  }
+  return datos;
+}
+
+// ==================== AUTENTICACIÓN ====================
+async function iniciarSesion(e) {
+  e.preventDefault();
+  try {
+    const datos = await apiRequest('/api/auth/login', 'POST', {
+      ci: document.getElementById('loginCi').value,
+      correo: document.getElementById('loginCorreo').value,
+      password: document.getElementById('loginPassword').value
+    });
+    
+    token = datos.token;
+    usuarioActual = datos.usuario;
+    localStorage.setItem('token', token);
+    
+    Swal.fire({ icon: 'success', title: '¡Bienvenido!', text: `Hola ${datos.usuario.nombres}`, timer: 1500, showConfirmButton: false });
+    
+    cargarInterfazSegunRol();
+  } catch (error) {
+    Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+  }
+}
+
+async function registrarUsuario(e) {
+  e.preventDefault();
+  try {
+    const datos = await apiRequest('/api/auth/registro', 'POST', {
+      ci: document.getElementById('regCi').value,
+      nombres: document.getElementById('regNombres').value,
+      correo: document.getElementById('regCorreo').value,
+      celular: document.getElementById('regCelular').value,
+      direccion: document.getElementById('regDireccion').value,
+      password: document.getElementById('regPassword').value,
+      confirmPassword: document.getElementById('regConfirmPassword').value
+    });
+    
+    token = datos.token;
+    usuarioActual = datos.usuario;
+    localStorage.setItem('token', token);
+    
+    Swal.fire({ icon: 'success', title: '¡Registro Exitoso!', text: 'Tu cuenta ha sido creada correctamente', timer: 1500, showConfirmButton: false });
+    
+    cargarInterfazSegunRol();
+  } catch (error) {
+    Swal.fire({ icon: 'error', title: 'Error en el registro', text: error.message });
+  }
+}
+
+function cerrarSesion() {
+  Swal.fire({
+    title: '¿Está seguro?',
+    text: '¿Desea cerrar su sesión?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#9333EA',
+    cancelButtonColor: '#EF4444',
+    confirmButtonText: 'Sí, cerrar sesión',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      token = null;
+      usuarioActual = null;
+      localStorage.removeItem('token');
+      document.getElementById('navbar').style.display = 'none';
+      document.querySelectorAll('.vista').forEach(v => v.style.display = 'none');
+      document.getElementById('vistaInicio').style.display = 'flex';
+      document.getElementById('formLogin').reset();
+    }
+  });
+}
+
+// ==================== CARGAR INTERFAZ ====================
+function cargarInterfazSegunRol() {
+  document.getElementById('navbar').style.display = 'flex';
+  document.getElementById('userName').textContent = usuarioActual.nombres;
+  document.querySelectorAll('.vista').forEach(v => v.style.display = 'none');
+  
+  const navMenu = document.getElementById('navMenu');
+  navMenu.innerHTML = '';
+  
+  if (usuarioActual.rol === 'paciente') {
+    navMenu.innerHTML = `
+      <button class="active" onclick="mostrarVista('vistaAgendar', this)">Agendar Cita</button>
+      <button onclick="mostrarVista('vistaMisCitas', this)">Mis Citas</button>
+      <button onclick="mostrarVista('vistaPerfil', this)">Mi Perfil</button>
+    `;
+    mostrarVista('vistaAgendar');
+    document.getElementById('citaFecha').min = new Date().toISOString().split('T')[0];
+  } else if (usuarioActual.rol === 'medico') {
+    navMenu.innerHTML = `
+      <button class="active" onclick="mostrarVista('vistaMedicoCitas', this)">Mis Citas</button>
+    `;
+    mostrarVista('vistaMedicoCitas');
+  } else if (usuarioActual.rol === 'admin') {
+    navMenu.innerHTML = `
+      <button class="active" onclick="mostrarVista('vistaAdminUsuarios', this)">Gestión Usuarios</button>
+      <button onclick="mostrarVista('vistaAdminEstadisticas', this)">Estadísticas</button>
+    `;
+    mostrarVista('vistaAdminUsuarios');
+  }
+}
+
+function mostrarVista(idVista, btn = null) {
+  document.querySelectorAll('.vista').forEach(v => v.style.display = 'none');
+  document.getElementById(idVista).style.display = 'block';
+  
+  if (btn) {
+    document.querySelectorAll('.nav-menu button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  
+  if (idVista === 'vistaMisCitas') cargarMisCitas();
+  if (idVista === 'vistaPerfil') cargarPerfil();
+  if (idVista === 'vistaMedicoCitas') cargarCitasMedico('hoy', document.querySelector('.filtro-btn'));
+  if (idVista === 'vistaAdminUsuarios') cargarUsuariosAdmin();
+  if (idVista === 'vistaAdminEstadisticas') cargarEstadisticas();
+}
+
+// ==================== PACIENTE: AGENDAR CITA ====================
+async function cargarMedicosPorEspecialidad() {
+  const especialidad = document.getElementById('citaEspecialidad').value;
+  const selectMedico = document.getElementById('citaMedico');
+  
+  if (!especialidad) {
+    selectMedico.innerHTML = '<option value="">Primero seleccione especialidad</option>';
+    return;
+  }
+  
+  try {
+    const medicos = await apiRequest('/api/medicos');
+    const medicosFiltrados = medicos.filter(m => m.especialidad === especialidad);
+    
+    selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
+    medicosFiltrados.forEach(m => {
+      selectMedico.innerHTML += `<option value="${m._id}">${m.nombres} (${m.genero === 'M' ? 'Dr.' : 'Dra.'})</option>`;
+    });
+  } catch (error) {
+    Swal.fire('Error', 'No se pudieron cargar los médicos', 'error');
+  }
+}
+
+async function agendarCita(e) {
+  e.preventDefault();
+  try {
+    await apiRequest('/api/citas', 'POST', {
+      medicoId: document.getElementById('citaMedico').value,
+      especialidad: document.getElementById('citaEspecialidad').value,
+      fecha: document.getElementById('citaFecha').value,
+      hora: document.getElementById('citaHora').value,
+      motivo: document.getElementById('citaMotivo').value
+    });
+    
+    Swal.fire({ icon: 'success', title: '¡Cita Agendada!', text: 'Tu cita ha sido reservada correctamente' });
+    e.target.reset();
+    document.getElementById('citaMedico').innerHTML = '<option value="">Primero seleccione especialidad</option>';
+  } catch (error) {
+    Swal.fire({ icon: 'error', title: 'No se pudo agendar', text: error.message });
+  }
+}
+
+// ==================== PACIENTE: MIS CITAS ====================
+async function cargarMisCitas() {
+  try {
+    const citas = await apiRequest('/api/mis-citas');
+    const contenedor = document.getElementById('listaMisCitas');
+    
+    if (citas.length === 0) {
+      contenedor.innerHTML = '<div class="cita-card"><p style="text-align:center;color:var(--texto-claro);">No tienes citas agendadas aún</p></div>';
+      return;
+    }
+    
+    contenedor.innerHTML = citas.map(cita => {
+      const puedeModificar = verificarTiempoRestante(cita.fecha, cita.hora) && ['Pendiente', 'Confirmada', 'Reagendada'].includes(cita.estado);
+      return `
+        <div class="cita-card ${cita.estado.toLowerCase()}">
+          <div class="cita-header">
+            <span class="cita-especialidad">${cita.especialidad}</span>
+            <span class="cita-estado estado-${cita.estado}">${cita.estado}</span>
+          </div>
+          <div class="cita-info">
+            <p><strong>👨‍⚕️ Médico:</strong> ${cita.medico.nombres}</p>
+            <p><strong>📅 Fecha:</strong> ${formatearFecha(cita.fecha)}</p>
+            <p><strong>⏰ Hora:</strong> ${cita.hora}</p>
+            <p><strong>📝 Motivo:</strong> ${cita.motivo}</p>
+            ${cita.recetaObservaciones ? `<p><strong>💊 Receta/Obs:</strong> ${cita.recetaObservaciones}</p>` : ''}
+          </div>
+          <div class="cita-acciones">
+            <button class="btn-reagendar" onclick="abrirModalReagendar('${cita._id}')" ${!puedeModificar ? 'disabled' : ''}>
+              ${!puedeModificar && !['Pendiente', 'Confirmada', 'Reagendada'].includes(cita.estado) ? 'No disponible' : 'Reagendar'}
+            </button>
+            <button class="btn-cancelar" onclick="cancelarCita('${cita._id}')" ${!puedeModificar ? 'disabled' : ''}>
+              ${!puedeModificar && !['Pendiente', 'Confirmada', 'Reagendada'].includes(cita.estado) ? 'No disponible' : 'Cancelar'}
+            </button>
+          </div>
+          ${!puedeModificar && ['Pendiente', 'Confirmada', 'Reagendada'].includes(cita.estado) ? 
+            '<p style="margin-top:0.8rem;font-size:0.8rem;color:var(--rojo);text-align:center;">⚠️ Menos de 24h para la cita - No se puede modificar</p>' : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    Swal.fire('Error', 'No se pudieron cargar las citas', 'error');
+  }
+}
+
+async function cancelarCita(idCita) {
+  const confirmacion = await Swal.fire({
+    title: '¿Está seguro?',
+    text: '¿Desea cancelar esta cita? Esta acción no se puede deshacer.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#EF4444',
+    cancelButtonColor: '#9333EA',
+    confirmButtonText: 'Sí, cancelar cita',
+    cancelButtonText: 'Volver'
+  });
+  
+  if (confirmacion.isConfirmed) {
+    try {
+      await apiRequest(`/api/citas/${idCita}/cancelar`, 'PUT');
+      Swal.fire('Cancelada', 'La cita ha sido cancelada exitosamente', 'success');
+      cargarMisCitas();
+    } catch (error) {
+      Swal.fire('Error', error.message, 'error');
+    }
+  }
+}
+
+function abrirModalReagendar(idCita) {
+  document.getElementById('reagendarCitaId').value = idCita;
+  document.getElementById('nuevaFecha').min = new Date().toISOString().split('T')[0];
+  document.getElementById('modalReagendar').style.display = 'flex';
+}
+
+async function confirmarReagendar() {
+  const idCita = document.getElementById('reagendarCitaId').value;
+  const nuevaFecha = document.getElementById('nuevaFecha').value;
+  const nuevaHora = document.getElementById('nuevaHora').value;
+  
+  if (!nuevaFecha || !nuevaHora) {
+    Swal.fire('Aviso', 'Seleccione nueva fecha y hora', 'warning');
+    return;
+  }
+  
+  const confirmacion = await Swal.fire({
+    title: 'Confirmar reagendamiento',
+    text: `¿Desea cambiar la cita para el ${formatearFecha(nuevaFecha)} a las ${nuevaHora}?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#FACC15',
+    cancelButtonColor: '#9333EA',
+    confirmButtonText: 'Sí, reagendar'
+  });
+  
+  if (confirmacion.isConfirmed) {
+    try {
+      await apiRequest(`/api/citas/${idCita}/reagendar`, 'PUT', { nuevaFecha, nuevaHora });
+      Swal.fire('Reagendada', 'La cita ha sido actualizada exitosamente', 'success');
+      cerrarModal('modalReagendar');
+      cargarMisCitas();
+    } catch (error) {
+      Swal.fire('Error', error.message, 'error');
+    }
+  }
+}
+
+// ==================== PACIENTE: PERFIL ====================
+function cargarPerfil() {
+  document.getElementById('perfilCi').value = usuarioActual.ci;
+  document.getElementById('perfilNombres').value = usuarioActual.nombres;
+  document.getElementById('perfilCorreo').value = usuarioActual.correo;
+  document.getElementById('perfilCelular').value = usuarioActual.celular || '';
+  document.getElementById('perfilDireccion').value = usuarioActual.direccion || '';
+}
+
+async function actualizarPerfil(e) {
+  e.preventDefault();
+  try {
+    const datos = await apiRequest('/api/perfil', 'PUT', {
+      correo: document.getElementById('perfilCorreo').value,
+      celular: document.getElementById('perfilCelular').value,
+      direccion: document.getElementById('perfilDireccion').value
+    });
+    usuarioActual = { ...usuarioActual, ...datos.usuario };
+    Swal.fire('Actualizado', 'Tu perfil ha sido actualizado correctamente', 'success');
+  } catch (error) {
+    Swal.fire('Error', error.message, 'error');
+  }
+}
+
+// ==================== MÉDICO: PANEL CITAS ====================
+async function cargarCitasMedico(rango, btn) {
+  if (btn) {
+    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  
+  try {
+    const citas = await apiRequest(`/api/medico/citas?rango=${rango}`);
+    const contenedor = document.getElementById('listaCitasMedico');
+    
+    if (citas.length === 0) {
+      contenedor.innerHTML = '<div class="cita-card"><p style="text-align:center;color:var(--texto-claro);">No hay citas para este período</p></div>';
+      return;
+    }
+    
+    contenedor.innerHTML = citas.map(cita => `
+      <div class="cita-card ${cita.estado.toLowerCase()}">
+        <div class="cita-header">
+          <span class="cita-especialidad">${cita.especialidad}</span>
+          <span class="cita-estado estado-${cita.estado}">${cita.estado}</span>
+        </div>
+        <div class="cita-info">
+          <p><strong>👤 Paciente:</strong> ${cita.paciente.nombres}</p>
+          <p><strong>🆔 CI:</strong> ${cita.paciente.ci}</p>
+          <p><strong>📧 Correo:</strong> ${cita.paciente.correo}</p>
+          <p><strong>📱 Celular:</strong> ${cita.paciente.celular || 'No registrado'}</p>
+          <p><strong>📍 Dirección:</strong> ${cita.paciente.direccion || 'No registrada'}</p>
+          <p><strong>📅 Fecha:</strong> ${formatearFecha(cita.fecha)}</p>
+          <p><strong>⏰ Hora:</strong> ${cita.hora}</p>
+          <p><strong>📝 Motivo:</strong> ${cita.motivo}</p>
+          ${cita.recetaObservaciones ? `<p><strong>💊 Receta/Obs:</strong> ${cita.recetaObservaciones}</p>` : ''}
+        </div>
+        <div class="cita-acciones">
+          <button class="btn-editar" onclick="abrirModalEditarCita('${cita._id}', '${cita.estado}', '${cita.hora}', '${(cita.recetaObservaciones || '').replace(/'/g, "\\'")}')">
+            ✏️ Editar Cita
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch (error) {
+    Swal.fire('Error', 'No se pudieron cargar las citas', 'error');
+  }
+}
+
+function abrirModalEditarCita(id, estado, hora, receta) {
+  document.getElementById('editarCitaId').value = id;
+  document.getElementById('editarEstado').value = estado;
+  document.getElementById('editarHora').value = hora;
+  document.getElementById('editarReceta').value = receta;
+  document.getElementById('modalEditarCita').style.display = 'flex';
+}
+
+async function guardarEdicionCita() {
+  const id = document.getElementById('editarCitaId').value;
+  try {
+    await apiRequest(`/api/medico/citas/${id}`, 'PUT', {
+      estado: document.getElementById('editarEstado').value,
+      hora: document.getElementById('editarHora').value,
+      recetaObservaciones: document.getElementById('editarReceta').value
+    });
+    Swal.fire('Actualizada', 'La cita ha sido actualizada exitosamente', 'success');
+    cerrarModal('modalEditarCita');
+    cargarCitasMedico(document.querySelector('.filtro-btn.active').textContent.toLowerCase().includes('hoy') ? 'hoy' : 
+                    document.querySelector('.filtro-btn.active').textContent.toLowerCase().includes('semana') ? 'semana' : 'meses');
+  } catch (error) {
+    Swal.fire('Error', error.message, 'error');
+  }
+}
+
+// ==================== ADMIN: USUARIOS ====================
+async function cargarUsuariosAdmin() {
+  try {
+    const usuarios = await apiRequest('/api/admin/usuarios');
+    const tbody = document.getElementById('tablaUsuarios');
+    
+    tbody.innerHTML = usuarios.map(u => `
+      <tr>
+        <td>${u.ci}</td>
+        <td>${u.nombres}</td>
+        <td>${u.correo}</td>
+        <td><strong>${u.rol}</strong></td>
+        <td>${u.especialidad || '-'}</td>
+        <td><button class="btn-editar" onclick="verPassword('${u.password}')">Ver</button></td>
+        <td class="acciones">
+          <button class="btn-editar" onclick="cambiarPasswordAdmin('${u._id}', '${u.nombres}')">Cambiar Pass</button>
+          ${u.rol !== 'admin' ? `<button class="btn-cancelar" onclick="eliminarUsuario('${u._id}', '${u.nombres}')">Eliminar</button>` : ''}
+        </td>
+      </tr>
+    `).join('');
+  } catch (error) {
+    Swal.fire('Error', 'No se pudieron cargar los usuarios', 'error');
+  }
+}
+
+function verPassword(hash) {
+  Swal.fire({
+    title: 'Contraseña (Hash)',
+    text: `Por seguridad solo se muestra el hash encriptado:\n\n${hash.substring(0, 50)}...`,
+    icon: 'info',
+    confirmButtonColor: '#9333EA'
+  });
+}
+
+async function cambiarPasswordAdmin(id, nombre) {
+  const { value: nuevaPass } = await Swal.fire({
+    title: `Cambiar contraseña a ${nombre}`,
+    input: 'text',
+    inputLabel: 'Nueva contraseña (mínimo 6 caracteres)',
+    inputPlaceholder: 'Ingrese nueva contraseña temporal',
+    showCancelButton: true,
+    confirmButtonColor: '#9333EA',
+    cancelButtonColor: '#EF4444',
+    inputValidator: (value) => {
+      if (!value || value.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+    }
+  });
+  
+  if (nuevaPass) {
+    try {
+      await apiRequest(`/api/admin/usuarios/${id}/password`, 'PUT', { nuevaPassword: nuevaPass });
+      Swal.fire('Actualizada', 'Contraseña actualizada exitosamente', 'success');
+    } catch (error) {
+      Swal.fire('Error', error.message, 'error');
+    }
+  }
+}
+
+async function eliminarUsuario(id, nombre) {
+  const confirmacion = await Swal.fire({
+    title: '¿Eliminar usuario?',
+    text: `Está a punto de eliminar a ${nombre}. Esta acción no se puede deshacer.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#EF4444',
+    cancelButtonColor: '#9333EA',
+    confirmButtonText: 'Sí, eliminar'
+  });
+  
+  if (confirmacion.isConfirmed) {
+    try {
+      await apiRequest(`/api/admin/usuarios/${id}`, 'DELETE');
+      Swal.fire('Eliminado', 'Usuario eliminado exitosamente', 'success');
+      cargarUsuariosAdmin();
+    } catch (error) {
+      Swal.fire('Error', error.message, 'error');
+    }
+  }
+}
+
+function mostrarModalAgregarMedico() {
+  document.getElementById('modalAgregarMedico').style.display = 'flex';
+}
+
+async function agregarMedico(e) {
+  e.preventDefault();
+  try {
+    await apiRequest('/api/admin/medicos', 'POST', {
+      ci: document.getElementById('medicoCi').value,
+      nombres: document.getElementById('medicoNombres').value,
+      correo: document.getElementById('medicoCorreo').value,
+      celular: document.getElementById('medicoCelular').value,
+      especialidad: document.getElementById('medicoEspecialidad').value,
+      genero: document.getElementById('medicoGenero').value,
+      password: document.getElementById('medicoPassword').value
+    });
+    Swal.fire('Agregado', 'Médico agregado exitosamente al sistema', 'success');
+    cerrarModal('modalAgregarMedico');
+    e.target.reset();
+    cargarUsuariosAdmin();
+  } catch (error) {
+    Swal.fire('Error', error.message, 'error');
+  }
+}
+
+// ==================== ADMIN: ESTADÍSTICAS ====================
+async function cargarEstadisticas() {
+  try {
+    const stats = await apiRequest('/api/admin/estadisticas');
+    
+    document.getElementById('estadisticasGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-numero">${stats.totalCitas}</div><div class="stat-titulo">Total Citas</div></div>
+      <div class="stat-card"><div class="stat-numero" style="color:#10B981">${stats.exitosas}</div><div class="stat-titulo">Realizadas</div></div>
+      <div class="stat-card"><div class="stat-numero" style="color:#EF4444">${stats.canceladas}</div><div class="stat-titulo">Canceladas</div></div>
+      <div class="stat-card"><div class="stat-numero" style="color:#F59E0B">${stats.reagendadas}</div><div class="stat-titulo">Reagendadas</div></div>
+      <div class="stat-card"><div class="stat-numero" style="color:#3B82F6">${stats.pendientes}</div><div class="stat-titulo">Pendientes</div></div>
+    `;
+    
+    const maxTotal = Math.max(...stats.porEspecialidad.map(e => e.total), 1);
+    document.getElementById('graficoEspecialidades').innerHTML = stats.porEspecialidad.map(e => `
+      <div class="barra-especialidad">
+        <div class="barra-label"><span>${e.especialidad}</span><span>${e.total} citas</span></div>
+        <div class="barra-fondo"><div class="barra-llena" style="width:${(e.total / maxTotal * 100)}%">${e.total}</div></div>
+      </div>
+    `).join('');
+  } catch (error) {
+    Swal.fire('Error', 'No se pudieron cargar las estadísticas', 'error');
+  }
+}
+
+// ==================== INICIALIZACIÓN ====================
+window.onload = async () => {
+  if (token) {
+    try {
+      const respuesta = await fetch(`${API_BASE}/api/auth/verify`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (respuesta.ok) {
+        const datos = await respuesta.json();
+        usuarioActual = datos.usuario;
+        cargarInterfazSegunRol();
+        return;
+      }
+    } catch (e) {}
+    localStorage.removeItem('token');
+    token = null;
+  }
+  document.getElementById('vistaInicio').style.display = 'flex';
+};
+
+// Cerrar modales al hacer clic fuera
+window.onclick = (e) => {
+  document.querySelectorAll('.modal').forEach(modal => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+};
