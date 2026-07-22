@@ -90,16 +90,22 @@ async function iniciarSesion() {
     return;
   }
 
+  // Obtener valores directamente SIN fallos
   if (rol === 'paciente') {
-    ci = document.getElementById('loginCIPaciente')?.value.trim();
-    password = document.getElementById('loginPassPaciente')?.value.trim();
+    const campoCi = document.getElementById('loginCIPaciente');
+    const campoPass = document.getElementById('loginPassPaciente');
+    ci = campoCi ? campoCi.value : '';
+    password = campoPass ? campoPass.value : '';
   } else {
-    ci = document.getElementById('loginCIDirecto')?.value.trim();
-    password = document.getElementById('loginPassDirecto')?.value.trim();
+    const campoCi = document.getElementById('loginCIDirecto');
+    const campoPass = document.getElementById('loginPassDirecto');
+    ci = campoCi ? campoCi.value : '';
+    password = campoPass ? campoPass.value : '';
   }
 
-  if (!ci || !password) {
-    alert('⚠️ Completa todos los campos');
+  // Validación más clara
+  if (!ci || ci.trim() === '' || !password || password.trim() === '') {
+    alert('⚠️ Ingresa tu cédula y contraseña');
     return;
   }
 
@@ -107,7 +113,7 @@ async function iniciarSesion() {
     const respuesta = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ci, password })
+      body: JSON.stringify({ ci: ci.trim(), password: password.trim() })
     });
 
     const datos = await respuesta.json();
@@ -121,11 +127,10 @@ async function iniciarSesion() {
     else window.location.href = '/admin.html';
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error completo:', error);
     alert('❌ ' + error.message);
   }
 }
-
 // ==============================================
 // ✅ CARGA INICIAL
 // ==============================================
