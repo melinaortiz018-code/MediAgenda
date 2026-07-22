@@ -188,17 +188,24 @@ app.get('/api/auth/verify', auth(), async (req, res) => {
 
 // ==================== RUTAS GENERALES ====================
 // CARGAR MÉDICOS POR ESPECIALIDAD (COINCIDE CON FRONTEND)
+// ✅ RUTA DE MÉDICOS POR ESPECIALIDAD (EXACTA PARA EL FORMULARIO DE CITAS)
 app.get('/api/medicos', async (req, res) => {
   try {
     const { especialidad } = req.query;
-    let consulta = { rol: 'medico' };
-    if (especialidad) consulta.especialidad = especialidad;
-    
-    const medicos = await Usuario.find(consulta).select('_id nombres especialidad ci');
+    const filtro = { rol: 'medico', activo: true }; // Solo médicos activos
+
+    // Filtrar EXACTAMENTE por la especialidad elegida
+    if (especialidad && especialidad !== 'Todas') {
+      filtro.especialidad = especialidad;
+    }
+
+    // Devolvemos los campos que el frontend necesita
+    const medicos = await Usuario.find(filtro).select('_id nombres especialidad ci celular');
+    console.log(`✅ Cargando médicos para: ${especialidad || 'Todas'} → Total: ${medicos.length}`);
     res.json(medicos);
   } catch (error) {
-    console.error('Error al cargar médicos:', error);
-    res.status(500).json({ mensaje: 'Error al obtener médicos' });
+    console.error('❌ Error al cargar médicos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener la lista de médicos' });
   }
 });
 
@@ -348,31 +355,43 @@ app.put('/api/usuarios/perfil', auth(['paciente', 'medico']), async (req, res) =
 });
 
 // ==================== RUTAS MÉDICOS ====================
+// ✅ RUTA PARA VER SUS CITAS (CALENDARIO Y LISTA)
+// El frontend suele llamarla así: /api/medico/citas o /api/mis-citas-medico
 app.get('/api/medico/citas', auth(['medico']), async (req, res) => {
   try {
-    const { rango = 'hoy' } = req.query;
-    let filtro = { medico: req.usuario._id };
+    const { rango = 'todos' } = req.query;
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    
+    let filtro = { medico: req.usuario._id };
+
+    // Filtrar por fechas para el calendario
     if (rango === 'hoy') {
       const manana = new Date(hoy);
       manana.setDate(manana.getDate() + 1);
       filtro.fecha = { $gte: hoy, $lt: manana };
-    } else if (rango === 'semana') {
-      const finSemana = new Date(hoy);
-      finSemana.setDate(finSemana.getDate() + 7);
-      filtro.fecha = { $gte: hoy, $lt: finSemana };
-    } else if (rango === 'meses') {
-      const finMeses = new Date(hoy);
-      finMeses.setMonth(finMeses.getMonth() + 2);
-      filtro.fecha = { $gte: hoy, $lt: finMeses };
+    } else if (rango === 'proximas') {
+      filtro.fecha = { $gte: hoy };
     }
-    
+
+    // Traemos TODOS los datos que necesita el calendario
     const citas = await Cita.find(filtro)
-      .populate('paciente', 'nombres ci correo celular direccion')
+      .populate('paciente', 'nombres ci correo celular')
       .sort({ fecha: 1, hora: 1 });
-    
+
+    console.log(`✅ Médico ${req.usuario.nombres} → Citas cargadas: ${citas.length}`);
+    res.json(citas);
+  } catch (error) {
+    console.error('❌ Error al cargar citas del médico:', error);
+    res.status(500).json({ mensaje: 'Error al cargar tus citas' });
+  }
+});
+
+// ✅ RUTA ADICIONAL POR SI EL FRONTEND BUSCA OTRA DIRECCIÓN
+app.get('/api/mis-citas-medico', auth(['medico']), async (req, res) => {
+  try {
+    const citas = await Cita.find({ medico: req.usuario._id })
+      .populate('paciente', 'nombres ci correo celular')
+      .sort({ fecha: 1, hora: 1 });
     res.json(citas);
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al cargar citas' });
