@@ -497,7 +497,85 @@ app.get('/api/admin/estadisticas', verificarToken, verificarAdmin, async (req, r
     res.status(500).json({ mensaje: 'Error al cargar estadísticas' });
   }
 });
+// ==============================================
+// ✅ RUTA PARA GENERAR TURNOS DE 30 MINUTOS (7:00 A 16:00)
+// ==============================================
+app.get('/api/turnos-disponibles', auth(['paciente', 'medico']), async (req, res) => {
+  try {
+    const { medicoId, fecha } = req.query;
+    if (!medicoId || !fecha) return res.status(400).json({ mensaje: 'Faltan datos para ver turnos' });
 
+    const horarioBase = [];
+    for (let hora = 7; hora < 16; hora++) {
+      horarioBase.push(`${hora.toString().padStart(2, '0')}:00`);
+      horarioBase.push(`${hora.toString().padStart(2, '0')}:30`);
+    }
+    horarioBase.push('16:00');
+
+    const citasReservadas = await Cita.find({
+      medico: medicoId,
+      fecha: new Date(fecha),
+      estado: { $in: ['Pendiente', 'Confirmada', 'En Consulta'] }
+    }).select('hora');
+
+    const horasOcupadas = citasReservadas.map(c => c.hora);
+    const turnosLibres = horarioBase.filter(hora => !horasOcupadas.includes(hora));
+
+    res.json({
+      horarioCompleto: horarioBase,
+      turnosDisponibles: turnosLibres,
+      mensaje: 'Horario: 7:00 a 16:00 | Turnos de 30 minutos'
+    });
+  } catch (error) {
+    console.error('Error al cargar turnos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener horarios' });
+  }
+});
+
+// ==============================================
+// ✅ RUTA PARA LISTAR MÉDICOS AL AGENDAR CITA
+// ==============================================
+app.get('/api/medicos', async (req, res) => {
+  try {
+    const { especialidad } = req.query;
+    const filtro = { rol: 'medico', activo: true };
+    if (especialidad) filtro.especialidad = especialidad;
+
+    const medicos = await Usuario.find(filtro).select('_id nombres especialidad ci');
+    console.log(`✅ Médicos cargados: ${medicos.length} para ${especialidad || 'Todas'}`);
+    res.json(medicos);
+  } catch (error) {
+    console.error('Error al cargar médicos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener médicos' });
+  }
+});
+
+// ==============================================
+// ✅ RUTA PARA TABLA Y CALENDARIO DE CITAS DEL MÉDICO
+// ==============================================
+app.get('/api/medico/mis-citas', auth(['medico']), async (req, res) => {
+  try {
+    const { fecha, mes, año } = req.query;
+    let filtro = { medico: req.usuario._id };
+
+    if (fecha) filtro.fecha = new Date(fecha);
+    else if (mes && año) {
+      const inicio = new Date(año, mes - 1, 1);
+      const fin = new Date(año, mes, 0, 23, 59, 59);
+      filtro.fecha = { $gte: inicio, $lte: fin };
+    }
+
+    const citas = await Cita.find(filtro)
+      .populate('paciente', 'nombres ci correo celular')
+      .sort({ fecha: 1, hora: 1 });
+
+    console.log(`✅ Citas del médico: ${citas.length}`);
+    res.json(citas);
+  } catch (error) {
+    console.error('Error al cargar citas:', error);
+    res.status(500).json({ mensaje: 'Error al cargar tus citas' });
+  }
+});
 // ==================== CONEXIÓN DB Y DATOS INICIALES ====================
 const MEDICOS_PREDEFINIDOS = [
   { ci: 'MED001', nombres: 'Dr. Carlos Mendoza', correo: 'carlos.mendoza@mediagenda.com', celular: '0987654321', especialidad: 'Psicología', genero: 'M', password: 'Medico123*' },
