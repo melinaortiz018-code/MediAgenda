@@ -39,29 +39,30 @@
             </div>
 
             <!-- FORMULARIO DE INICIO DE SESIÓN -->
-            <input type="hidden" id="loginRol">
-            <div id="camposLogin" class="campos-login" style="display: none;">
-                <div id="grupoLoginCI" class="grupo-campo" style="display: none;">
-                    <label for="loginCI">Cédula de Identidad (CI)</label>
-                    <input type="text" id="loginCI" placeholder="Ingresa tu número de cédula">
-                </div>
+    <input type="hidden" id="loginRol">
+    <div id="camposLogin" class="campos-login" style="display: none;">
+        <div id="grupoLoginCI" class="grupo-campo" style="display: none;">
+            <label for="loginCI">Cédula de Identidad (CI)</label>
+            <input type="text" id="loginCI" placeholder="Ingresa tu número de cédula" required>
+        </div>
 
-                <div id="grupoLoginCorreo" class="grupo-campo" style="display: none;">
-                    <label for="loginCorreo">Correo Electrónico</label>
-                    <input type="email" id="loginCorreo" placeholder="tu.correo@ejemplo.com">
-                </div>
+    <div id="grupoLoginCorreo" class="grupo-campo" style="display: none;">
+        <label for="loginCorreo">Correo Electrónico</label>
+        <input type="email" id="loginCorreo" placeholder="tu.correo@ejemplo.com" required>
+    </div>
 
-                <div class="grupo-campo">
-                    <label for="loginPassword">Contraseña</label>
-                    <div class="input-con-boton">
-                        <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña">
-                        <button type="button" onclick="togglePassword('loginPassword', this)">👁️</button>
-                    </div>
-                </div>
+    <div class="grupo-campo">
+        <label for="loginPassword">Contraseña</label>
+        <div class="input-con-boton">
+            <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña" required>
+            <button type="button" onclick="togglePassword('loginPassword', this)">👁️</button>
+        </div>
+    </div>
 
-                <p id="loginHint" class="hint"></p>
-                <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
-            </div>
+    <p id="loginHint" class="hint"></p>
+    <!-- ✅ CAMBIAMOS type="button" POR type="submit" Y AGREGAMOS EL EVENTO -->
+    <button type="submit" class="btn-principal" onclick="iniciarSesion(event)">Ingresar</button>
+</div>
 
             <!-- FORMULARIO DE REGISTRO DE PACIENTE -->
             <div id="formRegistro" class="formulario" style="display: none;">
