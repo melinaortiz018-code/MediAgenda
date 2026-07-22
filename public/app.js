@@ -30,7 +30,20 @@ function cerrarModal(idModal) {
 // ==============================================
 // SELECCIÓN DE ROL Y FORMULARIO
 // ==============================================
-function seleccionarRol(rolElegido, elemento) {
+function seleccionarRol(rolElegido) {
+  // Guardamos el rol en el campo oculto y en el navegador
+  document.getElementById('loginRol').value = rolElegido;
+  localStorage.setItem('rolSeleccionado', rolElegido);
+  
+  // Mostramos el formulario
+  document.getElementById('camposLogin').style.display = 'block';
+  
+  // Resaltamos la tarjeta elegida
+  document.querySelectorAll('.tipo-cuenta').forEach(t => t.style.border = '2px solid transparent');
+  event.currentTarget.style.border = '3px solid #9333ea';
+  
+  console.log('✅ Rol seleccionado:', rolElegido);
+}
   // Resaltar tarjeta seleccionada
   document.querySelectorAll('.rol-card').forEach(card => {
     card.style.background = '#ffffff';
@@ -76,7 +89,6 @@ function seleccionarRol(rolElegido, elemento) {
     grupoCorreo.style.display = 'flex';
     hint.textContent = '🛡️ Ingresa tu correo y contraseña';
   }
-}
 
 // ==============================================
 // PETICIONES AL SERVIDOR
@@ -103,19 +115,20 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 // AUTENTICACIÓN
 // ==============================================
 async function iniciarSesion(event) {
-  // ✅ Evitamos el error de evento
   if (event) event.preventDefault();
 
-  // ✅ Leemos TUS campos con los id que tienes
+  // ✅ Validamos primero el rol
+  const rol = document.getElementById('loginRol')?.value || localStorage.getItem('rolSeleccionado');
+  if (!rol) {
+    alert('⚠️ Primero elige Paciente, Médico o Administrador');
+    return;
+  }
+
   const ci = document.getElementById('loginCI')?.value.trim();
-  const correo = document.getElementById('loginCorreo')?.value.trim();
   const password = document.getElementById('loginPassword')?.value.trim();
 
-  // Usamos cédula como identificador principal (como lo tiene tu servidor)
-  const identificador = ci || correo;
-
-  if (!identificador || !password) {
-    alert('⚠️ Ingresa tu cédula/correo y contraseña');
+  if (!ci || !password) {
+    alert('⚠️ Ingresa tu cédula y contraseña');
     return;
   }
 
@@ -123,27 +136,30 @@ async function iniciarSesion(event) {
     const respuesta = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ci: identificador, password })
+      body: JSON.stringify({ rol, ci, password })
     });
 
-    const datos = await respuesta.json();
+    const datos = await respuesta.json(); // ✅ AQUÍ SE DECLARA datos
     if (!respuesta.ok) throw new Error(datos.mensaje || 'Error al iniciar sesión');
 
-    // ✅ Guardamos los datos correctamente
+    // ✅ AHORA SÍ PODEMOS USAR datos
     localStorage.setItem('token', datos.token);
     localStorage.setItem('rol', datos.usuario.rol);
 
-    // ✅ Redirigimos según el rol
-    if (datos.usuario.rol === 'paciente') window.location.href = '/agendar.html';
-    else if (datos.usuario.rol === 'medico') window.location.href = '/mis-citas.html';
-    else if (datos.usuario.rol === 'admin') window.location.href = '/admin.html';
+    // Redirigimos según el rol
+    if (datos.usuario.rol === 'paciente') {
+      window.location.href = '/agendar.html';
+    } else if (datos.usuario.rol === 'medico') {
+      window.location.href = '/mis-citas.html';
+    } else if (datos.usuario.rol === 'admin') {
+      window.location.href = '/admin.html';
+    }
 
-  } catch (error) {
+  } catch (error) { // ✅ catch va DESPUÉS de cerrar try
     console.error('Error:', error);
-    alert('❌ ' + error.message);
+    alert('❌ ' + (error.message || 'No se pudo iniciar sesión'));
   }
 }
-
 // ✅ ASEGÚRATE DE BORRAR LAS LLAMADAS A FUNCIONES QUE NO EXISTEN
 document.addEventListener('DOMContentLoaded', () => {
   // No llamar a cargarMedicosEnSelect ni cargarMisCitas aquí
