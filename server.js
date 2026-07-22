@@ -189,15 +189,42 @@ app.get('/api/auth/verify', auth(), async (req, res) => {
 // ==================== RUTAS GENERALES ====================
 // CARGAR MÉDICOS POR ESPECIALIDAD (COINCIDE CON FRONTEND)
 // ✅ RUTA DE MÉDICOS POR ESPECIALIDAD (EXACTA PARA EL FORMULARIO DE CITAS)
+// ✅ RUTA DE MÉDICOS PARA AGENDAR CITAS (ÚNICA Y CORRECTA)
 app.get('/api/medicos', async (req, res) => {
   try {
     const { especialidad } = req.query;
-    const filtro = { rol: 'medico', activo: true }; // Solo médicos activos
+    console.log('🔍 Buscando médicos para especialidad:', especialidad);
 
-    // Filtrar EXACTAMENTE por la especialidad elegida
-    if (especialidad && especialidad !== 'Todas') {
-      filtro.especialidad = especialidad;
+    // Solo médicos activos y con rol correcto
+    const filtro = { rol: 'medico', activo: true };
+    if (especialidad && especialidad.trim() !== '') {
+      filtro.especialidad = especialidad.trim();
     }
+
+    // Traemos solo los campos que usa el formulario
+    // ✅ RUTA DE MÉDICOS PARA AGENDAR CITAS (ÚNICA Y CORRECTA)
+app.get('/api/medicos', async (req, res) => {
+  try {
+    const { especialidad } = req.query;
+    console.log('🔍 Buscando médicos para especialidad:', especialidad);
+
+    // Solo médicos activos y con rol correcto
+    const filtro = { rol: 'medico', activo: true };
+    if (especialidad && especialidad.trim() !== '') {
+      filtro.especialidad = especialidad.trim();
+    }
+
+    // Traemos solo los campos que usa el formulario
+    const medicos = await Usuario.find(filtro).select('_id nombres especialidad ci');
+    console.log(`✅ Encontrados: ${medicos.length} médicos`);
+    console.log('   Lista:', medicos.map(m => m.nombres));
+
+    res.json(medicos);
+  } catch (error) {
+    console.error('❌ Error al cargar médicos:', error);
+    res.status(500).json({ mensaje: 'No se pudieron cargar los médicos' });
+  }
+});
 
     // Devolvemos los campos que el frontend necesita
     const medicos = await Usuario.find(filtro).select('_id nombres especialidad ci celular');
