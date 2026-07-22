@@ -30,13 +30,88 @@ function cerrarModal(idModal) {
 // ==============================================
 // SELECCIÓN DE ROL Y FORMULARIO
 // ==============================================
+// ✅ FUNCIÓN PARA SELECCIONAR TIPO DE CUENTA
 function seleccionarRol(rolElegido) {
-  // Guardamos el rol en el campo oculto y en el navegador
-  document.getElementById('loginRol').value = rolElegido;
+  const campoRol = document.getElementById('loginRol');
+  const formulario = document.getElementById('camposLogin');
+  const campoCI = document.getElementById('grupoLoginCI');
+
+  if (campoRol) campoRol.value = rolElegido;
   localStorage.setItem('rolSeleccionado', rolElegido);
-  
-  // Mostramos el formulario
-  document.getElementById('camposLogin').style.display = 'block';
+
+  // Mostramos el formulario completo
+  if (formulario) formulario.style.display = 'block';
+  if (campoCI) campoCI.style.display = 'block';
+
+  // Resaltamos la tarjeta elegida
+  document.querySelectorAll('.tipo-cuenta').forEach(t => t.style.border = '2px solid transparent');
+  event.currentTarget.style.border = '3px solid #9333ea';
+
+  console.log('✅ Rol seleccionado:', rolElegido);
+}
+
+// ✅ FUNCIÓN DE INICIO DE SESIÓN CORREGIDA SIN ERRORES
+async function iniciarSesion(event) {
+  if (event) event.preventDefault();
+
+  // Validamos rol
+  const rol = document.getElementById('loginRol')?.value || localStorage.getItem('rolSeleccionado');
+  if (!rol) {
+    alert('⚠️ Primero elige Paciente, Médico o Administrador');
+    return;
+  }
+
+  // Tomamos datos de tus campos
+  const ci = document.getElementById('loginCI')?.value.trim();
+  const password = document.getElementById('loginPassword')?.value.trim();
+
+  if (!ci || !password) {
+    alert('⚠️ Ingresa tu cédula y contraseña');
+    return;
+  }
+
+  try {
+    const respuesta = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ci, password })
+    });
+
+    const datos = await respuesta.json();
+    if (!respuesta.ok) throw new Error(datos.mensaje || 'Error al iniciar sesión');
+
+    // Guardamos datos correctamente
+    localStorage.setItem('token', datos.token);
+    localStorage.setItem('rol', datos.usuario.rol);
+
+    // Redirigimos
+    if (datos.usuario.rol === 'paciente') window.location.href = '/agendar.html';
+    else if (datos.usuario.rol === 'medico') window.location.href = '/mis-citas.html';
+    else window.location.href = '/admin.html';
+
+  } catch (error) {
+    console.error('Error:', error);
+    alert('❌ ' + (error.message || 'No se pudo conectar al servidor'));
+  }
+}
+
+// ✅ CARGA DE PÁGINA: NO LLAMAMOS A NINGUNA FUNCIÓN INNECESARIA
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ Página de inicio cargada correctamente');
+  // ❌ BORRAMOS CUALQUIER LLAMADA A cargarMedicosEnSelect o cargarMisCitas AQUÍ
+});
+
+// ✅ FUNCIÓN PARA MOSTRAR/OCULTAR CONTRASEÑA
+function togglePassword(id, boton) {
+  const input = document.getElementById(id);
+  if (input.type === 'password') {
+    input.type = 'text';
+    boton.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    boton.textContent = '👁️';
+  }
+}
   
   // Resaltamos la tarjeta elegida
   document.querySelectorAll('.tipo-cuenta').forEach(t => t.style.border = '2px solid transparent');

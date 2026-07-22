@@ -39,16 +39,12 @@
             </div>
 
             <!-- FORMULARIO DE INICIO DE SESIÓN -->
-    <input type="hidden" id="loginRol">
-    <div id="camposLogin" class="campos-login" style="display: none;">
-        <div id="grupoLoginCI" class="grupo-campo" style="display: none;">
-            <label for="loginCI">Cédula de Identidad (CI)</label>
-            <input type="text" id="loginCI" placeholder="Ingresa tu número de cédula" required>
-        </div>
-
-    <div id="grupoLoginCorreo" class="grupo-campo" style="display: none;">
-        <label for="loginCorreo">Correo Electrónico</label>
-        <input type="email" id="loginCorreo" placeholder="tu.correo@ejemplo.com" required>
+    <!-- FORMULARIO DE INICIO DE SESIÓN -->
+<input type="hidden" id="loginRol">
+<div id="camposLogin" class="campos-login" style="display: none;">
+    <div id="grupoLoginCI" class="grupo-campo"> <!-- QUITAMOS style="display: none;" -->
+        <label for="loginCI">Cédula de Identidad (CI)</label>
+        <input type="text" id="loginCI" placeholder="Ingresa tu número de cédula" required>
     </div>
 
     <div class="grupo-campo">
@@ -58,6 +54,9 @@
             <button type="button" onclick="togglePassword('loginPassword', this)">👁️</button>
         </div>
     </div>
+
+    <button type="submit" class="btn-principal" onclick="iniciarSesion(event)">Ingresar</button>
+</div>
 
     <p id="loginHint" class="hint"></p>
     <!-- ✅ CAMBIAMOS type="button" POR type="submit" Y AGREGAMOS EL EVENTO -->
@@ -429,16 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- YA TENÍAS ESTA LÍNEA, QUÉDALA IGUAL -->
 <script src="app.js"></script>
 <script>
-async function cargarMisCitas() {
-  const token = localStorage.getItem('token');
-  const contenedor = document.getElementById('lista-citas') || document.getElementById('calendario');
-  
-  if (!token) {
-    alert('Debes iniciar sesión');
-    return;
-  }
-
-  try {
     // Detectamos el rol para usar la ruta correcta
     const esMedico = localStorage.getItem('rol') === 'medico';
     const ruta = esMedico ? '/api/mis-citas' : '/api/citas/mis';
