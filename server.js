@@ -548,16 +548,34 @@ const inicializarDatos = async () => {
     console.error('❌ ERROR AL CREAR USUARIOS:', error.message);
   }
 };
+// ==================== CONEXIÓN A BASE DE DATOS Y ARRANQUE ====================
+// Primero definimos la función
+const conectarDB = async () => {
+  try {
+    const mongoURI = process.env.MONGO_URI;
+    if (!mongoURI) throw new Error('Falta la variable MONGO_URI en las configuraciones de Render');
+    
+    await mongoose.connect(mongoURI, { dbName: 'MediAgenda' });
+    console.log('🔌 Conectado a MongoDB exitosamente en BD: MediAgenda');
+    await inicializarDatos();
+  } catch (error) {
+    console.error('❌ Error FATAL de conexión MongoDB:', error.message);
+    process.exit(1);
+  }
+};
+
 // Ruta para servir el frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// INICIO FINAL DEL SERVIDOR
-conectarDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Servidor MediAgenda corriendo en puerto ${PORT}`);
+// AHORA SÍ llamamos a la función después de definirla
+conectarDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor MediAgenda corriendo correctamente en puerto ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ No se pudo arrancar el servidor:', err);
   });
-}).catch(err => {
-  console.error('❌ No se pudo arrancar el servidor:', err);
-});
