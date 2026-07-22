@@ -78,7 +78,7 @@ const verificarAdmin = auth(['admin']);
 
 // ==================== RUTAS AUTENTICACIÓN ====================
 // RUTA DE LOGIN POR ROLES (CORREGIDA PARA MÉDICOS)
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
   try {
     const { rol, ci, correo, password } = req.body;
     
