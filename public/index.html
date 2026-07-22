@@ -122,18 +122,25 @@
         <form onsubmit="agendarCita(event)">
             <div class="grupo-campo">
                 <label for="citaEspecialidad">Especialidad Médica *</label>
-                <select id="citaEspecialidad" required onchange="cargarMedicosPorEspecialidad()">
-                    <option value="">Seleccione una especialidad</option>
-                    <option value="Medicina General">Medicina General</option>
-                    <option value="Pediatría">Pediatría</option>
-                    <option value="Odontología">Odontología</option>
-                    <option value="Psicología">Psicología</option>
+                <!-- Especialidad -->
+                <select id="especialidad" onchange="cargarMedicosPorEspecialidad()">
+                <option value="Psicología">Psicología</option>
+                <option value="Odontología">Odontología</option>
+                <option value="Medicina General">Medicina General</option>
+                <option value="Pediatría">Pediatría</option>
                 </select>
-            </div>
-            <div class="grupo-campo">
-                <label for="citaMedico">Médico *</label>
-                <select id="citaMedico" required>
-                    <option value="">Seleccione un médico primero</option>
+
+                <!-- Médico -->
+                <select id="medico">
+                <option value="">Seleccione primero una especialidad</option>
+                </select>
+
+                <!-- Fecha -->
+                <input type="date" id="fecha_cita">
+
+                <!-- Hora (aquí se cargarán solos los turnos de 30min) -->
+                <select id="hora_cita">
+                <option value="">---</option>
                 </select>
             </div>
             <div class="grupo-campo">
@@ -292,6 +299,80 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- ... todo tu código anterior hasta la línea 294 ... -->
+
+<!-- ✅ PEGA AQUÍ EL CÓDIGO DE LAS FUNCIONES QUE FALTABAN -->
+<script>
+async function cargarMedicosPorEspecialidad() {
+  const especialidad = document.getElementById('especialidad').value;
+  const selectMedico = document.getElementById('medico');
+  
+  selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
+  if (!especialidad) return;
+
+  try {
+    const respuesta = await fetch(`/api/medicos?especialidad=${encodeURIComponent(especialidad)}`);
+    const medicos = await respuesta.json();
+
+    if (medicos.length === 0) {
+      selectMedico.innerHTML = '<option value="">No hay médicos disponibles</option>';
+      return;
+    }
+
+    medicos.forEach(medico => {
+      const opcion = document.createElement('option');
+      opcion.value = medico._id;
+      opcion.textContent = medico.nombres;
+      selectMedico.appendChild(opcion);
+    });
+  } catch (error) {
+    console.error('Error al cargar médicos:', error);
+    selectMedico.innerHTML = '<option value="">Error al cargar</option>';
+  }
+}
+
+async function cargarTurnosDisponibles() {
+  const medicoId = document.getElementById('medico').value;
+  const fecha = document.getElementById('fecha_cita').value;
+  const selectHora = document.getElementById('hora_cita');
+
+  selectHora.innerHTML = '<option value="">Cargando horarios...</option>';
+  if (!medicoId || !fecha) {
+    selectHora.innerHTML = '<option value="">Primero elige médico y fecha</option>';
+    return;
+  }
+
+  try {
+    const respuesta = await fetch(`/api/turnos-disponibles?medicoId=${medicoId}&fecha=${fecha}`);
+    const datos = await respuesta.json();
+    const turnos = datos.turnosDisponibles;
+
+    selectHora.innerHTML = '<option value="">Seleccione una hora</option>';
+    turnos.forEach(hora => {
+      const opcion = document.createElement('option');
+      opcion.value = hora;
+      opcion.textContent = hora;
+      selectHora.appendChild(opcion);
+    });
+  } catch (error) {
+    console.error('Error al cargar turnos:', error);
+    selectHora.innerHTML = '<option value="">Error al cargar horarios</option>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const selectEspecialidad = document.getElementById('especialidad');
+  const selectMedico = document.getElementById('medico');
+  const inputFecha = document.getElementById('fecha_cita');
+
+  if (selectEspecialidad) selectEspecialidad.addEventListener('change', cargarMedicosPorEspecialidad);
+  if (selectMedico) selectMedico.addEventListener('change', cargarTurnosDisponibles);
+  if (inputFecha) inputFecha.addEventListener('change', cargarTurnosDisponibles);
+});
+</script>
+
+<!-- YA TENÍAS ESTA LÍNEA, QUÉDALA IGUAL -->
+<script src="app.js"></script>
+
 </body>
 </html>
