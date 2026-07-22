@@ -98,10 +98,13 @@ app.post('/api/auth/login', async (req, res) => {
     
     if (rol === 'medico') {
       if (!ciLimpio) return res.status(400).json({ mensaje: 'Ingrese su cédula/CI' });
-      // BUSCAMOS EXACTAMENTE POR CI Y ROL DE MÉDICO
-      usuario = await Usuario.findOne({ ci: ciLimpio, rol: 'medico' });
-      console.log('   🔎 Buscando médico... Usuario encontrado:', usuario ? 'SÍ' : 'NO');
-    } 
+      // Busca SIN diferenciar mayúsculas/minúsculas por si acaso
+      usuario = await Usuario.findOne({ 
+        ci: { $regex: `^${ciLimpio}$`, $options: 'i' },
+       rol: 'medico'
+       });
+        console.log('   🔎 Búsqueda de médico: CI=', ciLimpio, ' | Encontrado:', usuario ? 'SÍ' : 'NO');
+    }
     else if (rol === 'paciente') {
       if (!ciLimpio || !correoLimpio) return res.status(400).json({ mensaje: 'Paciente requiere CI y Correo' });
       usuario = await Usuario.findOne({ ci: ciLimpio, correo: correoLimpio, rol: 'paciente' });
@@ -500,45 +503,51 @@ const ADMIN_PREDEFINIDO = {
 const inicializarDatos = async () => {
   try {
     console.log('========================================');
-    console.log('🔄 INICIANDO REINICIO DE CREDENCIALES...');
+    console.log('🔄 INICIANDO CREACIÓN DE MÉDICOS Y ADMIN...');
     console.log('========================================');
     
+    // Borramos solo los usuarios por defecto para volver a crearlos bien
     const borrados = await Usuario.deleteMany({ 
-      $or: [{ rol: 'admin' }, { ci: { $in: MEDICOS_PREDEFINIDOS.map(m => m.ci) } }] 
+      $or: [
+        { rol: 'admin' }, 
+        { ci: { $in: MEDICOS_PREDEFINIDOS.map(m => m.ci) } } 
+      ] 
     });
-    console.log(`🗑️ Usuarios por defecto borrados: ${borrados.deletedCount}`);
+    console.log(`🗑️ Usuarios antiguos eliminados: ${borrados.deletedCount}`);
 
+    // Creamos ADMIN
     const saltAdmin = await bcrypt.genSalt(10);
     const passwordHashAdmin = await bcrypt.hash(ADMIN_PREDEFINIDO.password, saltAdmin);
     await Usuario.create({ ...ADMIN_PREDEFINIDO, password: passwordHashAdmin });
-    console.log('✅ ADMIN CREADO: admin@mediagenda.com / Admin123*');
+    console.log('✅ ADMIN CREADO CORRECTAMENTE');
+    console.log('   Correo: admin@mediagenda.com');
+    console.log('   Contraseña: Admin123*');
     
+    // Creamos CADA MÉDICO uno por uno y confirmamos
     for (const medico of MEDICOS_PREDEFINIDOS) {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(medico.password, salt);
-      await Usuario.create({ ...medico, password: passwordHash });
+      const nuevoMedico = await Usuario.create({
+        ci: medico.ci,
+        nombres: medico.nombres,
+        correo: medico.correo,
+        celular: medico.celular,
+        especialidad: medico.especialidad,
+        genero: medico.genero,
+        rol: 'medico', // ¡Aseguramos que el rol sea EXACTO!
+        password: passwordHash
+      });
+      console.log(`   ✅ Médico creado: CI=${nuevoMedico.ci} | Rol=${nuevoMedico.rol} | Especialidad=${nuevoMedico.especialidad}`);
     }
-    console.log('✅ 8 MÉDICOS CREADOS: CI MED001-MED008 / Medico123*');
+    
+    console.log('✅ LOS 8 MÉDICOS ESTÁN LISTOS');
+    console.log('   CI: MED001 a MED008');
+    console.log('   Contraseña: Medico123*');
     console.log('========================================');
   } catch (error) {
-    console.error('❌ ERROR AL INICIALIZAR DATOS:', error);
+    console.error('❌ ERROR AL CREAR USUARIOS:', error.message);
   }
 };
-
-const conectarDB = async () => {
-  try {
-    const mongoURI = process.env.MONGO_URI;
-    if (!mongoURI) throw new Error('Falta variable MONGO_URI en Render');
-    
-    await mongoose.connect(mongoURI, { dbName: 'MediAgenda' });
-    console.log('🔌 Conectado a MongoDB exitosamente en BD: MediAgenda');
-    await inicializarDatos();
-  } catch (error) {
-    console.error('❌ Error FATAL de conexión MongoDB:', error.message);
-    process.exit(1);
-  }
-};
-
 // Ruta para servir el frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
