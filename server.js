@@ -382,34 +382,47 @@ app.put('/api/usuarios/perfil', auth(['paciente', 'medico']), async (req, res) =
 });
 
 // ==================== RUTAS MÉDICOS ====================
-// ✅ RUTA PARA VER SUS CITAS (CALENDARIO Y LISTA)
-// El frontend suele llamarla así: /api/medico/citas o /api/mis-citas-medico
-app.get('/api/medico/citas', auth(['medico']), async (req, res) => {
+// ✅ RUTA EXACTA PARA CARGAR MÉDICOS EN EL FORMULARIO
+app.get('/api/medicos', async (req, res) => {
   try {
-    const { rango = 'todos' } = req.query;
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    let filtro = { medico: req.usuario._id };
+    let { especialidad } = req.query;
+    console.log('🔍 Especialidad recibida del formulario:', `[${especialidad}]`);
 
-    // Filtrar por fechas para el calendario
-    if (rango === 'hoy') {
-      const manana = new Date(hoy);
-      manana.setDate(manana.getDate() + 1);
-      filtro.fecha = { $gte: hoy, $lt: manana };
-    } else if (rango === 'proximas') {
-      filtro.fecha = { $gte: hoy };
+    // Normalizamos: quitamos espacios y arreglamos tildes por si acaso
+    especialidad = especialidad?.trim();
+    const mapaEspecialidades = {
+      'Pediatria': 'Pediatría',
+      'pediatria': 'Pediatría',
+      'Psicologia': 'Psicología',
+      'psicologia': 'Psicología',
+      'Odontologia': 'Odontología',
+      'odontologia': 'Odontología',
+      'Medicina general': 'Medicina General',
+      'medicina general': 'Medicina General'
+    };
+    if (mapaEspecialidades[especialidad]) {
+      especialidad = mapaEspecialidades[especialidad];
+      console.log('🔄 Normalizado a:', especialidad);
     }
 
-    // Traemos TODOS los datos que necesita el calendario
-    const citas = await Cita.find(filtro)
-      .populate('paciente', 'nombres ci correo celular')
-      .sort({ fecha: 1, hora: 1 });
+    // Filtro seguro
+    const filtro = { rol: 'medico', activo: true };
+    if (especialidad) filtro.especialidad = especialidad;
 
-    console.log(`✅ Médico ${req.usuario.nombres} → Citas cargadas: ${citas.length}`);
-    res.json(citas);
+    // Buscamos médicos
+    const medicos = await Usuario.find(filtro).select('_id nombres especialidad');
+    console.log(`✅ Total médicos encontrados: ${medicos.length}`);
+    medicos.forEach(m => console.log(`   - ${m.nombres} | ${m.especialidad}`));
+
+    // Devolvemos el formato que espera el menú desplegable
+    res.json(medicos.map(m => ({
+      id: m._id,
+      value: m._id,
+      label: m.nombres
+    })));
   } catch (error) {
-    console.error('❌ Error al cargar citas del médico:', error);
-    res.status(500).json({ mensaje: 'Error al cargar tus citas' });
+    console.error('❌ Error al cargar médicos:', error);
+    res.status(500).json({ mensaje: 'Error al cargar médicos' });
   }
 });
 
