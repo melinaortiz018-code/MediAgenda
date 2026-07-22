@@ -38,24 +38,77 @@
                 <button class="tab-btn" onclick="mostrarFormulario('registro')">Registrarse</button>
             </div>
 
-            <!-- FORMULARIO DE INICIO DE SESIÓN -->
-            <input type="hidden" id="loginRol">
+                        <!-- FORMULARIO DE INICIO DE SESIÓN (PACIENTE) -->
             <div id="formLogin" class="campos-login" style="display: none;">
                 <div class="grupo-campo">
-                    <label for="loginCI">Cédula de Identidad (CI)</label>
-                    <input type="text" id="loginCI" placeholder="Ingresa tu número de cédula" required>
+                    <label for="loginCIPaciente">Cédula de Identidad (CI)</label>
+                    <input type="text" id="loginCIPaciente" placeholder="Ingresa tu número de cédula" required>
                 </div>
                 <div class="grupo-campo">
-                    <label for="loginPassword">Contraseña</label>
+                    <label for="loginPassPaciente">Contraseña</label>
                     <div class="input-con-boton">
-                        <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña" required>
-                        <button type="button" onclick="togglePassword('loginPassword', this)">👁️</button>
+                        <input type="password" id="loginPassPaciente" placeholder="Ingresa tu contraseña" required>
+                        <button type="button" class="boton-ojo" onclick="togglePassword('loginPassPaciente', this)">👁️</button>
                     </div>
                 </div>
                 <p id="loginHint" class="hint"></p>
                 <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
             </div>
 
+            <!-- FORMULARIO DE ACCESO DIRECTO (MÉDICO / ADMIN) -->
+            <div id="formAccesoDirecto" class="campos-login" style="display: none;">
+                <div class="grupo-campo">
+                    <label for="loginCIAdmin">Cédula / Identificador</label>
+                    <input type="text" id="loginCIAdmin" placeholder="Ingresa tu identificador" required>
+                </div>
+                <div class="grupo-campo">
+                    <label for="loginPassAdmin">Contraseña</label>
+                    <div class="input-con-boton">
+                        <input type="password" id="loginPassAdmin" placeholder="Ingresa tu contraseña" required>
+                        <button type="button" class="boton-ojo" onclick="togglePassword('loginPassAdmin', this)">👁️</button>
+                    </div>
+                </div>
+                <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
+            </div>
+
+            <!-- FORMULARIO DE REGISTRO DE PACIENTE -->
+            <div id="formRegistro" class="formulario" style="display: none;">
+                <h3>Crear Cuenta de Paciente</h3>
+                <form onsubmit="registrarUsuario(event)">
+                    <div class="grupo-campo">
+                        <label for="regCi">Cédula de Identidad *</label>
+                        <input type="text" id="regCi" required placeholder="Ej: 0987654321">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regNombres">Nombres Completos *</label>
+                        <input type="text" id="regNombres" required placeholder="Tu nombre completo">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regCorreo">Correo Electrónico *</label>
+                        <input type="email" id="regCorreo" required placeholder="tu.correo@ejemplo.com">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regCelular">Número de Celular *</label>
+                        <input type="tel" id="regCelular" required placeholder="Ej: 0991234567">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regDireccion">Dirección de Domicilio</label>
+                        <input type="text" id="regDireccion" placeholder="Tu dirección">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regPassword">Contraseña *</label>
+                        <div class="input-con-boton">
+                            <input type="password" id="regPassword" required placeholder="Crea una contraseña segura">
+                            <button type="button" class="boton-ojo" onclick="togglePassword('regPassword', this)">👁️</button>
+                        </div>
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="regConfirmPassword">Confirmar Contraseña *</label>
+                        <input type="password" id="regConfirmPassword" required placeholder="Repite tu contraseña">
+                    </div>
+                    <button type="submit" class="btn-principal">Registrarme</button>
+                </form>
+            </div>
             <!-- FORMULARIO DE ACCESO DIRECTO (MÉDICO / ADMIN) -->
             <div id="formAccesoDirecto" class="campos-login" style="display: none;">
                 <div class="grupo-campo">

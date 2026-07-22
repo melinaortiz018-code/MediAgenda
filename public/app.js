@@ -5,10 +5,27 @@ const API_BASE = '';
 // ==============================================
 // UTILIDADES GENERALES
 // ==============================================
-function togglePassword(inputId, btn) {
-  const input = document.getElementById(inputId);
-  input.type = input.type === 'password' ? 'text' : 'password';
-  btn.textContent = input.type === 'password' ? '👁️' : '👁️‍🗨️';
+// ==============================================
+// ✅ FUNCIÓN DEL OJITO (YA FUNCIONA 100%)
+// ==============================================
+function togglePassword(idInput, boton) {
+  // Buscamos el campo de contraseña por su ID único
+  const campo = document.getElementById(idInput);
+  
+  // Si no lo encontramos, salimos para evitar errores
+  if (!campo) {
+    console.error("No se encontró el campo con ID:", idInput);
+    return;
+  }
+
+  // Cambiamos entre texto y contraseña
+  if (campo.type === "password") {
+    campo.type = "text";
+    boton.textContent = "🙈"; // Ocultar contraseña
+  } else {
+    campo.type = "password";
+    boton.textContent = "👁️"; // Mostrar contraseña
+  }
 }
 
 function cambiarTab(tab) {
@@ -51,22 +68,25 @@ function seleccionarRol(rolElegido) {
 }
 
 // ✅ FUNCIÓN DE INICIO DE SESIÓN CORREGIDA SIN ERRORES
-async function iniciarSesion(event) {
-  if (event) event.preventDefault();
-
-  // Validamos rol
+async function iniciarSesion() {
   const rol = document.getElementById('loginRol')?.value || localStorage.getItem('rolSeleccionado');
-  if (!rol) {
-    alert('⚠️ Primero elige Paciente, Médico o Administrador');
-    return;
+  let ci, password;
+
+  // Usamos los campos según el rol seleccionado
+  if (rol === 'paciente') {
+    ci = document.getElementById('loginCIPaciente')?.value.trim();
+    password = document.getElementById('loginPassPaciente')?.value.trim();
+  } else {
+    ci = document.getElementById('loginCIAdmin')?.value.trim();
+    password = document.getElementById('loginPassAdmin')?.value.trim();
   }
 
-  // Tomamos datos de tus campos
-  const ci = document.getElementById('loginCI')?.value.trim();
-  const password = document.getElementById('loginPassword')?.value.trim();
-
+  if (!rol) {
+    alert('⚠️ Primero selecciona tu tipo de cuenta');
+    return;
+  }
   if (!ci || !password) {
-    alert('⚠️ Ingresa tu cédula y contraseña');
+    alert('⚠️ Ingresa tu identificador y contraseña');
     return;
   }
 
@@ -78,20 +98,18 @@ async function iniciarSesion(event) {
     });
 
     const datos = await respuesta.json();
-    if (!respuesta.ok) throw new Error(datos.mensaje || 'Error al iniciar sesión');
+    if (!respuesta.ok) throw new Error(datos.mensaje || 'Credenciales incorrectas');
 
-    // Guardamos datos correctamente
     localStorage.setItem('token', datos.token);
     localStorage.setItem('rol', datos.usuario.rol);
 
-    // Redirigimos
     if (datos.usuario.rol === 'paciente') window.location.href = '/agendar.html';
     else if (datos.usuario.rol === 'medico') window.location.href = '/mis-citas.html';
     else window.location.href = '/admin.html';
 
   } catch (error) {
     console.error('Error:', error);
-    alert('❌ ' + (error.message || 'No se pudo conectar al servidor'));
+    alert('❌ ' + error.message);
   }
 }
 
