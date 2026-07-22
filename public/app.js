@@ -262,6 +262,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function cargarMedicosEnSelect() {
+  // ✅ AGREGA SOLO ESTA LÍNEA AL INICIO, LO DEMÁS LO DEJAS IGUAL O LO BORRAS
+  if (!document.getElementById('medico')) return;
     try {
         // Asegúrate de que esta ruta coincida con la de tu backend
         const respuesta = await fetch('/api/medicos'); 

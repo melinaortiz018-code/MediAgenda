@@ -427,6 +427,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- YA TENÍAS ESTA LÍNEA, QUÉDALA IGUAL -->
 <script src="app.js"></script>
+<script>
+async function cargarMisCitas() {
+  const token = localStorage.getItem('token');
+  const contenedor = document.getElementById('lista-citas') || document.getElementById('calendario');
+  
+  if (!token) {
+    alert('Debes iniciar sesión');
+    return;
+  }
 
+  try {
+    // Detectamos el rol para usar la ruta correcta
+    const esMedico = localStorage.getItem('rol') === 'medico';
+    const ruta = esMedico ? '/api/mis-citas' : '/api/citas/mis';
+    
+    const respuesta = await fetch(ruta, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const citas = await respuesta.json();
+
+    if (citas.length === 0) {
+      contenedor.innerHTML = '<p style="text-align:center; color:#666;">No tienes citas agendadas aún</p>';
+      return;
+    }
+
+    // Aquí se llena la tabla o el calendario
+    console.log('✅ Citas cargadas:', citas);
+    // Si usas tabla o calendario FullCalendar, aquí van los datos
+  } catch (error) {
+    console.error('Error al cargar citas:', error);
+    contenedor.innerHTML = '<p style="color:red;">Error al cargar las citas</p>';
+  }
+}
+
+// Cargamos al abrir la página
+document.addEventListener('DOMContentLoaded', cargarMisCitas);
+</script>
 </body>
 </html>
