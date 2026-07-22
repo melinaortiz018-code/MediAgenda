@@ -77,42 +77,61 @@ const verificarToken = auth();
 const verificarAdmin = auth(['admin']);
 
 // ==================== RUTAS AUTENTICACIÓN ====================
-// RUTA DE LOGIN POR ROLES (ÚNICA Y CORRECTA)
+// RUTA DE LOGIN POR ROLES (CORREGIDA PARA MÉDICOS)
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { rol, ci, correo, password } = req.body;
     
-    console.log('🔐 Intento login | Rol:', rol, '| CI:', `[${ci}]`, '| Correo:', `[${correo}]`);
+    // Limpiamos espacios que puedan llegar por error
+    const ciLimpio = ci?.trim();
+    const correoLimpio = correo?.trim();
+    
+    console.log('🔐 Intento de inicio de sesión:');
+    console.log('   Rol:', rol);
+    console.log('   CI ingresado:', `[${ciLimpio}]`);
+    console.log('   Correo:', `[${correoLimpio}]`);
     
     if (!password) return res.status(400).json({ mensaje: 'Contraseña obligatoria' });
     if (!rol) return res.status(400).json({ mensaje: 'Seleccione un tipo de cuenta' });
     
     let usuario;
     
-    if (rol === 'paciente') {
-      if (!ci || !correo) return res.status(400).json({ mensaje: 'Paciente requiere CI y Correo' });
-      usuario = await Usuario.findOne({ ci, correo, rol: 'paciente' });
+    if (rol === 'medico') {
+      if (!ciLimpio) return res.status(400).json({ mensaje: 'Ingrese su cédula/CI' });
+      // BUSCAMOS EXACTAMENTE POR CI Y ROL DE MÉDICO
+      usuario = await Usuario.findOne({ ci: ciLimpio, rol: 'medico' });
+      console.log('   🔎 Buscando médico... Usuario encontrado:', usuario ? 'SÍ' : 'NO');
     } 
-    else if (rol === 'medico') {
-      if (!ci) return res.status(400).json({ mensaje: 'Médico requiere CI' });
-      usuario = await Usuario.findOne({ ci, rol: 'medico' });
+    else if (rol === 'paciente') {
+      if (!ciLimpio || !correoLimpio) return res.status(400).json({ mensaje: 'Paciente requiere CI y Correo' });
+      usuario = await Usuario.findOne({ ci: ciLimpio, correo: correoLimpio, rol: 'paciente' });
     } 
     else if (rol === 'admin') {
-      if (!correo) return res.status(400).json({ mensaje: 'Admin requiere correo' });
-      usuario = await Usuario.findOne({ correo, rol: 'admin' });
+      if (!correoLimpio) return res.status(400).json({ mensaje: 'Admin requiere correo' });
+      usuario = await Usuario.findOne({ correo: correoLimpio, rol: 'admin' });
     }
     
-    console.log('   ✅ Usuario encontrado:', usuario ? `${usuario.nombres} (${usuario.rol})` : 'NO ENCONTRADO');
+    if (!usuario) {
+      console.log('   ❌ No existe usuario con esos datos');
+      return res.status(401).json({ mensaje: 'Credenciales incorrectas: verifica tu CI' });
+    }
     
-    if (!usuario) return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
-    
+    // Verificamos contraseña
     const passValida = await bcrypt.compare(password, usuario.password);
     console.log('   🔑 Contraseña válida:', passValida);
     
-    if (!passValida) return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
+    if (!passValida) {
+      return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
+    }
     
-    const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, JWT_SECRET, { expiresIn: '24h' });
+    // Generamos token
+    const token = jwt.sign(
+      { id: usuario._id, rol: usuario.rol }, 
+      JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
     
+    console.log('   ✅ INICIO DE SESIÓN EXITOSO:', usuario.nombres);
     res.json({
       token,
       usuario: {
@@ -127,8 +146,8 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error login:', error);
-    res.status(500).json({ mensaje: 'Error al iniciar sesión' });
+    console.error('❌ ERROR EN LOGIN:', error);
+    res.status(500).json({ mensaje: 'Error en el servidor al iniciar sesión' });
   }
 });
 
