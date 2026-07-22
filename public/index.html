@@ -9,14 +9,12 @@
 </head>
 <body>
 
-    <!-- VISTA INICIO / SELECCIÓN DE ROL -->
     <div id="vistaInicio" class="vista pantalla-inicio">
         <div class="contenedor-inicio">
             <h1 class="titulo-principal">🏥 MediAgenda</h1>
             <p class="subtitulo">Sistema de Gestión de Citas Médicas</p>
             <h2 class="seleccion-rol">Selecciona tu tipo de cuenta</h2>
 
-            <!-- TARJETAS DE ROLES -->
             <div class="roles-grid">
                 <div class="rol-card" onclick="seleccionarRol('paciente', this)">
                     <div class="icono-rol">👤</div>
@@ -32,13 +30,11 @@
                 </div>
             </div>
 
-            <!-- PESTAÑAS SOLO VISIBLES PARA PACIENTES -->
             <div id="tabsAuth" class="tabs-auth" style="display: none;">
                 <button class="tab-btn active" onclick="mostrarFormulario('login')">Iniciar Sesión</button>
                 <button class="tab-btn" onclick="mostrarFormulario('registro')">Registrarse</button>
             </div>
 
-            <!-- FORMULARIO DE INICIO DE SESIÓN PACIENTE (ID ÚNICO) -->
             <input type="hidden" id="loginRol">
             <div id="formLogin" class="campos-login" style="display: none;">
                 <div class="grupo-campo">
@@ -52,11 +48,9 @@
                         <button type="button" class="boton-ojo" onclick="togglePassword('loginPassPaciente', this)">👁️</button>
                     </div>
                 </div>
-                <p id="loginHint" class="hint"></p>
                 <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
             </div>
 
-            <!-- FORMULARIO DE ACCESO DIRECTO MÉDICO/ADMIN (ID ÚNICO) -->
             <div id="formAccesoDirecto" class="campos-login" style="display: none;">
                 <div class="grupo-campo">
                     <label for="loginCIDirecto">Cédula / Identificador</label>
@@ -72,7 +66,6 @@
                 <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
             </div>
 
-            <!-- FORMULARIO DE REGISTRO DE PACIENTE (ID ÚNICO EN CONTRASEÑAS) -->
             <div id="formRegistro" class="formulario" style="display: none;">
                 <h3>Crear Cuenta de Paciente</h3>
                 <form onsubmit="registrarUsuario(event)">
@@ -113,7 +106,6 @@
         </div>
     </div>
 
-    <!-- RESTO DE ESTRUCTURA SE MANTIENE IGUAL -->
     <nav id="navbar" style="display: none;">
         <div class="nav-contenedor">
             <div class="nav-logo">🏥 MediAgenda</div>
@@ -301,28 +293,13 @@
     </div>
 
 <script>
-// ==============================================
-// ✅ FUNCIÓN DEL OJITO 100% FUNCIONAL Y SIN CONFLICTOS
-// ==============================================
 function togglePassword(idCampo, boton) {
   const campo = document.getElementById(idCampo);
-  if (!campo) {
-    console.error("No se encontró el campo:", idCampo);
-    return;
-  }
-  // Cambiar visibilidad
-  if (campo.type === "password") {
-    campo.type = "text";
-    boton.textContent = "🙈";
-  } else {
-    campo.type = "password";
-    boton.textContent = "👁️";
-  }
+  if (!campo) return;
+  campo.type = campo.type === "password" ? "text" : "password";
+  boton.textContent = campo.type === "password" ? "👁️" : "🙈";
 }
 
-// ==============================================
-// ✅ SELECCIÓN DE ROL Y FORMULARIOS
-// ==============================================
 function seleccionarRol(rolElegido, tarjeta) {
   const campoRol = document.getElementById('loginRol');
   const pestañas = document.getElementById('tabsAuth');
@@ -330,46 +307,36 @@ function seleccionarRol(rolElegido, tarjeta) {
   const formRegistro = document.getElementById('formRegistro');
   const formAcceso = document.getElementById('formAccesoDirecto');
 
-  if (campoRol) campoRol.value = rolElegido;
+  campoRol.value = rolElegido;
   localStorage.setItem('rolSeleccionado', rolElegido);
 
-  // Ocultar todo primero
   if (pestañas) pestañas.style.display = 'none';
   if (formLogin) formLogin.style.display = 'none';
   if (formRegistro) formRegistro.style.display = 'none';
   if (formAcceso) formAcceso.style.display = 'none';
 
-  // Resaltar tarjeta
   document.querySelectorAll('.rol-card').forEach(t => t.style.border = '2px solid #ddd');
   tarjeta.style.border = '3px solid #9333ea';
 
-  // Mostrar solo lo que corresponde
   if (rolElegido === 'paciente') {
-    if (pestañas) pestañas.style.display = 'flex';
+    pestañas.style.display = 'flex';
     mostrarFormulario('login');
   } else {
-    if (formAcceso) formAcceso.style.display = 'block';
+    formAcceso.style.display = 'block';
   }
-  console.log('✅ Rol elegido:', rolElegido);
 }
 
-// Cambiar entre login y registro (solo pacientes)
 function mostrarFormulario(tipo) {
   const formLogin = document.getElementById('formLogin');
   const formRegistro = document.getElementById('formRegistro');
-
-  if (formLogin) formLogin.style.display = tipo === 'login' ? 'block' : 'none';
-  if (formRegistro) formRegistro.style.display = tipo === 'registro' ? 'block' : 'none';
-
+  formLogin.style.display = tipo === 'login' ? 'block' : 'none';
+  formRegistro.style.display = tipo === 'registro' ? 'block' : 'none';
   document.querySelectorAll('#tabsAuth .tab-btn').forEach(btn => btn.classList.remove('active'));
   event.target.classList.add('active');
 }
 
-// ==============================================
-// ✅ INICIO DE SESIÓN CORREGIDO CON IDs ÚNICOS
-// ==============================================
 async function iniciarSesion() {
-  const rol = document.getElementById('loginRol')?.value || localStorage.getItem('rolSeleccionado');
+  const rol = document.getElementById('loginRol').value || localStorage.getItem('rolSeleccionado');
   let ci, password;
 
   if (!rol) {
@@ -377,13 +344,12 @@ async function iniciarSesion() {
     return;
   }
 
-  // Leer campos según el rol
   if (rol === 'paciente') {
-    ci = document.getElementById('loginCIPaciente')?.value.trim();
-    password = document.getElementById('loginPassPaciente')?.value.trim();
+    ci = document.getElementById('loginCIPaciente').value.trim();
+    password = document.getElementById('loginPassPaciente').value.trim();
   } else {
-    ci = document.getElementById('loginCIDirecto')?.value.trim();
-    password = document.getElementById('loginPassDirecto')?.value.trim();
+    ci = document.getElementById('loginCIDirecto').value.trim();
+    password = document.getElementById('loginPassDirecto').value.trim();
   }
 
   if (!ci || !password) {
@@ -397,124 +363,39 @@ async function iniciarSesion() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ci, password })
     });
-
     const datos = await respuesta.json();
     if (!respuesta.ok) throw new Error(datos.mensaje || 'Credenciales incorrectas');
 
     localStorage.setItem('token', datos.token);
     localStorage.setItem('rol', datos.usuario.rol);
 
-    // Redirigir
     if (datos.usuario.rol === 'paciente') window.location.href = '/agendar.html';
     else if (datos.usuario.rol === 'medico') window.location.href = '/mis-citas.html';
     else window.location.href = '/admin.html';
-
   } catch (error) {
     console.error('Error:', error);
     alert('❌ ' + error.message);
   }
 }
 
-// ==============================================
-// ✅ RESTO DE FUNCIONES SIN CAMBIOS
-// ==============================================
 async function cargarMedicosPorEspecialidad() {
   const especialidad = document.getElementById('especialidad')?.value;
   const selectMedico = document.getElementById('medico');
-  const selectHora = document.getElementById('hora_cita');
-
   if (!especialidad || !selectMedico) return;
-
   selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
-  if (selectHora) selectHora.innerHTML = '<option value="">Seleccione primero médico y fecha</option>';
-
   try {
-    const respuesta = await fetch(`/api/medicos?especialidad=${encodeURIComponent(especialidad)}`);
-    const medicos = await respuesta.json();
-    medicos.forEach(medico => {
-      const opcion = document.createElement('option');
-      opcion.value = medico._id;
-      opcion.textContent = medico.nombres;
-      selectMedico.appendChild(opcion);
+    const res = await fetch(`/api/medicos?especialidad=${encodeURIComponent(especialidad)}`);
+    const medicos = await res.json();
+    medicos.forEach(m => {
+      const op = document.createElement('option');
+      op.value = m._id;
+      op.textContent = m.nombres;
+      selectMedico.appendChild(op);
     });
-  } catch (error) {
-    selectMedico.innerHTML = '<option value="">Error al cargar médicos</option>';
+  } catch (e) {
+    selectMedico.innerHTML = '<option value="">Error al cargar</option>';
   }
 }
-
-async function cargarTurnosDisponibles() {
-  const medicoId = document.getElementById('medico')?.value;
-  const fecha = document.getElementById('fecha_cita')?.value;
-  const selectHora = document.getElementById('hora_cita');
-
-  if (!medicoId || !fecha || !selectHora) return;
-
-  selectHora.innerHTML = '<option value="">Cargando horarios...</option>';
-  try {
-    const respuesta = await fetch(`/api/turnos-disponibles?medicoId=${medicoId}&fecha=${fecha}`);
-    const datos = await respuesta.json();
-    const turnos = datos.turnosDisponibles || [];
-    selectHora.innerHTML = '<option value="">Seleccione una hora</option>';
-    turnos.forEach(hora => {
-      const opcion = document.createElement('option');
-      opcion.value = hora;
-      opcion.textContent = hora;
-      selectHora.appendChild(opcion);
-    });
-  } catch (error) {
-    selectHora.innerHTML = '<option value="">Error al cargar horarios</option>';
-  }
-}
-
-async function agendarCita(event) {
-  event.preventDefault();
-  const especialidad = document.getElementById('especialidad')?.value?.trim();
-  const medico = document.getElementById('medico')?.value?.trim();
-  const fecha = document.getElementById('fecha_cita')?.value?.trim();
-  const hora = document.getElementById('hora_cita')?.value?.trim();
-  const motivo = document.getElementById('citaMotivo')?.value?.trim();
-
-  if (!especialidad || !medico || !fecha || !hora || !motivo) {
-    alert('⚠️ Completa todos los campos');
-    return;
-  }
-
-  const token = localStorage.getItem('token');
-  if (!token) {
-    alert('⚠️ Debes iniciar sesión primero');
-    return;
-  }
-
-  try {
-    const respuesta = await fetch('/api/citas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ especialidad, medico, fecha, hora, motivo })
-    });
-    const resultado = await respuesta.json();
-    if (respuesta.ok) {
-      alert('✅ Cita agendada correctamente');
-      event.target.reset();
-      document.getElementById('medico').innerHTML = '<option value="">Seleccione primero una especialidad</option>';
-      document.getElementById('hora_cita').innerHTML = '<option value="">Seleccione primero médico y fecha</option>';
-    } else {
-      alert('❌ ' + (resultado.mensaje || 'No se pudo agendar'));
-    }
-  } catch (error) {
-    alert('❌ Error de conexión');
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('✅ Página cargada correctamente');
-  const selectEspecialidad = document.getElementById('especialidad');
-  const selectMedico = document.getElementById('medico');
-  const inputFecha = document.getElementById('fecha_cita');
-
-  if (selectEspecialidad) selectEspecialidad.addEventListener('change', cargarMedicosPorEspecialidad);
-  if (selectMedico) selectMedico.addEventListener('change', cargarTurnosDisponibles);
-  if (inputFecha) inputFecha.addEventListener('change', cargarTurnosDisponibles);
-});
 </script>
 
 <script src="app.js"></script>

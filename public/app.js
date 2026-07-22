@@ -6,87 +6,100 @@ const API_BASE = '';
 // UTILIDADES GENERALES
 // ==============================================
 // ==============================================
-// ✅ FUNCIÓN DEL OJITO (YA FUNCIONA 100%)
+// ✅ FUNCIÓN DEL OJITO (SIN ERRORES)
 // ==============================================
-function togglePassword(idInput, boton) {
-  // Buscamos el campo de contraseña por su ID único
-  const campo = document.getElementById(idInput);
-  
-  // Si no lo encontramos, salimos para evitar errores
-  if (!campo) {
-    console.error("No se encontró el campo con ID:", idInput);
+function togglePassword(id, boton) {
+  const input = document.getElementById(id);
+  if (!input) {
+    console.error("Campo no encontrado:", id);
     return;
   }
-
-  // Cambiamos entre texto y contraseña
-  if (campo.type === "password") {
-    campo.type = "text";
-    boton.textContent = "🙈"; // Ocultar contraseña
+  if (input.type === 'password') {
+    input.type = 'text';
+    boton.textContent = '🙈';
   } else {
-    campo.type = "password";
-    boton.textContent = "👁️"; // Mostrar contraseña
+    input.type = 'password';
+    boton.textContent = '👁️';
   }
 }
 
-function cambiarTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  if (tab === 'login') {
-    document.getElementById('camposLogin').style.display = 'block';
-    document.getElementById('formRegistro').style.display = 'none';
-  } else {
-    document.getElementById('camposLogin').style.display = 'none';
-    document.getElementById('formRegistro').style.display = 'block';
-  }
-  event.target.classList.add('active');
-}
-
-function cerrarModal(idModal) {
-  document.getElementById(idModal).style.display = 'none';
-}
-
 // ==============================================
-// SELECCIÓN DE ROL Y FORMULARIO
+// ✅ SELECCIÓN DE ROL (COINCIDE CON TU HTML)
 // ==============================================
-// ✅ FUNCIÓN PARA SELECCIONAR TIPO DE CUENTA
-function seleccionarRol(rolElegido) {
+function seleccionarRol(rolElegido, tarjeta) {
   const campoRol = document.getElementById('loginRol');
-  const formulario = document.getElementById('camposLogin');
-  const campoCI = document.getElementById('grupoLoginCI');
+  const pestañas = document.getElementById('tabsAuth');
+  const formLogin = document.getElementById('formLogin');
+  const formRegistro = document.getElementById('formRegistro');
+  const formAcceso = document.getElementById('formAccesoDirecto');
 
+  // Guardar rol en campo oculto y localStorage
   if (campoRol) campoRol.value = rolElegido;
   localStorage.setItem('rolSeleccionado', rolElegido);
 
-  // Mostramos el formulario completo
-  if (formulario) formulario.style.display = 'block';
-  if (campoCI) campoCI.style.display = 'block';
+  // Ocultar todo primero
+  if (pestañas) pestañas.style.display = 'none';
+  if (formLogin) formLogin.style.display = 'none';
+  if (formRegistro) formRegistro.style.display = 'none';
+  if (formAcceso) formAcceso.style.display = 'none';
 
-  // Resaltamos la tarjeta elegida
-  document.querySelectorAll('.tipo-cuenta').forEach(t => t.style.border = '2px solid transparent');
-  event.currentTarget.style.border = '3px solid #9333ea';
+  // Resaltar tarjeta seleccionada
+  document.querySelectorAll('.rol-card').forEach(t => {
+    t.style.border = '2px solid #ddd';
+    t.style.backgroundColor = '#fff';
+    t.style.boxShadow = 'none';
+  });
+  tarjeta.style.border = '3px solid #9333ea';
+  tarjeta.style.backgroundColor = '#f8f5ff';
+  tarjeta.style.boxShadow = '0 0 10px rgba(147, 51, 234, 0.2)';
+
+  // Mostrar formulario correspondiente
+  if (rolElegido === 'paciente') {
+    if (pestañas) pestañas.style.display = 'flex';
+    mostrarFormulario('login');
+  } else {
+    if (formAcceso) formAcceso.style.display = 'block';
+  }
 
   console.log('✅ Rol seleccionado:', rolElegido);
 }
 
-// ✅ FUNCIÓN DE INICIO DE SESIÓN CORREGIDA SIN ERRORES
+// ==============================================
+// ✅ CAMBIAR FORMULARIO PACIENTE
+// ==============================================
+function mostrarFormulario(tipo) {
+  const formLogin = document.getElementById('formLogin');
+  const formRegistro = document.getElementById('formRegistro');
+
+  if (formLogin) formLogin.style.display = tipo === 'login' ? 'block' : 'none';
+  if (formRegistro) formRegistro.style.display = tipo === 'registro' ? 'block' : 'none';
+
+  document.querySelectorAll('#tabsAuth .tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ==============================================
+// ✅ INICIO DE SESIÓN
+// ==============================================
 async function iniciarSesion() {
   const rol = document.getElementById('loginRol')?.value || localStorage.getItem('rolSeleccionado');
   let ci, password;
-
-  // Usamos los campos según el rol seleccionado
-  if (rol === 'paciente') {
-    ci = document.getElementById('loginCIPaciente')?.value.trim();
-    password = document.getElementById('loginPassPaciente')?.value.trim();
-  } else {
-    ci = document.getElementById('loginCIAdmin')?.value.trim();
-    password = document.getElementById('loginPassAdmin')?.value.trim();
-  }
 
   if (!rol) {
     alert('⚠️ Primero selecciona tu tipo de cuenta');
     return;
   }
+
+  if (rol === 'paciente') {
+    ci = document.getElementById('loginCIPaciente')?.value.trim();
+    password = document.getElementById('loginPassPaciente')?.value.trim();
+  } else {
+    ci = document.getElementById('loginCIDirecto')?.value.trim();
+    password = document.getElementById('loginPassDirecto')?.value.trim();
+  }
+
   if (!ci || !password) {
-    alert('⚠️ Ingresa tu identificador y contraseña');
+    alert('⚠️ Completa todos los campos');
     return;
   }
 
@@ -113,30 +126,30 @@ async function iniciarSesion() {
   }
 }
 
+// ==============================================
+// ✅ CARGA INICIAL
+// ==============================================
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ app.js cargado correctamente');
+  // Recuperar rol guardado al recargar
+  const rolGuardado = localStorage.getItem('rolSeleccionado');
+  if (rolGuardado) {
+    const tarjeta = Array.from(document.querySelectorAll('.rol-card')).find(t => t.getAttribute('onclick').includes(rolGuardado));
+    if (tarjeta) seleccionarRol(rolGuardado, tarjeta);
+  }
+});
 // ✅ CARGA DE PÁGINA: NO LLAMAMOS A NINGUNA FUNCIÓN INNECESARIA
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ Página de inicio cargada correctamente');
   // ❌ BORRAMOS CUALQUIER LLAMADA A cargarMedicosEnSelect o cargarMisCitas AQUÍ
 });
 
-// ✅ FUNCIÓN PARA MOSTRAR/OCULTAR CONTRASEÑA
-function togglePassword(id, boton) {
-  const input = document.getElementById(id);
-  if (input.type === 'password') {
-    input.type = 'text';
-    boton.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    boton.textContent = '👁️';
-  }
-}
-  
   // Resaltamos la tarjeta elegida
   document.querySelectorAll('.tipo-cuenta').forEach(t => t.style.border = '2px solid transparent');
   event.currentTarget.style.border = '3px solid #9333ea';
   
   console.log('✅ Rol seleccionado:', rolElegido);
-}
+
   // Resaltar tarjeta seleccionada
   document.querySelectorAll('.rol-card').forEach(card => {
     card.style.background = '#ffffff';
