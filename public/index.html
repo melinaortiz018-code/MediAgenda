@@ -63,7 +63,7 @@
                         <button type="button" class="boton-ojo" onclick="togglePassword('loginPassDirecto', this)">👁️</button>
                     </div>
                 </div>
-                <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
+                <button class="tab-btn active" onclick="mostrarFormulario('login', this)">Iniciar Sesión</button>
             </div>
 
             <div id="formRegistro" class="formulario" style="display: none;">
@@ -100,7 +100,7 @@
                         <label for="regConfirmPassword">Confirmar Contraseña *</label>
                         <input type="password" id="regConfirmPassword" required placeholder="Repite tu contraseña">
                     </div>
-                    <button type="submit" class="btn-principal">Registrarme</button>
+                    <button class="tab-btn" onclick="mostrarFormulario('registro', this)">Registrarse</button>
                 </form>
             </div>
         </div>

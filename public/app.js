@@ -225,21 +225,102 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 // ==============================================
 // AUTENTICACIÓN
 // ==============================================
-async function iniciarSesion(event) {
-  if (event) event.preventDefault();
+// ==============================================
+// ✅ FUNCIÓN DEL OJITO (SIN ERRORES)
+// ==============================================
+function togglePassword(id, boton) {
+  const input = document.getElementById(id);
+  if (!input) {
+    console.error("Campo no encontrado:", id);
+    return;
+  }
+  input.type = input.type === 'password' ? 'text' : 'password';
+  boton.textContent = input.type === 'password' ? '👁️' : '🙈';
+}
 
-  // ✅ Validamos primero el rol
+// ==============================================
+// ✅ SELECCIÓN DE ROL (CORREGIDO EL ERROR DE event)
+// ==============================================
+function seleccionarRol(rolElegido, tarjeta) {
+  const campoRol = document.getElementById('loginRol');
+  const pestañas = document.getElementById('tabsAuth');
+  const formLogin = document.getElementById('formLogin');
+  const formRegistro = document.getElementById('formRegistro');
+  const formAcceso = document.getElementById('formAccesoDirecto');
+
+  // Guardar rol
+  if (campoRol) campoRol.value = rolElegido;
+  localStorage.setItem('rolSeleccionado', rolElegido);
+
+  // Ocultar todo primero
+  if (pestañas) pestañas.style.display = 'none';
+  if (formLogin) formLogin.style.display = 'none';
+  if (formRegistro) formRegistro.style.display = 'none';
+  if (formAcceso) formAcceso.style.display = 'none';
+
+  // Resaltar tarjeta seleccionada (SIN USAR event.currentTarget)
+  document.querySelectorAll('.rol-card').forEach(t => {
+    t.style.border = '2px solid #ddd';
+    t.style.backgroundColor = '#fff';
+    t.style.boxShadow = 'none';
+  });
+  tarjeta.style.border = '3px solid #9333ea';
+  tarjeta.style.backgroundColor = '#f8f5ff';
+  tarjeta.style.boxShadow = '0 0 10px rgba(147, 51, 234, 0.2)';
+
+  // Mostrar formulario correcto
+  if (rolElegido === 'paciente') {
+    if (pestañas) pestañas.style.display = 'flex';
+    mostrarFormulario('login');
+  } else {
+    if (formAcceso) formAcceso.style.display = 'block';
+  }
+
+  console.log('✅ Rol seleccionado:', rolElegido);
+}
+
+// ==============================================
+// ✅ CAMBIAR FORMULARIO PACIENTE (RECIBE EL EVENTO)
+// ==============================================
+function mostrarFormulario(tipo, botonEvento) {
+  const formLogin = document.getElementById('formLogin');
+  const formRegistro = document.getElementById('formRegistro');
+
+  if (formLogin) formLogin.style.display = tipo === 'login' ? 'block' : 'none';
+  if (formRegistro) formRegistro.style.display = tipo === 'registro' ? 'block' : 'none';
+
+  // Resaltar botón sin depender de event global
+  document.querySelectorAll('#tabsAuth .tab-btn').forEach(btn => btn.classList.remove('active'));
+  if (botonEvento) botonEvento.classList.add('active');
+}
+
+// ==============================================
+// ✅ INICIO DE SESIÓN (LECTURA SEGURA DE CAMPOS)
+// ==============================================
+async function iniciarSesion() {
   const rol = document.getElementById('loginRol')?.value || localStorage.getItem('rolSeleccionado');
+  let ci = '', password = '';
+
   if (!rol) {
-    alert('⚠️ Primero elige Paciente, Médico o Administrador');
+    alert('⚠️ Primero selecciona tu tipo de cuenta');
     return;
   }
 
-  const ci = document.getElementById('loginCI')?.value.trim();
-  const password = document.getElementById('loginPassword')?.value.trim();
+  // Leer campos de forma segura
+  if (rol === 'paciente') {
+    const campoCi = document.getElementById('loginCIPaciente');
+    const campoPass = document.getElementById('loginPassPaciente');
+    ci = campoCi?.value?.trim() || '';
+    password = campoPass?.value?.trim() || '';
+  } else {
+    const campoCi = document.getElementById('loginCIDirecto');
+    const campoPass = document.getElementById('loginPassDirecto');
+    ci = campoCi?.value?.trim() || '';
+    password = campoPass?.value?.trim() || '';
+  }
 
   if (!ci || !password) {
-    alert('⚠️ Ingresa tu cédula y contraseña');
+    alert('⚠️ Ingresa tu cédula/identificador y contraseña');
     return;
   }
 
@@ -247,36 +328,44 @@ async function iniciarSesion(event) {
     const respuesta = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rol, ci, password })
+      body: JSON.stringify({ ci, password })
     });
 
-    const datos = await respuesta.json(); // ✅ AQUÍ SE DECLARA datos
-    if (!respuesta.ok) throw new Error(datos.mensaje || 'Error al iniciar sesión');
+    const datos = await respuesta.json();
+    if (!respuesta.ok) throw new Error(datos.mensaje || 'Credenciales incorrectas');
 
-    // ✅ AHORA SÍ PODEMOS USAR datos
     localStorage.setItem('token', datos.token);
     localStorage.setItem('rol', datos.usuario.rol);
 
-    // Redirigimos según el rol
-    if (datos.usuario.rol === 'paciente') {
-      window.location.href = '/agendar.html';
-    } else if (datos.usuario.rol === 'medico') {
-      window.location.href = '/mis-citas.html';
-    } else if (datos.usuario.rol === 'admin') {
-      window.location.href = '/admin.html';
-    }
+    // Redirigir según rol
+    if (datos.usuario.rol === 'paciente') window.location.href = '/agendar.html';
+    else if (datos.usuario.rol === 'medico') window.location.href = '/mis-citas.html';
+    else window.location.href = '/admin.html';
 
-  } catch (error) { // ✅ catch va DESPUÉS de cerrar try
-    console.error('Error:', error);
-    alert('❌ ' + (error.message || 'No se pudo iniciar sesión'));
+  } catch (error) {
+    console.error('Error completo:', error);
+    alert('❌ ' + error.message);
   }
 }
-// ✅ ASEGÚRATE DE BORRAR LAS LLAMADAS A FUNCIONES QUE NO EXISTEN
-document.addEventListener('DOMContentLoaded', () => {
-  // No llamar a cargarMedicosEnSelect ni cargarMisCitas aquí
-  console.log('✅ Página de inicio cargada');
-});
 
+// ==============================================
+// ✅ CARGA INICIAL SIN ERRORES
+// ==============================================
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ app.js cargado correctamente');
+
+  // Eliminar botones antiguos si existen
+  const botonesAntiguos = document.querySelectorAll('button:is([onclick*="Iniciar"], [onclick*="Registrar"])');
+  botonesAntiguos.forEach(b => b.remove());
+
+  // Recuperar rol guardado
+  const rolGuardado = localStorage.getItem('rolSeleccionado');
+  if (rolGuardado) {
+    const tarjeta = Array.from(document.querySelectorAll('.rol-card'))
+      .find(t => t.getAttribute('onclick')?.includes(rolGuardado));
+    if (tarjeta) seleccionarRol(rolGuardado, tarjeta);
+  }
+});
 async function registrarUsuario(e) {
   e.preventDefault();
   try {
