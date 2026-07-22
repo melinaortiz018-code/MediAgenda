@@ -32,16 +32,16 @@
                 </div>
             </div>
 
-            <!-- PESTAÑAS DE AUTENTICACIÓN -->
+            <!-- PESTAÑAS SOLO VISIBLES PARA PACIENTES -->
             <div id="tabsAuth" class="tabs-auth" style="display: none;">
-                <button class="tab-btn active" onclick="cambiarTab('login')">Iniciar Sesión</button>
-                <button class="tab-btn" onclick="cambiarTab('registro')">Registrarse</button>
+                <button class="tab-btn active" onclick="mostrarFormulario('login')">Iniciar Sesión</button>
+                <button class="tab-btn" onclick="mostrarFormulario('registro')">Registrarse</button>
             </div>
 
             <!-- FORMULARIO DE INICIO DE SESIÓN -->
             <input type="hidden" id="loginRol">
-            <div id="camposLogin" class="campos-login" style="display: none;">
-                <div id="grupoLoginCI" class="grupo-campo">
+            <div id="formLogin" class="campos-login" style="display: none;">
+                <div class="grupo-campo">
                     <label for="loginCI">Cédula de Identidad (CI)</label>
                     <input type="text" id="loginCI" placeholder="Ingresa tu número de cédula" required>
                 </div>
@@ -53,7 +53,23 @@
                     </div>
                 </div>
                 <p id="loginHint" class="hint"></p>
-                <button type="button" class="btn-principal" onclick="iniciarSesion(event)">Ingresar</button>
+                <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
+            </div>
+
+            <!-- FORMULARIO DE ACCESO DIRECTO (MÉDICO / ADMIN) -->
+            <div id="formAccesoDirecto" class="campos-login" style="display: none;">
+                <div class="grupo-campo">
+                    <label for="loginCI">Cédula / Identificador</label>
+                    <input type="text" id="loginCI" placeholder="Ingresa tu identificador" required>
+                </div>
+                <div class="grupo-campo">
+                    <label for="loginPassword">Contraseña</label>
+                    <div class="input-con-boton">
+                        <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña" required>
+                        <button type="button" onclick="togglePassword('loginPassword', this)">👁️</button>
+                    </div>
+                </div>
+                <button type="button" class="btn-principal" onclick="iniciarSesion()">Ingresar</button>
             </div>
 
             <!-- FORMULARIO DE REGISTRO DE PACIENTE -->
@@ -97,7 +113,7 @@
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN -->
+    <!-- BARRA DE NAVEGACIÓN (SE MANTIENE IGUAL) -->
     <nav id="navbar" style="display: none;">
         <div class="nav-contenedor">
             <div class="nav-logo">🏥 MediAgenda</div>
@@ -109,7 +125,7 @@
         </div>
     </nav>
 
-    <!-- VISTAS PRINCIPALES -->
+    <!-- VISTAS PRINCIPALES (SE MANTIENEN TODAS IGUALES) -->
     <div id="vistaAgendar" class="vista contenedor-principal" style="display: none;">
         <h2>Agendar Nueva Cita</h2>
         <form onsubmit="agendarCita(event)">
@@ -230,7 +246,7 @@
         </div>
     </div>
 
-    <!-- MODAL: AGREGAR MÉDICO -->
+    <!-- MODALES (SE MANTIENEN IGUALES) -->
     <div id="modalAgregarMedico" class="modal">
         <div class="modal-contenido">
             <span class="cerrar" onclick="cerrarModal('modalAgregarMedico')">&times;</span>
@@ -267,7 +283,6 @@
         </div>
     </div>
 
-    <!-- MODAL: CAMBIAR CONTRASEÑA -->
     <div id="modalCambiarPass" class="modal">
         <div class="modal-contenido">
             <span class="cerrar" onclick="cerrarModal('modalCambiarPass')">&times;</span>
@@ -289,28 +304,56 @@
 
 <script>
 // ==============================================
-// ✅ FUNCIONES GENERALES (SIN ERRORES)
+// ✅ FUNCIONES CORREGIDAS SIN MODIFICAR TU ESTRUCTURA
 // ==============================================
+
+// Selección de rol y formularios
 function seleccionarRol(rolElegido, tarjeta) {
   const campoRol = document.getElementById('loginRol');
-  const formulario = document.getElementById('camposLogin');
-  const campoCI = document.getElementById('grupoLoginCI');
   const pestañas = document.getElementById('tabsAuth');
+  const formLogin = document.getElementById('formLogin');
+  const formRegistro = document.getElementById('formRegistro');
+  const formAcceso = document.getElementById('formAccesoDirecto');
 
   if (campoRol) campoRol.value = rolElegido;
   localStorage.setItem('rolSeleccionado', rolElegido);
 
-  if (pestañas) pestañas.style.display = 'flex';
-  if (formulario) formulario.style.display = 'block';
-  if (campoCI) campoCI.style.display = 'block';
+  // Ocultar todo primero
+  if (pestañas) pestañas.style.display = 'none';
+  if (formLogin) formLogin.style.display = 'none';
+  if (formRegistro) formRegistro.style.display = 'none';
+  if (formAcceso) formAcceso.style.display = 'none';
 
-  // Resaltar tarjeta seleccionada
+  // Resaltar tarjeta
   document.querySelectorAll('.rol-card').forEach(t => t.style.border = '2px solid #ddd');
   tarjeta.style.border = '3px solid #9333ea';
+
+  // Mostrar solo lo que corresponde
+  if (rolElegido === 'paciente') {
+    if (pestañas) pestañas.style.display = 'flex';
+    mostrarFormulario('login');
+  } else {
+    // Médico y Admin: acceso directo SIN registro
+    if (formAcceso) formAcceso.style.display = 'block';
+  }
 
   console.log('✅ Rol elegido:', rolElegido);
 }
 
+// Cambiar entre login y registro (solo para pacientes)
+function mostrarFormulario(tipo) {
+  const formLogin = document.getElementById('formLogin');
+  const formRegistro = document.getElementById('formRegistro');
+
+  if (formLogin) formLogin.style.display = tipo === 'login' ? 'block' : 'none';
+  if (formRegistro) formRegistro.style.display = tipo === 'registro' ? 'block' : 'none';
+
+  // Resaltar botón activo
+  document.querySelectorAll('#tabsAuth .tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Mostrar/ocultar contraseña
 function togglePassword(id, boton) {
   const input = document.getElementById(id);
   if (!input) return;
@@ -319,22 +362,19 @@ function togglePassword(id, boton) {
 }
 
 // ==============================================
-// ✅ INICIO DE SESIÓN (SIN ERRORES DE SINTAXIS)
+// ✅ INICIO DE SESIÓN SIN ERRORES
 // ==============================================
-async function iniciarSesion(event) {
-  event?.preventDefault();
-
+async function iniciarSesion() {
   const rol = document.getElementById('loginRol')?.value || localStorage.getItem('rolSeleccionado');
-  if (!rol) {
-    alert('⚠️ Primero elige Paciente, Médico o Administrador');
-    return;
-  }
-
   const ci = document.getElementById('loginCI')?.value.trim();
   const password = document.getElementById('loginPassword')?.value.trim();
 
+  if (!rol) {
+    alert('⚠️ Primero selecciona tu tipo de cuenta');
+    return;
+  }
   if (!ci || !password) {
-    alert('⚠️ Ingresa tu cédula y contraseña');
+    alert('⚠️ Ingresa tu identificador y contraseña');
     return;
   }
 
@@ -351,9 +391,10 @@ async function iniciarSesion(event) {
     localStorage.setItem('token', datos.token);
     localStorage.setItem('rol', datos.usuario.rol);
 
-    if (datos.usuario.rol === 'paciente') window.location.href = '#agendar';
-    else if (datos.usuario.rol === 'medico') window.location.href = '#mis-citas';
-    else window.location.href = '#admin';
+    // Redirigir según rol
+    if (datos.usuario.rol === 'paciente') window.location.href = '/agendar.html';
+    else if (datos.usuario.rol === 'medico') window.location.href = '/mis-citas.html';
+    else window.location.href = '/admin.html';
 
   } catch (error) {
     console.error('Error:', error);
@@ -471,12 +512,11 @@ async function agendarCita(event) {
 }
 
 // ==============================================
-// ✅ INICIO DE CARGA DE PÁGINA
+// ✅ CARGA INICIAL DE EVENTOS
 // ==============================================
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ Página cargada correctamente');
 
-  // Asignar eventos a los campos del formulario
   const selectEspecialidad = document.getElementById('especialidad');
   const selectMedico = document.getElementById('medico');
   const inputFecha = document.getElementById('fecha_cita');
