@@ -102,39 +102,48 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 // ==============================================
 // AUTENTICACIÓN
 // ==============================================
-async function iniciarSesion() {
-  const rol = document.getElementById('loginRol').value;
-  const ci = document.getElementById('loginCI').value.trim();
-  const correo = document.getElementById('loginCorreo').value.trim();
-  const password = document.getElementById('loginPassword').value;
+async function iniciarSesion(event) {
+  event.preventDefault();
 
-  if (!rol) return Swal.fire('Atención', 'Selecciona un tipo de cuenta', 'warning');
-  if (!password) return Swal.fire('Atención', 'Escribe tu contraseña', 'warning');
+  // Tomamos los datos del formulario
+  const ci = document.getElementById('ci').value.trim();
+  const password = document.getElementById('password').value.trim();
 
-  const datosEnvio = { rol, password };
-  if (rol === 'paciente') {
-    if (!ci || !correo) return Swal.fire('Atención', 'Ingresa tu cédula y correo', 'warning');
-    datosEnvio.ci = ci;
-    datosEnvio.correo = correo;
-  } else if (rol === 'medico') {
-    if (!ci) return Swal.fire('Atención', 'Ingresa tu cédula (ej: MED001)', 'warning');
-    datosEnvio.ci = ci; // ✅ Solo envía cédula, sin datos extra
-  } else if (rol === 'admin') {
-    if (!correo) return Swal.fire('Atención', 'Ingresa tu correo', 'warning');
-    datosEnvio.correo = correo;
+  if (!ci || !password) {
+    alert('Completa cédula y contraseña');
+    return;
   }
 
   try {
-    const respuesta = await apiRequest('/api/auth/login', 'POST', datosEnvio);
-    token = respuesta.token;
-    usuarioActual = respuesta.usuario;
-    localStorage.setItem('token', token);
+    const respuesta = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ci, password })
+    });
+
+    // ✅ AQUÍ ESTABA EL ERROR: NOMBRAMOS LA VARIABLE CORRECTAMENTE
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok) {
+      throw new Error(datos.mensaje || 'Error al iniciar sesión');
+    }
+
+    // ✅ ESTAS LÍNEAS SON LAS CORRECTAS QUE PUSISTE ANTES
+    localStorage.setItem('token', datos.token);
     localStorage.setItem('rol', datos.usuario.rol);
 
-    Swal.fire('✅ Bienvenido', `Hola ${usuarioActual.nombres}`, 'success')
-      .then(() => cargarInterfazSegunRol());
+    // ✅ REDIRIGIMOS SEGÚN EL ROL
+    if (datos.usuario.rol === 'paciente') {
+      window.location.href = '/agendar.html';
+    } else if (datos.usuario.rol === 'medico') {
+      window.location.href = '/mis-citas.html';
+    } else if (datos.usuario.rol === 'admin') {
+      window.location.href = '/admin.html';
+    }
+
   } catch (error) {
-    Swal.fire('❌ Error al iniciar sesión', error.message, 'error');
+    console.error('Error:', error);
+    alert('Error al iniciar sesión: ' + error.message);
   }
 }
 
@@ -261,34 +270,6 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarMedicosEnSelect();
 });
 
-async function cargarMedicosEnSelect() {
-  // ✅ AGREGA SOLO ESTA LÍNEA AL INICIO, LO DEMÁS LO DEJAS IGUAL O LO BORRAS
-  if (!document.getElementById('medico')) return;
-    try {
-        // Asegúrate de que esta ruta coincida con la de tu backend
-        const respuesta = await fetch('/api/medicos'); 
-        const medicos = await respuesta.json();
-
-        const selectMedico = document.getElementById('citaMedico');
-        
-        // Limpiar opciones anteriores manteniendo la opción por defecto
-        selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
-
-        // Rellenar con los médicos obtenidos
-        medicos.forEach(medico => {
-            const option = document.createElement('option');
-            // Usamos el _id de MongoDB como value y el nombre/especialidad como texto visible
-            option.value = medico._id; 
-            option.textContent = `Dr. ${medico.nombre} - ${medico.especialidad || 'General'}`;
-            selectMedico.appendChild(option);
-        });
-
-    } catch (error) {
-        console.error("Error al cargar los médicos:", error);
-        const selectMedico = document.getElementById('citaMedico');
-        selectMedico.innerHTML = '<option value="">Error al cargar especialistas</option>';
-    }
-}
 async function agendarCita(e) {
   e.preventDefault();
   try {
