@@ -120,43 +120,43 @@
     <div id="vistaAgendar" class="vista contenedor-principal" style="display: none;">
         <h2>Agendar Nueva Cita</h2>
         <form onsubmit="agendarCita(event)">
-            <div class="grupo-campo">
-                <label for="citaEspecialidad">Especialidad Médica *</label>
-                <!-- Especialidad -->
-                <select id="especialidad" onchange="cargarMedicosPorEspecialidad()">
-                <option value="Psicología">Psicología</option>
-                <option value="Odontología">Odontología</option>
-                <option value="Medicina General">Medicina General</option>
-                <option value="Pediatría">Pediatría</option>
-                </select>
+    <div class="grupo-campo">
+        <label for="especialidad">Especialidad Médica *</label>
+        <select id="especialidad" onchange="cargarMedicosPorEspecialidad()" required>
+        <option value="">Seleccione una especialidad</option>
+        <option value="Psicología">Psicología</option>
+        <option value="Odontología">Odontología</option>
+        <option value="Medicina General">Medicina General</option>
+        <option value="Pediatría">Pediatría</option>
+        </select>
+    </div>
 
-                <!-- Médico -->
-                <select id="medico">
-                <option value="">Seleccione primero una especialidad</option>
-                </select>
+    <div class="grupo-campo">
+        <label for="medico">Médico *</label>
+        <select id="medico" required>
+        <option value="">Seleccione primero una especialidad</option>
+        </select>
+    </div>
 
-                <!-- Fecha -->
-                <input type="date" id="fecha_cita">
+    <div class="grupo-campo">
+        <label for="fecha_cita">Fecha de la Cita *</label>
+        <input type="date" id="fecha_cita" required>
+    </div>
 
-                <!-- Hora (aquí se cargarán solos los turnos de 30min) -->
-                <select id="hora_cita">
-                <option value="">---</option>
-                </select>
-            </div>
-            <div class="grupo-campo">
-                <label for="citaFecha">Fecha de la Cita *</label>
-                <input type="date" id="citaFecha" required min="">
-            </div>
-            <div class="grupo-campo">
-                <label for="citaHora">Hora de la Cita *</label>
-                <input type="time" id="citaHora" required>
-            </div>
-            <div class="grupo-campo">
-                <label for="citaMotivo">Motivo de la Consulta *</label>
-                <textarea id="citaMotivo" rows="3" required placeholder="Describe brevemente tu consulta"></textarea>
-            </div>
-            <button type="submit" class="btn-principal">Agendar Cita</button>
-        </form>
+    <div class="grupo-campo">
+        <label for="hora_cita">Hora de la Cita *</label>
+        <select id="hora_cita" required>
+        <option value="">Seleccione primero médico y fecha</option>
+        </select>
+    </div>
+
+    <div class="grupo-campo">
+        <label for="citaMotivo">Motivo de la Consulta *</label>
+        <textarea id="citaMotivo" rows="3" required placeholder="Describe brevemente el motivo de tu consulta..."></textarea>
+    </div>
+
+    <button type="submit" class="btn-principal">Agendar Cita</button>
+    </form>
     </div>
 
     <div id="vistaMisCitas" class="vista contenedor-principal" style="display: none;">
