@@ -308,8 +308,12 @@ async function cargarMedicosPorEspecialidad() {
   const especialidad = document.getElementById('especialidad').value;
   const selectMedico = document.getElementById('medico');
   
-  // ✅ BORRA LO ANTERIOR ANTES DE CARGAR NUEVOS
-  selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
+  // ✅ ELIMINAMOS TODAS LAS OPCIONES ANTES DE CARGAR NUEVAS
+  selectMedico.innerHTML = '';
+  const opcionInicial = document.createElement('option');
+  opcionInicial.value = '';
+  opcionInicial.textContent = 'Seleccione un médico';
+  selectMedico.appendChild(opcionInicial);
 
   if (!especialidad) return;
 
@@ -322,6 +326,7 @@ async function cargarMedicosPorEspecialidad() {
       return;
     }
 
+    // ✅ AGREGAMOS SOLO LOS 2 MÉDICOS DE LA ESPECIALIDAD
     medicos.forEach(medico => {
       const opcion = document.createElement('option');
       opcion.value = medico._id;
