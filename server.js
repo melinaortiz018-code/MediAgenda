@@ -75,50 +75,58 @@ const auth = (rolesPermitidos = []) => {
 // ==================== RUTAS AUTENTICACIÓN ====================
 
 // 🆕 RUTA DE REGISTRO DE PACIENTES (LA QUE FALTABA)
-app.post('/api/auth/registro', async (req, res) => {
+// ✅ Login que acepta CI para médicos/pacientes y correo para admin
+app.post('/api/auth/login', async (req, res) => {
   try {
-    const { ci, nombres, correo, celular, direccion, password, confirmPassword } = req.body;
-    
-    console.log('📝 Intento de registro recibido:', { ci, nombres, correo });
-    
-    if (!ci || !nombres || !correo || !password || !confirmPassword)
-      return res.status(400).json({ mensaje: 'Todos los campos obligatorios deben llenarse' });
-    
-    if (password !== confirmPassword)
-      return res.status(400).json({ mensaje: 'Las contraseñas no coinciden' });
-    
-    if (password.length < 6)
-      return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres' });
-    
-    const existeCI = await Usuario.findOne({ ci });
-    if (existeCI) return res.status(400).json({ mensaje: 'Ya existe un usuario con este CI' });
-    
-    const existeCorreo = await Usuario.findOne({ correo });
-    if (existeCorreo) return res.status(400).json({ mensaje: 'Ya existe un usuario con este correo' });
-    
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-    
-    const usuario = new Usuario({
-      ci, nombres, correo, celular, direccion,
-      password: passwordHash, rol: 'paciente'
-    });
-    
-    await usuario.save();
-    const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, JWT_SECRET, { expiresIn: '7d' });
-    
-    console.log('✅ Paciente registrado correctamente:', nombres);
-    
-    res.status(201).json({
+    const { rol, ci, correo, password } = req.body;
+    let usuario;
+
+    if (rol === 'medico') {
+      // Médicos inician con CI y contraseña
+      usuario = await Usuario.findOne({ ci, rol: 'medico' });
+    } else if (rol === 'paciente') {
+      // Pacientes inician con CI + correo
+      usuario = await Usuario.findOne({ ci, correo, rol: 'paciente' });
+    } else if (rol === 'admin') {
+      // Admin inicia con correo
+      usuario = await Usuario.findOne({ correo, rol: 'admin' });
+    } else {
+      return res.status(400).json({ mensaje: 'Rol no válido' });
+    }
+
+    if (!usuario) {
+      return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
+    }
+
+    // Verificar contraseña
+    const contraseñaValida = await bcrypt.compare(password, usuario.password);
+    if (!contraseñaValida) {
+      return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
+    }
+
+    // Generar token
+    const token = jwt.sign(
+      { id: usuario._id, rol: usuario.rol },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
       token,
-      usuario: { 
-        id: usuario._id, ci: usuario.ci, nombres: usuario.nombres, 
-        correo: usuario.correo, rol: usuario.rol 
+      usuario: {
+        _id: usuario._id,
+        ci: usuario.ci,
+        nombres: usuario.nombres,
+        correo: usuario.correo,
+        rol: usuario.rol,
+        especialidad: usuario.especialidad,
+        celular: usuario.celular,
+        direccion: usuario.direccion
       }
     });
   } catch (error) {
-    console.error('❌ Error en registro:', error);
-    res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+    console.error('Error en login:', error);
+    res.status(500).json({ mensaje: 'Error al iniciar sesión' });
   }
 });
 
@@ -183,12 +191,22 @@ app.get('/api/auth/verify', auth(), async (req, res) => {
 });
 
 // ==================== RUTAS PACIENTES ====================
-app.get('/api/medicos', auth(['paciente', 'admin']), async (req, res) => {
+// ✅ Ruta que usa el frontend para cargar médicos en la cita
+app.get('/api/medicos', async (req, res) => {
   try {
-    const medicos = await Usuario.find({ rol: 'medico', activo: true }).select('-password');
+    const { especialidad } = req.query;
+    let consulta = { rol: 'medico' };
+
+    // Filtrar por especialidad si se pide
+    if (especialidad) {
+      consulta.especialidad = especialidad;
+    }
+
+    const medicos = await Usuario.find(consulta).select('-password');
     res.json(medicos);
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error al cargar médicos' });
+    console.error('Error al cargar médicos:', error);
+    res.status(500).json({ mensaje: 'Error al obtener médicos' });
   }
 });
 
@@ -389,41 +407,46 @@ app.put('/api/medico/citas/:id', auth(['medico']), async (req, res) => {
   }
 });
 
-// ==================== RUTAS ADMINISTRADOR ====================
-app.get('/api/admin/usuarios', auth(['admin']), async (req, res) => {
+// ✅ Devuelve el rol y especialidad correctamente
+app.get('/api/admin/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   try {
-    const usuarios = await Usuario.find().select('+password').sort({ createdAt: -1 });
+    const usuarios = await Usuario.find().select('-password');
     res.json(usuarios);
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error al cargar usuarios' });
+    console.error('Error al cargar usuarios:', error);
+    res.status(500).json({ mensaje: 'Error al obtener usuarios' });
   }
 });
 
-app.post('/api/admin/medicos', auth(['admin']), async (req, res) => {
+// ✅ Coincide con los campos que envía el formulario
+app.post('/api/admin/medicos', verificarToken, verificarAdmin, async (req, res) => {
   try {
-    const { ci, nombres, correo, celular, especialidad, genero, password } = req.body;
-    
-    if (!ci || !nombres || !correo || !especialidad || !genero || !password)
-      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
-    
-    const existeCI = await Usuario.findOne({ ci });
-    if (existeCI) return res.status(400).json({ mensaje: 'Ya existe un usuario con este CI' });
-    
-    const existeCorreo = await Usuario.findOne({ correo });
-    if (existeCorreo) return res.status(400).json({ mensaje: 'Ya existe un usuario con este correo' });
-    
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-    
-    const medico = new Usuario({
-      ci, nombres, correo, celular, especialidad, genero,
-      password: passwordHash, rol: 'medico'
+    const { ci, nombres, correo, especialidad, password } = req.body;
+
+    // Verificar si ya existe
+    const existe = await Usuario.findOne({ $or: [{ ci }, { correo }] });
+    if (existe) {
+      return res.status(400).json({ mensaje: 'El médico ya existe con esa cédula o correo' });
+    }
+
+    // Encriptar contraseña
+    const contraseñaEncriptada = await bcrypt.hash(password, 10);
+
+    // Crear usuario médico
+    const nuevoMedico = new Usuario({
+      ci,
+      nombres,
+      correo,
+      rol: 'medico',
+      especialidad,
+      password: contraseñaEncriptada
     });
-    
-    await medico.save();
-    res.status(201).json({ mensaje: 'Médico agregado exitosamente', medico });
+
+    await nuevoMedico.save();
+    res.json({ mensaje: 'Médico registrado correctamente' });
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error al agregar médico' });
+    console.error('Error al agregar médico:', error);
+    res.status(500).json({ mensaje: 'Error al registrar médico' });
   }
 });
 
