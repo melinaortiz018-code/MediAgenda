@@ -215,7 +215,7 @@ app.get('/api/medicos', async (req, res) => {
     }
 
     // Traemos solo los campos que usa el formulario
-    const medicos = await Usuario.find(filtro).select('_id nombres especialidad ci');
+    const medicos = await Usuario.find({ rol: 'medico', especialidad: especialidad }).distinct('_id', 'nombres', 'especialidad');
     console.log(`✅ Encontrados: ${medicos.length} médicos`);
     console.log('   Lista:', medicos.map(m => m.nombres));
 
