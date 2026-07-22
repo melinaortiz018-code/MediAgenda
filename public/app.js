@@ -129,7 +129,7 @@ async function iniciarSesion() {
     token = respuesta.token;
     usuarioActual = respuesta.usuario;
     localStorage.setItem('token', token);
-    localStorage.setItem('usuario', JSON.stringify(usuarioActual));
+    localStorage.setItem('rol', datos.usuario.rol);
 
     Swal.fire('✅ Bienvenido', `Hola ${usuarioActual.nombres}`, 'success')
       .then(() => cargarInterfazSegunRol());

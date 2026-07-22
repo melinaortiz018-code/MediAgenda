@@ -187,8 +187,6 @@ app.get('/api/auth/verify', auth(), async (req, res) => {
 });
 
 // ==================== RUTAS GENERALES ====================
-// CARGAR MÉDICOS POR ESPECIALIDAD (COINCIDE CON FRONTEND)
-// ✅ RUTA DE MÉDICOS POR ESPECIALIDAD (EXACTA PARA EL FORMULARIO DE CITAS)
 // ✅ RUTA DE MÉDICOS PARA AGENDAR CITAS (ÚNICA Y CORRECTA)
 app.get('/api/medicos', async (req, res) => {
   try {
@@ -442,16 +440,43 @@ app.get('/api/turnos-disponibles', async (req, res) => {
 // ==============================================
 // ✅ RUTA 3: CITAS Y CALENDARIO DEL MÉDICO
 // ==============================================
-app.get('/api/medico/citas', auth(['medico']), async (req, res) => {
+// ✅ RUTA PARA LISTAR MIS CITAS (PACIENTE)
+app.get('/api/citas/mis', auth(['paciente']), async (req, res) => {
   try {
-    const citas = await Cita.find({ medico: req.usuario._id })
-      .populate('paciente', 'nombres ci correo celular')
+    const citas = await Cita.find({ paciente: req.usuario._id })
+      .populate('medico', 'nombres especialidad')
       .sort({ fecha: 1, hora: 1 });
-
-    console.log(`✅ Citas del médico: ${citas.length}`);
+    console.log(`✅ Paciente ${req.usuario.nombres}: ${citas.length} citas encontradas`);
     res.json(citas);
   } catch (error) {
-    console.error('❌ Error citas médico:', error);
+    console.error('Error al cargar citas del paciente:', error);
+    res.status(500).json({ mensaje: 'Error al cargar tus citas' });
+  }
+});
+
+// ✅ RUTA PARA CALENDARIO Y DISPONIBILIDAD DEL MÉDICO
+app.get('/api/medico/disponibilidad', auth(['medico']), async (req, res) => {
+  try {
+    const citas = await Cita.find({ medico: req.usuario._id })
+      .select('fecha hora estado')
+      .sort({ fecha: 1, hora: 1 });
+    console.log(`✅ Médico ${req.usuario.nombres}: ${citas.length} eventos para calendario`);
+    res.json(citas);
+  } catch (error) {
+    console.error('Error al cargar disponibilidad:', error);
+    res.status(500).json({ mensaje: 'Error al cargar disponibilidad' });
+  }
+});
+
+// ✅ RUTA DE RESPALDO PARA MIS CITAS DEL MÉDICO
+app.get('/api/mis-citas', auth(['medico']), async (req, res) => {
+  try {
+    const citas = await Cita.find({ medico: req.usuario._id })
+      .populate('paciente', 'nombres ci celular')
+      .sort({ fecha: 1, hora: 1 });
+    res.json(citas);
+  } catch (error) {
+    console.error('Error citas médico:', error);
     res.status(500).json({ mensaje: 'Error al cargar citas' });
   }
 });
