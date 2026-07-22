@@ -303,11 +303,14 @@
 
 <!-- ✅ PEGA AQUÍ EL CÓDIGO DE LAS FUNCIONES QUE FALTABAN -->
 <script>
+// ✅ FUNCIÓN CORREGIDA PARA CARGAR MÉDICOS (SIN DUPLICADOS)
 async function cargarMedicosPorEspecialidad() {
   const especialidad = document.getElementById('especialidad').value;
   const selectMedico = document.getElementById('medico');
   
+  // ✅ BORRA LO ANTERIOR ANTES DE CARGAR NUEVOS
   selectMedico.innerHTML = '<option value="">Seleccione un médico</option>';
+
   if (!especialidad) return;
 
   try {
@@ -331,23 +334,22 @@ async function cargarMedicosPorEspecialidad() {
   }
 }
 
+// ✅ FUNCIÓN CORREGIDA PARA CARGAR HORARIOS (SIN DUPLICADOS)
 async function cargarTurnosDisponibles() {
   const medicoId = document.getElementById('medico').value;
   const fecha = document.getElementById('fecha_cita').value;
   const selectHora = document.getElementById('hora_cita');
 
-  selectHora.innerHTML = '<option value="">Cargando horarios...</option>';
-  if (!medicoId || !fecha) {
-    selectHora.innerHTML = '<option value="">Primero elige médico y fecha</option>';
-    return;
-  }
+  // ✅ BORRA HORARIOS VIEJOS ANTES DE CARGAR NUEVOS
+  selectHora.innerHTML = '<option value="">Seleccione primero médico y fecha</option>';
+
+  if (!medicoId || !fecha) return;
 
   try {
     const respuesta = await fetch(`/api/turnos-disponibles?medicoId=${medicoId}&fecha=${fecha}`);
     const datos = await respuesta.json();
     const turnos = datos.turnosDisponibles;
 
-    selectHora.innerHTML = '<option value="">Seleccione una hora</option>';
     turnos.forEach(hora => {
       const opcion = document.createElement('option');
       opcion.value = hora;
