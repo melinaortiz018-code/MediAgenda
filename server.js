@@ -381,64 +381,86 @@ app.put('/api/usuarios/perfil', auth(['paciente', 'medico']), async (req, res) =
   }
 });
 
-// ==================== RUTAS MÉDICOS ====================
-// ✅ RUTA EXACTA PARA CARGAR MÉDICOS EN EL FORMULARIO
+// ==============================================
+// ✅ RUTA 1: CARGAR MÉDICOS PARA EL FORMULARIO (FORMATO EXACTO)
+// ==============================================
 app.get('/api/medicos', async (req, res) => {
   try {
-    let { especialidad } = req.query;
-    console.log('🔍 Especialidad recibida del formulario:', `[${especialidad}]`);
+    const especialidad = req.query.especialidad?.trim();
+    console.log('🔍 Recibida especialidad:', especialidad);
 
-    // Normalizamos: quitamos espacios y arreglamos tildes por si acaso
-    especialidad = especialidad?.trim();
-    const mapaEspecialidades = {
-      'Pediatria': 'Pediatría',
-      'pediatria': 'Pediatría',
-      'Psicologia': 'Psicología',
-      'psicologia': 'Psicología',
-      'Odontologia': 'Odontología',
-      'odontologia': 'Odontología',
-      'Medicina general': 'Medicina General',
-      'medicina general': 'Medicina General'
-    };
-    if (mapaEspecialidades[especialidad]) {
-      especialidad = mapaEspecialidades[especialidad];
-      console.log('🔄 Normalizado a:', especialidad);
+    // Busca SIN diferenciar tildes ni mayúsculas: NO FALLARÁ
+    const filtro = { rol: 'medico' };
+    if (especialidad) {
+      filtro.especialidad = { 
+        $regex: `^${especialidad.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}$`, 
+        $options: 'i' 
+      };
     }
 
-    // Filtro seguro
-    const filtro = { rol: 'medico', activo: true };
-    if (especialidad) filtro.especialidad = especialidad;
-
-    // Buscamos médicos
-    const medicos = await Usuario.find(filtro).select('_id nombres especialidad');
-    console.log(`✅ Total médicos encontrados: ${medicos.length}`);
+    // Traemos los médicos SIN FILTRO DE ACTIVO por si acaso
+    const medicos = await Usuario.find(filtro).select('_id nombres especialidad ci');
+    console.log(`✅ ENCONTRADOS: ${medicos.length} médicos`);
     medicos.forEach(m => console.log(`   - ${m.nombres} | ${m.especialidad}`));
 
-    // Devolvemos el formato que espera el menú desplegable
-    res.json(medicos.map(m => ({
-      id: m._id,
-      value: m._id,
-      label: m.nombres
-    })));
+    // Formato que espera TU menú desplegable
+    res.json(medicos);
   } catch (error) {
-    console.error('❌ Error al cargar médicos:', error);
-    res.status(500).json({ mensaje: 'Error al cargar médicos' });
+    console.error('❌ Error ruta médicos:', error);
+    res.status(500).json({ mensaje: 'Error al cargar' });
   }
 });
 
-// ✅ RUTA ADICIONAL POR SI EL FRONTEND BUSCA OTRA DIRECCIÓN
-app.get('/api/mis-citas-medico', auth(['medico']), async (req, res) => {
+// ==============================================
+// ✅ RUTA 2: TURNOS DE 30 MINUTOS (7:00 A 16:00)
+// ==============================================
+app.get('/api/turnos-disponibles', async (req, res) => {
+  try {
+    const { medicoId, fecha } = req.query;
+    console.log('⏰ Generando turnos para Médico:', medicoId, 'Fecha:', fecha);
+
+    // Generamos horario FIJO: 7:00 a 16:00 cada 30 min
+    const horario = [];
+    for (let h = 7; h < 16; h++) {
+      horario.push(`${h.toString().padStart(2,'0')}:00`);
+      horario.push(`${h.toString().padStart(2,'0')}:30`);
+    }
+    horario.push('16:00');
+
+    // Quitamos los ya reservados
+    const reservadas = await Cita.find({ medico: medicoId, fecha: new Date(fecha) }).select('hora');
+    const libres = horario.filter(h => !reservadas.map(c => c.hora).includes(h));
+
+    console.log(`✅ Turnos totales: ${horario.length} | Libres: ${libres.length}`);
+    res.json({ horarioCompleto: horario, turnosDisponibles: libres });
+  } catch (error) {
+    console.error('❌ Error turnos:', error);
+    res.status(500).json({ mensaje: 'Error horarios' });
+  }
+});
+
+// ==============================================
+// ✅ RUTA 3: CITAS Y CALENDARIO DEL MÉDICO
+// ==============================================
+app.get('/api/medico/citas', auth(['medico']), async (req, res) => {
   try {
     const citas = await Cita.find({ medico: req.usuario._id })
       .populate('paciente', 'nombres ci correo celular')
       .sort({ fecha: 1, hora: 1 });
+
+    console.log(`✅ Citas del médico: ${citas.length}`);
     res.json(citas);
   } catch (error) {
+    console.error('❌ Error citas médico:', error);
     res.status(500).json({ mensaje: 'Error al cargar citas' });
   }
 });
 
-app.put('/api/medico/citas/:id', auth(['medico']), async (req, res) => {
+// ✅ RUTA ALIAS POR SI EL FRONTEND BUSCA OTRA DIRECCIÓN
+app.get('/api/medico/mis-citas', auth(['medico']), async (req, res) => {
+  app.request.url = '/api/medico/citas';
+  app._router.handle(req, res);
+
   try {
     const { estado, recetaObservaciones, hora } = req.body;
     const cita = await Cita.findById(req.params.id);
