@@ -72,65 +72,12 @@ const auth = (rolesPermitidos = []) => {
   };
 };
 
+// Alias para coincidir con tus rutas de admin
+const verificarToken = auth();
+const verificarAdmin = auth(['admin']);
+
 // ==================== RUTAS AUTENTICACIÓN ====================
-
-// 🆕 RUTA DE REGISTRO DE PACIENTES (LA QUE FALTABA)
-// ✅ Login que acepta CI para médicos/pacientes y correo para admin
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { rol, ci, correo, password } = req.body;
-    let usuario;
-
-    if (rol === 'medico') {
-      // Médicos inician con CI y contraseña
-      usuario = await Usuario.findOne({ ci, rol: 'medico' });
-    } else if (rol === 'paciente') {
-      // Pacientes inician con CI + correo
-      usuario = await Usuario.findOne({ ci, correo, rol: 'paciente' });
-    } else if (rol === 'admin') {
-      // Admin inicia con correo
-      usuario = await Usuario.findOne({ correo, rol: 'admin' });
-    } else {
-      return res.status(400).json({ mensaje: 'Rol no válido' });
-    }
-
-    if (!usuario) {
-      return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
-    }
-
-    // Verificar contraseña
-    const contraseñaValida = await bcrypt.compare(password, usuario.password);
-    if (!contraseñaValida) {
-      return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
-    }
-
-    // Generar token
-    const token = jwt.sign(
-      { id: usuario._id, rol: usuario.rol },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    res.json({
-      token,
-      usuario: {
-        _id: usuario._id,
-        ci: usuario.ci,
-        nombres: usuario.nombres,
-        correo: usuario.correo,
-        rol: usuario.rol,
-        especialidad: usuario.especialidad,
-        celular: usuario.celular,
-        direccion: usuario.direccion
-      }
-    });
-  } catch (error) {
-    console.error('Error en login:', error);
-    res.status(500).json({ mensaje: 'Error al iniciar sesión' });
-  }
-});
-
-// RUTA DE LOGIN POR ROLES
+// RUTA DE LOGIN POR ROLES (ÚNICA Y CORRECTA)
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { rol, ci, correo, password } = req.body;
@@ -157,26 +104,53 @@ app.post('/api/auth/login', async (req, res) => {
     
     console.log('   ✅ Usuario encontrado:', usuario ? `${usuario.nombres} (${usuario.rol})` : 'NO ENCONTRADO');
     
-    if (!usuario) return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
+    if (!usuario) return res.status(401).json({ mensaje: 'Credenciales incorrectas' });
     
     const passValida = await bcrypt.compare(password, usuario.password);
     console.log('   🔑 Contraseña válida:', passValida);
     
-    if (!passValida) return res.status(400).json({ mensaje: 'Credenciales incorrectas' });
+    if (!passValida) return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
     
-    const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: usuario._id, rol: usuario.rol }, JWT_SECRET, { expiresIn: '24h' });
     
     res.json({
       token,
       usuario: {
-        id: usuario._id, ci: usuario.ci, nombres: usuario.nombres, correo: usuario.correo,
-        rol: usuario.rol, celular: usuario.celular, direccion: usuario.direccion,
+        _id: usuario._id,
+        ci: usuario.ci,
+        nombres: usuario.nombres,
+        correo: usuario.correo,
+        rol: usuario.rol,
+        celular: usuario.celular,
+        direccion: usuario.direccion,
         especialidad: usuario.especialidad
       }
     });
   } catch (error) {
     console.error('❌ Error login:', error);
-    res.status(500).json({ mensaje: 'Error en el servidor' });
+    res.status(500).json({ mensaje: 'Error al iniciar sesión' });
+  }
+});
+
+// RUTA DE REGISTRO DE PACIENTES
+app.post('/api/auth/registro', async (req, res) => {
+  try {
+    const { ci, nombres, correo, celular, direccion, password, confirmPassword } = req.body;
+    if (password !== confirmPassword) return res.status(400).json({ mensaje: 'Las contraseñas no coinciden' });
+    
+    const existe = await Usuario.findOne({ $or: [{ ci }, { correo }] });
+    if (existe) return res.status(400).json({ mensaje: 'Cédula o correo ya registrados' });
+    
+    const passHash = await bcrypt.hash(password, 10);
+    const nuevoPaciente = await Usuario.create({
+      ci, nombres, correo, celular, direccion, password: passHash, rol: 'paciente'
+    });
+    
+    const token = jwt.sign({ id: nuevoPaciente._id, rol: 'paciente' }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ token, usuario: { _id: nuevoPaciente._id, ci, nombres, correo, rol: 'paciente' } });
+  } catch (error) {
+    console.error('❌ Error registro:', error);
+    res.status(500).json({ mensaje: 'Error al registrarse' });
   }
 });
 
@@ -184,25 +158,21 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/verify', auth(), async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuario._id).select('-password');
-    res.json({ usuario });
+    res.json(usuario);
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al verificar token' });
   }
 });
 
-// ==================== RUTAS PACIENTES ====================
-// ✅ Ruta que usa el frontend para cargar médicos en la cita
+// ==================== RUTAS GENERALES ====================
+// CARGAR MÉDICOS POR ESPECIALIDAD (COINCIDE CON FRONTEND)
 app.get('/api/medicos', async (req, res) => {
   try {
     const { especialidad } = req.query;
     let consulta = { rol: 'medico' };
-
-    // Filtrar por especialidad si se pide
-    if (especialidad) {
-      consulta.especialidad = especialidad;
-    }
-
-    const medicos = await Usuario.find(consulta).select('-password');
+    if (especialidad) consulta.especialidad = especialidad;
+    
+    const medicos = await Usuario.find(consulta).select('_id nombres especialidad ci');
     res.json(medicos);
   } catch (error) {
     console.error('Error al cargar médicos:', error);
@@ -210,6 +180,7 @@ app.get('/api/medicos', async (req, res) => {
   }
 });
 
+// ==================== RUTAS PACIENTES ====================
 app.post('/api/citas', auth(['paciente']), async (req, res) => {
   try {
     const { medicoId, especialidad, fecha, hora, motivo } = req.body;
@@ -249,7 +220,7 @@ app.post('/api/citas', auth(['paciente']), async (req, res) => {
   }
 });
 
-app.get('/api/mis-citas', auth(['paciente']), async (req, res) => {
+app.get('/api/citas/mis', auth(['paciente']), async (req, res) => {
   try {
     const citas = await Cita.find({ paciente: req.usuario._id })
       .populate('medico', 'nombres especialidad')
@@ -333,7 +304,7 @@ app.put('/api/citas/:id/reagendar', auth(['paciente', 'medico']), async (req, re
   }
 });
 
-app.put('/api/perfil', auth(['paciente', 'medico']), async (req, res) => {
+app.put('/api/usuarios/perfil', auth(['paciente', 'medico']), async (req, res) => {
   try {
     const { correo, celular, direccion } = req.body;
     
@@ -348,7 +319,7 @@ app.put('/api/perfil', auth(['paciente', 'medico']), async (req, res) => {
       { new: true }
     ).select('-password');
     
-    res.json({ mensaje: 'Perfil actualizado exitosamente', usuario });
+    res.json(usuario);
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al actualizar perfil' });
   }
@@ -407,7 +378,7 @@ app.put('/api/medico/citas/:id', auth(['medico']), async (req, res) => {
   }
 });
 
-// ✅ Devuelve el rol y especialidad correctamente
+// ==================== RUTAS ADMINISTRADOR ====================
 app.get('/api/admin/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const usuarios = await Usuario.find().select('-password');
@@ -418,30 +389,17 @@ app.get('/api/admin/usuarios', verificarToken, verificarAdmin, async (req, res) 
   }
 });
 
-// ✅ Coincide con los campos que envía el formulario
 app.post('/api/admin/medicos', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { ci, nombres, correo, especialidad, password } = req.body;
-
-    // Verificar si ya existe
     const existe = await Usuario.findOne({ $or: [{ ci }, { correo }] });
-    if (existe) {
-      return res.status(400).json({ mensaje: 'El médico ya existe con esa cédula o correo' });
-    }
-
-    // Encriptar contraseña
+    if (existe) return res.status(400).json({ mensaje: 'El médico ya existe con esa cédula o correo' });
+    
     const contraseñaEncriptada = await bcrypt.hash(password, 10);
-
-    // Crear usuario médico
     const nuevoMedico = new Usuario({
-      ci,
-      nombres,
-      correo,
-      rol: 'medico',
-      especialidad,
-      password: contraseñaEncriptada
+      ci, nombres, correo, rol: 'medico', especialidad, password: contraseñaEncriptada
     });
-
+    
     await nuevoMedico.save();
     res.json({ mensaje: 'Médico registrado correctamente' });
   } catch (error) {
@@ -450,7 +408,7 @@ app.post('/api/admin/medicos', verificarToken, verificarAdmin, async (req, res) 
   }
 });
 
-app.put('/api/admin/usuarios/:id/password', auth(['admin']), async (req, res) => {
+app.put('/api/admin/usuarios/:id/password', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { nuevaPassword } = req.body;
     if (!nuevaPassword || nuevaPassword.length < 6)
@@ -458,7 +416,6 @@ app.put('/api/admin/usuarios/:id/password', auth(['admin']), async (req, res) =>
     
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(nuevaPassword, salt);
-    
     await Usuario.findByIdAndUpdate(req.params.id, { password: passwordHash });
     res.json({ mensaje: 'Contraseña actualizada exitosamente' });
   } catch (error) {
@@ -466,13 +423,11 @@ app.put('/api/admin/usuarios/:id/password', auth(['admin']), async (req, res) =>
   }
 });
 
-app.delete('/api/admin/usuarios/:id', auth(['admin']), async (req, res) => {
+app.delete('/api/admin/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.params.id);
     if (!usuario) return res.status(404).json({ mensaje: 'Usuario no encontrado' });
-    
-    if (usuario.rol === 'admin')
-      return res.status(400).json({ mensaje: 'No se puede eliminar una cuenta de administrador' });
+    if (usuario.rol === 'admin') return res.status(400).json({ mensaje: 'No se puede eliminar una cuenta de administrador' });
     
     await Usuario.findByIdAndDelete(req.params.id);
     res.json({ mensaje: 'Usuario eliminado exitosamente' });
@@ -481,7 +436,7 @@ app.delete('/api/admin/usuarios/:id', auth(['admin']), async (req, res) => {
   }
 });
 
-app.get('/api/admin/estadisticas', auth(['admin']), async (req, res) => {
+app.get('/api/admin/estadisticas', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const totalCitas = await Cita.countDocuments();
     const exitosas = await Cita.countDocuments({ estado: 'Exitosa' });
@@ -489,12 +444,12 @@ app.get('/api/admin/estadisticas', auth(['admin']), async (req, res) => {
     const reagendadas = await Cita.countDocuments({ estado: 'Reagendada' });
     const pendientes = await Cita.countDocuments({ estado: { $in: ['Pendiente', 'Confirmada', 'En Consulta'] } });
     
-    const porEspecialidad = await Cita.aggregate([
-      { $group: { _id: '$especialidad', total: { $sum: 1 } } }
-    ]);
+    const porEspecialidad = await Cita.aggregate([{ $group: { _id: '$especialidad', total: { $sum: 1 } } }]);
+    const totalPacientes = await Usuario.countDocuments({ rol: 'paciente' });
+    const totalMedicos = await Usuario.countDocuments({ rol: 'medico' });
     
     res.json({
-      totalCitas, exitosas, canceladas, reagendadas, pendientes,
+      totalPacientes, totalMedicos, totalCitas, exitosas, canceladas, reagendadas, pendientes,
       porEspecialidad: porEspecialidad.map(e => ({ especialidad: e._id, total: e.total }))
     });
   } catch (error) {
@@ -502,7 +457,7 @@ app.get('/api/admin/estadisticas', auth(['admin']), async (req, res) => {
   }
 });
 
-// ==================== CONEXIÓN DB Y SEED ====================
+// ==================== CONEXIÓN DB Y DATOS INICIALES ====================
 const MEDICOS_PREDEFINIDOS = [
   { ci: 'MED001', nombres: 'Dr. Carlos Mendoza', correo: 'carlos.mendoza@mediagenda.com', celular: '0987654321', especialidad: 'Psicología', genero: 'M', password: 'Medico123*' },
   { ci: 'MED002', nombres: 'Dra. Laura Fernández', correo: 'laura.fernandez@mediagenda.com', celular: '0987654322', especialidad: 'Psicología', genero: 'F', password: 'Medico123*' },
@@ -530,10 +485,7 @@ const inicializarDatos = async () => {
     console.log('========================================');
     
     const borrados = await Usuario.deleteMany({ 
-      $or: [
-        { rol: 'admin' }, 
-        { ci: { $in: MEDICOS_PREDEFINIDOS.map(m => m.ci) } } 
-      ] 
+      $or: [{ rol: 'admin' }, { ci: { $in: MEDICOS_PREDEFINIDOS.map(m => m.ci) } }] 
     });
     console.log(`🗑️ Usuarios por defecto borrados: ${borrados.deletedCount}`);
 
@@ -550,30 +502,34 @@ const inicializarDatos = async () => {
     console.log('✅ 8 MÉDICOS CREADOS: CI MED001-MED008 / Medico123*');
     console.log('========================================');
   } catch (error) {
-    console.error('❌ ERROR GRAVE AL INICIALIZAR DATOS:', error);
-    throw error;
+    console.error('❌ ERROR AL INICIALIZAR DATOS:', error);
   }
 };
 
 const conectarDB = async () => {
   try {
-    const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/';
+    const mongoURI = process.env.MONGO_URI;
+    if (!mongoURI) throw new Error('Falta variable MONGO_URI en Render');
+    
     await mongoose.connect(mongoURI, { dbName: 'MediAgenda' });
     console.log('🔌 Conectado a MongoDB exitosamente en BD: MediAgenda');
     await inicializarDatos();
   } catch (error) {
-    console.error('❌ Error FATAL de conexión MongoDB:', error);
+    console.error('❌ Error FATAL de conexión MongoDB:', error.message);
     process.exit(1);
   }
 };
 
-// Ruta principal
+// Ruta para servir el frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// INICIO FINAL DEL SERVIDOR
 conectarDB().then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor MediAgenda corriendo en puerto ${PORT}`);
   });
+}).catch(err => {
+  console.error('❌ No se pudo arrancar el servidor:', err);
 });
